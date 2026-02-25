@@ -10,6 +10,7 @@ import LogoUploader from './LogoUploader';
 import FontPicker from './FontPicker';
 import BrandDetector from './BrandDetector';
 import ManualAssistant from './ManualAssistant';
+import TemplateSelector from './TemplateSelector';
 import ColorFieldTip, { type TipData } from './ColorFieldTip';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import {
@@ -563,6 +564,11 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
                         onGenerate={handleManualGenerate}
                         onApplyAll={handleBrandSuggestAll}
                     />
+                </div>
+
+                {/* Ferdige maler */}
+                <div className={styles.section}>
+                    <TemplateSelector onApply={handleBrandSuggestAll} />
                 </div>
 
                 {/* Organisasjonsnavn */}
