@@ -24,7 +24,7 @@ export default async function AdminLayout({
     let tenantName = 'Egen Akademi';
     let tenantLogoUrl: string | null = null;
     let userAvatarUrl: string | null = null;
-    let currentUser: { avatarUrl: string | null; firstName: string | null; lastName: string | null } | null = null;
+    let currentUser: { avatarUrl: string | null; firstName: string | null; lastName: string | null; jobTitle: string | null } | null = null;
     if (session.user.tenantId) {
         const tenant = await prisma.tenant.findUnique({
             where: { id: session.user.tenantId },
@@ -46,7 +46,7 @@ export default async function AdminLayout({
     if (session.user.id) {
         currentUser = await prisma.user.findUnique({
             where: { id: session.user.id },
-            select: { avatarUrl: true, firstName: true, lastName: true },
+            select: { avatarUrl: true, firstName: true, lastName: true, jobTitle: true },
         });
         if (currentUser?.avatarUrl) {
             userAvatarUrl = currentUser.avatarUrl;
@@ -133,11 +133,16 @@ export default async function AdminLayout({
                                     initials
                                 )}
                             </div>
-                            <span className={styles.userName}>
-                                {currentUser?.firstName && currentUser?.lastName
-                                    ? `${currentUser.firstName} ${currentUser.lastName}`
-                                    : session.user.email || 'Bruker'}
-                            </span>
+                            <div className={styles.userInfo}>
+                                <span className={styles.userName}>
+                                    {currentUser?.firstName && currentUser?.lastName
+                                        ? `${currentUser.firstName} ${currentUser.lastName}`
+                                        : session.user.email || 'Bruker'}
+                                </span>
+                                {currentUser?.jobTitle && (
+                                    <span className={styles.userJobTitle}>{currentUser.jobTitle}</span>
+                                )}
+                            </div>
                         </Link>
                         <form action={async () => {
                             'use server';

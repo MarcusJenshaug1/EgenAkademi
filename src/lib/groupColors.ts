@@ -29,13 +29,18 @@ export const GROUP_COLOR_PALETTE = [
 
 // ── Contrast utilities ─────────────────────────────────────────
 
-function hexToRgb(hex: string): [number, number, number] {
+export function hexToRgb(hex: string): [number, number, number] {
     const h = hex.replace('#', '');
     return [
         parseInt(h.substring(0, 2), 16),
         parseInt(h.substring(2, 4), 16),
         parseInt(h.substring(4, 6), 16),
     ];
+}
+
+/** Returns true if string is a valid 6-digit hex color (with or without #) */
+export function isValidHex(hex: string): boolean {
+    return /^#?[0-9a-fA-F]{6}$/.test(hex.trim());
 }
 
 function sRGBtoLinear(c: number): number {

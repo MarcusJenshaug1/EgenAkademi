@@ -203,6 +203,57 @@
     flex-shrink: 0; display: inline-block;
 }
 
+.wcagDot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,255,255,0.85);
+    display: block;
+}
+
+.customColorRow {
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 4px;
+}
+
+.customColorHash {
+    font-size: 0.85rem; font-weight: 600;
+    color: var(--color-text-secondary);
+    font-family: monospace;
+}
+
+.customColorInput {
+    width: 90px; height: 32px; padding: 0 8px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: 0.85rem; font-family: monospace;
+    outline: none;
+    transition: border-color var(--transition-fast);
+}
+.customColorInput:focus {
+    border-color: var(--color-accent-blue);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent-blue) 15%, transparent);
+}
+.customColorInput::placeholder {
+    color: var(--color-text-secondary); opacity: 0.5;
+}
+
+.wcagBadge {
+    font-size: 0.7rem; font-weight: 600;
+    padding: 2px 8px; border-radius: 10px;
+    white-space: nowrap; font-family: system-ui, sans-serif;
+}
+.wcagPass {
+    background: color-mix(in srgb, var(--color-success) 15%, transparent);
+    color: var(--color-success);
+    border: 1px solid color-mix(in srgb, var(--color-success) 30%, transparent);
+}
+.wcagFail {
+    background: color-mix(in srgb, var(--color-warning) 15%, transparent);
+    color: var(--color-warning);
+    border: 1px solid color-mix(in srgb, var(--color-warning) 30%, transparent);
+}
+
 .cardTitleRow {
     display: flex; align-items: center; gap: 8px;
 }

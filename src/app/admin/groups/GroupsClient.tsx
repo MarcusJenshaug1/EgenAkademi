@@ -11,7 +11,7 @@ import {
     listAvailableMembers, getGroupStats,
     type GroupListItem, type GroupDetail,
 } from '@/app/actions/groupActions';
-import { suggestGroupColors, type ColorSuggestion } from '@/lib/groupColors';
+import { suggestGroupColors, contrastRatio, meetsWcagAA, isValidHex, type ColorSuggestion } from '@/lib/groupColors';
 import styles from './groups.module.css';
 
 function getInitials(user: { firstName?: string | null; lastName?: string | null; name?: string | null; email?: string | null }): string {
@@ -19,6 +19,22 @@ function getInitials(user: { firstName?: string | null; lastName?: string | null
     if (user.name) return user.name.substring(0, 2).toUpperCase();
     if (user.email) return user.email.substring(0, 2).toUpperCase();
     return '??';
+}
+
+/** Read a CSS custom property value from the document root */
+function getCssVar(name: string): string {
+    if (typeof window === 'undefined') return '';
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+/** Get the effective background color for WCAG checks (bg-surface is often semi-transparent, so fall back to bg-secondary then bg-primary) */
+function getBrandingBg(): string {
+    // bg-secondary is the card/panel background where group badges typically appear
+    const bgSecondary = getCssVar('--color-bg-secondary');
+    if (bgSecondary && isValidHex(bgSecondary)) return bgSecondary;
+    const bgPrimary = getCssVar('--color-bg-primary');
+    if (bgPrimary && isValidHex(bgPrimary)) return bgPrimary;
+    return '#0f0f11'; // safe default
 }
 
 interface GroupsClientProps {
@@ -46,13 +62,25 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
     const [formName, setFormName] = useState('');
     const [formDesc, setFormDesc] = useState('');
     const [formColor, setFormColor] = useState<string | null>(null);
+    const [customHex, setCustomHex] = useState('');
 
-    // Color suggestions (computed from existing groups)
+    // Color suggestions (computed from existing groups + actual branding)
     function getColorSuggestions(): ColorSuggestion[] {
         const usedColors = groups
             .filter((g) => g.color && g.id !== selectedGroup?.id)
             .map((g) => g.color!);
-        return suggestGroupColors(usedColors);
+        const brandAccent = getCssVar('--color-accent-blue') || undefined;
+        const bg = getBrandingBg();
+        return suggestGroupColors(usedColors, brandAccent, bg);
+    }
+
+    /** Check WCAG AA for a custom hex against branding background */
+    function getCustomColorInfo(hex: string): { ratio: number; aa: boolean } | null {
+        const normalized = hex.startsWith('#') ? hex : `#${hex}`;
+        if (!isValidHex(normalized)) return null;
+        const bg = getBrandingBg();
+        const ratio = contrastRatio(normalized, bg);
+        return { ratio: Math.round(ratio * 100) / 100, aa: ratio >= 4.5 };
     }
 
     // Add member state
@@ -108,6 +136,7 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
         setFormName(group.name);
         setFormDesc(group.description || '');
         setFormColor(group.color || null);
+        setCustomHex('');
         setError(null);
         setShowEdit(true);
     }
@@ -247,7 +276,7 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
                     <p className={styles.emptyText}>
                         Opprett din første gruppe for å organisere brukere og forenkle kursadministrasjon.
                     </p>
-                    <button className={styles.createButton} onClick={() => { setFormName(''); setFormDesc(''); setFormColor(null); setError(null); setShowCreate(true); }}>
+                    <button className={styles.createButton} onClick={() => { setFormName(''); setFormDesc(''); setFormColor(null); setCustomHex(''); setError(null); setShowCreate(true); }}>
                         <Plus size={16} /> Opprett gruppe
                     </button>
                 </div>
@@ -334,7 +363,7 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
                                     <button
                                         type="button"
                                         className={`${styles.colorSwatch} ${!formColor ? styles.colorSwatchActive : ''}`}
-                                        onClick={() => setFormColor(null)}
+                                        onClick={() => { setFormColor(null); setCustomHex(''); }}
                                         title="Ingen farge"
                                     >
                                         <X size={10} />
@@ -345,15 +374,49 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
                                             type="button"
                                             className={`${styles.colorSwatch} ${formColor === c.hex ? styles.colorSwatchActive : ''}`}
                                             style={{ background: c.hex }}
-                                            onClick={() => setFormColor(c.hex)}
+                                            onClick={() => { setFormColor(c.hex); setCustomHex(''); }}
                                             title={`${c.name} — kontrast ${c.contrastOnDark}:1${c.meetsAA ? ' ✓ WCAG AA' : ''}`}
-                                        />
+                                        >
+                                            {c.meetsAA && <span className={styles.wcagDot} />}
+                                        </button>
                                     ))}
+                                </div>
+                                <div className={styles.customColorRow}>
+                                    <span className={styles.customColorHash}>#</span>
+                                    <input
+                                        className={styles.customColorInput}
+                                        value={customHex}
+                                        onChange={(e) => {
+                                            const v = e.target.value.replace(/[^0-9a-fA-F]/g, '').slice(0, 6);
+                                            setCustomHex(v);
+                                            if (v.length === 6) setFormColor(`#${v}`);
+                                        }}
+                                        placeholder="3b82f6"
+                                        maxLength={6}
+                                    />
+                                    {customHex.length === 6 && (() => {
+                                        const info = getCustomColorInfo(customHex);
+                                        if (!info) return null;
+                                        return (
+                                            <span className={`${styles.wcagBadge} ${info.aa ? styles.wcagPass : styles.wcagFail}`}>
+                                                {info.aa ? '✓ AA' : '✗ AA'} ({info.ratio}:1)
+                                            </span>
+                                        );
+                                    })()}
                                 </div>
                                 {formColor && (
                                     <span className={styles.colorPreview}>
                                         <span className={styles.colorDot} style={{ background: formColor }} />
                                         {formColor}
+                                        {(() => {
+                                            const info = getCustomColorInfo(formColor);
+                                            if (!info) return null;
+                                            return (
+                                                <span className={`${styles.wcagBadge} ${info.aa ? styles.wcagPass : styles.wcagFail}`}>
+                                                    {info.aa ? '✓ WCAG AA' : '✗ WCAG AA'} ({info.ratio}:1)
+                                                </span>
+                                            );
+                                        })()}
                                     </span>
                                 )}
                             </div>
@@ -405,7 +468,7 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
                                     <button
                                         type="button"
                                         className={`${styles.colorSwatch} ${!formColor ? styles.colorSwatchActive : ''}`}
-                                        onClick={() => setFormColor(null)}
+                                        onClick={() => { setFormColor(null); setCustomHex(''); }}
                                         title="Ingen farge"
                                     >
                                         <X size={10} />
@@ -416,15 +479,49 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
                                             type="button"
                                             className={`${styles.colorSwatch} ${formColor === c.hex ? styles.colorSwatchActive : ''}`}
                                             style={{ background: c.hex }}
-                                            onClick={() => setFormColor(c.hex)}
+                                            onClick={() => { setFormColor(c.hex); setCustomHex(''); }}
                                             title={`${c.name} — kontrast ${c.contrastOnDark}:1${c.meetsAA ? ' ✓ WCAG AA' : ''}`}
-                                        />
+                                        >
+                                            {c.meetsAA && <span className={styles.wcagDot} />}
+                                        </button>
                                     ))}
+                                </div>
+                                <div className={styles.customColorRow}>
+                                    <span className={styles.customColorHash}>#</span>
+                                    <input
+                                        className={styles.customColorInput}
+                                        value={customHex}
+                                        onChange={(e) => {
+                                            const v = e.target.value.replace(/[^0-9a-fA-F]/g, '').slice(0, 6);
+                                            setCustomHex(v);
+                                            if (v.length === 6) setFormColor(`#${v}`);
+                                        }}
+                                        placeholder="3b82f6"
+                                        maxLength={6}
+                                    />
+                                    {customHex.length === 6 && (() => {
+                                        const info = getCustomColorInfo(customHex);
+                                        if (!info) return null;
+                                        return (
+                                            <span className={`${styles.wcagBadge} ${info.aa ? styles.wcagPass : styles.wcagFail}`}>
+                                                {info.aa ? '✓ AA' : '✗ AA'} ({info.ratio}:1)
+                                            </span>
+                                        );
+                                    })()}
                                 </div>
                                 {formColor && (
                                     <span className={styles.colorPreview}>
                                         <span className={styles.colorDot} style={{ background: formColor }} />
                                         {formColor}
+                                        {(() => {
+                                            const info = getCustomColorInfo(formColor);
+                                            if (!info) return null;
+                                            return (
+                                                <span className={`${styles.wcagBadge} ${info.aa ? styles.wcagPass : styles.wcagFail}`}>
+                                                    {info.aa ? '✓ WCAG AA' : '✗ WCAG AA'} ({info.ratio}:1)
+                                                </span>
+                                            );
+                                        })()}
                                     </span>
                                 )}
                             </div>

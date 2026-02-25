@@ -183,6 +183,12 @@
     text-decoration: none;
 }
 
+.userInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
 .userName {
     font-size: 0.875rem;
     font-weight: 500;
@@ -191,6 +197,17 @@
     max-width: 160px;
     overflow: hidden;
     text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+.userJobTitle {
+    font-size: 0.7rem;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
 }
 
 .userProfile {
