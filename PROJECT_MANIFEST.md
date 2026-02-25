@@ -169,8 +169,10 @@ export async function myAction(formData: FormData) {
 - [ ] Intern arrangementskalender
 
 **Brukeradministrasjon**
-- [ ] CRUD for brukere i admin (`/admin/users`)
-- [ ] Gruppe-administrasjon (`/admin/groups`)
+- [x] CRUD for brukere i admin (`/admin/users`)
+- [x] Gruppe-administrasjon (`/admin/groups`)
+- [x] Roller og tilgangsvisning (`/admin/roles`)
+- [x] Brukerprofil med avatar (`/admin/profile`)
 - [ ] Dynamiske grupper (regelbasert, fra attributter)
 - [ ] Individuelle brukerprofiler med ferdighetsprofil
 
