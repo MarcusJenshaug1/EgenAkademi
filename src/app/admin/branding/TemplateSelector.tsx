@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
 import { Palette, Check, Moon, Sparkles, Sun, Mountain, TreePine } from 'lucide-react';
 import styles from './templateSelector.module.css';
 
@@ -135,6 +134,25 @@ export const PRESETS: BrandingPreset[] = [
     },
 ];
 
+// Keys used to match current colors against presets
+const MATCH_KEYS = [
+    'colorBgPrimary',
+    'colorBgSecondary',
+    'colorAccent',
+    'colorSidebarBg',
+    'colorButtonPrimary',
+] as const;
+
+function detectActivePreset(colors: Record<string, string>): string | null {
+    for (const preset of PRESETS) {
+        const match = MATCH_KEYS.every(
+            (k) => (colors[k] ?? '').toLowerCase() === (preset.colors[k] ?? '').toLowerCase()
+        );
+        if (match) return preset.id;
+    }
+    return null;
+}
+
 // ── Component ───────────────────────────────────────────────
 
 interface TemplateSelectorProps {
@@ -144,20 +162,10 @@ interface TemplateSelectorProps {
 }
 
 export default function TemplateSelector({ currentColors, defaults, onApply }: TemplateSelectorProps) {
-    const [activeId, setActiveId] = useState<string | null>(null);
-    const appliedAt = useRef(0);
-
-    // Clear active when user makes manual color changes (but not from template apply)
-    useEffect(() => {
-        // Ignore color changes within 500ms of applying a template
-        if (Date.now() - appliedAt.current < 500) return;
-        if (activeId) setActiveId(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentColors]);
+    // Derive active preset from current colors — survives refresh
+    const activeId = detectActivePreset(currentColors);
 
     function handleApply(preset: BrandingPreset) {
-        appliedAt.current = Date.now();
-        setActiveId(preset.id);
         onApply(preset.colors);
     }
 
