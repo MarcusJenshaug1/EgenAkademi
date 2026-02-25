@@ -568,7 +568,11 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
 
                 {/* Ferdige maler */}
                 <div className={styles.section}>
-                    <TemplateSelector onApply={handleBrandSuggestAll} />
+                    <TemplateSelector
+                        currentColors={colors}
+                        defaults={DEFAULTS}
+                        onApply={handleBrandSuggestAll}
+                    />
                 </div>
 
                 {/* Organisasjonsnavn */}

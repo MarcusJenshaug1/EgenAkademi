@@ -79,9 +79,9 @@
     transform: translateY(-1px);
 }
 
-.cardApplied {
-    border-color: var(--color-success);
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-success) 30%, transparent);
+.cardActive {
+    border-color: var(--color-accent-blue);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent-blue) 30%, transparent);
 }
 
 /* ── Mini preview ── */
@@ -194,9 +194,9 @@
     gap: 4px;
 }
 
-.cardEmoji {
-    font-size: 0.85rem;
-    line-height: 1;
+.cardIcon {
+    flex-shrink: 0;
+    opacity: 0.6;
 }
 
 .cardDesc {
@@ -206,13 +206,13 @@
 }
 
 /* ── Applied badge ── */
-.appliedBadge {
+.activeBadge {
     position: absolute;
     top: 6px;
     right: 6px;
     width: 20px;
     height: 20px;
-    background: var(--color-success);
+    background: var(--color-accent-blue);
     color: white;
     border-radius: 50%;
     display: flex;

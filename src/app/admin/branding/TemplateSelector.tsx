@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Palette, Check, Sparkles } from 'lucide-react';
+import { useMemo } from 'react';
+import { Palette, Check, Moon, Sparkles, Sun, Mountain, TreePine } from 'lucide-react';
 import styles from './templateSelector.module.css';
 
 // ── Preset definitions ──────────────────────────────────────
@@ -10,16 +10,30 @@ export interface BrandingPreset {
     id: string;
     name: string;
     description: string;
-    emoji: string;
+    icon: keyof typeof ICON_MAP;
     colors: Record<string, string>;
 }
+
+const ICON_MAP = {
+    moon: Moon,
+    sparkles: Sparkles,
+    sun: Sun,
+    mountain: Mountain,
+    tree: TreePine,
+} as const;
+
+// The 5 key fields used for matching active template
+const MATCH_KEYS = [
+    'colorBgPrimary', 'colorAccent', 'colorSidebarBg',
+    'colorTextPrimary', 'colorButtonPrimary',
+] as const;
 
 export const PRESETS: BrandingPreset[] = [
     {
         id: 'midnatt',
         name: 'Midnatt',
         description: 'Elegant mørkt tema med blå aksent',
-        emoji: '🌙',
+        icon: 'moon',
         colors: {
             colorBgPrimary: '#050505',
             colorBgSecondary: '#0f0f11',
@@ -41,7 +55,7 @@ export const PRESETS: BrandingPreset[] = [
         id: 'nordlys',
         name: 'Nordlys',
         description: 'Mørkt tema med aurora-grønn glød',
-        emoji: '✨',
+        icon: 'sparkles',
         colors: {
             colorBgPrimary: '#0a0f0d',
             colorBgSecondary: '#111a16',
@@ -63,7 +77,7 @@ export const PRESETS: BrandingPreset[] = [
         id: 'soloppgang',
         name: 'Soloppgang',
         description: 'Varmt lyst tema med korall-aksent',
-        emoji: '🌅',
+        icon: 'sun',
         colors: {
             colorBgPrimary: '#fffbf5',
             colorBgSecondary: '#fff7ed',
@@ -85,7 +99,7 @@ export const PRESETS: BrandingPreset[] = [
         id: 'fjordblaa',
         name: 'Fjordblå',
         description: 'Rent lyst tema med dypblå toner',
-        emoji: '🏔️',
+        icon: 'mountain',
         colors: {
             colorBgPrimary: '#f8fafc',
             colorBgSecondary: '#f0f4f8',
@@ -107,7 +121,7 @@ export const PRESETS: BrandingPreset[] = [
         id: 'skogsdyp',
         name: 'Skogsdyp',
         description: 'Dyp jordtone med varm gull-aksent',
-        emoji: '🌲',
+        icon: 'tree',
         colors: {
             colorBgPrimary: '#0c0a09',
             colorBgSecondary: '#1c1917',
@@ -130,16 +144,23 @@ export const PRESETS: BrandingPreset[] = [
 // ── Component ───────────────────────────────────────────────
 
 interface TemplateSelectorProps {
+    currentColors: Record<string, string>;
+    defaults: Record<string, string>;
     onApply: (colors: Record<string, string>) => void;
 }
 
-export default function TemplateSelector({ onApply }: TemplateSelectorProps) {
-    const [appliedId, setAppliedId] = useState<string | null>(null);
-
-    function handleApply(preset: BrandingPreset) {
-        onApply(preset.colors);
-        setAppliedId(preset.id);
-    }
+export default function TemplateSelector({ currentColors, defaults, onApply }: TemplateSelectorProps) {
+    // Detect which preset matches the current form state
+    const activeId = useMemo(() => {
+        for (const preset of PRESETS) {
+            const matches = MATCH_KEYS.every(key => {
+                const current = (currentColors[key] || defaults[key] || '').toLowerCase();
+                return current === preset.colors[key].toLowerCase();
+            });
+            if (matches) return preset.id;
+        }
+        return null;
+    }, [currentColors, defaults]);
 
     return (
         <div className={styles.wrapper}>
@@ -157,13 +178,14 @@ export default function TemplateSelector({ onApply }: TemplateSelectorProps) {
 
             <div className={styles.grid}>
                 {PRESETS.map((preset) => {
-                    const isApplied = appliedId === preset.id;
+                    const isActive = activeId === preset.id;
+                    const Icon = ICON_MAP[preset.icon];
                     return (
                         <button
                             key={preset.id}
                             type="button"
-                            className={`${styles.card} ${isApplied ? styles.cardApplied : ''}`}
-                            onClick={() => handleApply(preset)}
+                            className={`${styles.card} ${isActive ? styles.cardActive : ''}`}
+                            onClick={() => onApply(preset.colors)}
                         >
                             {/* Color preview strip */}
                             <div className={styles.previewStrip}>
@@ -241,15 +263,15 @@ export default function TemplateSelector({ onApply }: TemplateSelectorProps) {
                             {/* Info */}
                             <div className={styles.cardInfo}>
                                 <span className={styles.cardName}>
-                                    <span className={styles.cardEmoji}>{preset.emoji}</span>
+                                    <Icon size={13} className={styles.cardIcon} />
                                     {preset.name}
                                 </span>
                                 <span className={styles.cardDesc}>{preset.description}</span>
                             </div>
 
-                            {/* Applied indicator */}
-                            {isApplied && (
-                                <div className={styles.appliedBadge}>
+                            {/* Active indicator */}
+                            {isActive && (
+                                <div className={styles.activeBadge}>
                                     <Check size={12} />
                                 </div>
                             )}
