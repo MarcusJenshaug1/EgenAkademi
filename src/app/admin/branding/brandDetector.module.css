@@ -1,0 +1,539 @@
+/* ── BrandDetector ─────────────────────────────────── */
+
+.detector {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+    background: color-mix(in srgb, var(--color-accent-blue) 3%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-accent-blue) 10%, transparent);
+    border-radius: var(--radius-lg);
+}
+
+/* ── Header ── */
+.header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.headerIcon {
+    width: 36px;
+    height: 36px;
+    background: color-mix(in srgb, var(--color-accent-blue) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-accent-blue) 20%, transparent);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-accent-blue);
+    flex-shrink: 0;
+}
+
+.headerTitle {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.headerDesc {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    margin: 2px 0 0 0;
+    line-height: 1.4;
+}
+
+/* ── URL Input ── */
+.inputRow {
+    display: flex;
+    gap: 8px;
+}
+
+.inputWrapper {
+    flex: 1;
+    position: relative;
+}
+
+.inputIcon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-text-secondary);
+    pointer-events: none;
+}
+
+.urlInput {
+    width: 100%;
+    height: 42px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 0 12px 0 38px;
+    color: var(--color-text-primary);
+    font-size: 0.85rem;
+    transition: all var(--transition-fast);
+}
+
+.urlInput:focus {
+    outline: none;
+    border-color: var(--color-accent-blue);
+    box-shadow: 0 0 0 1px var(--color-accent-blue);
+}
+
+.urlInput:disabled {
+    opacity: 0.6;
+}
+
+.detectButton {
+    height: 42px;
+    padding: 0 20px;
+    background: color-mix(in srgb, var(--color-accent-blue) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-accent-blue) 20%, transparent);
+    border-radius: var(--radius-md);
+    color: var(--color-accent-blue);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+}
+
+.detectButton:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-accent-blue) 15%, transparent);
+    border-color: color-mix(in srgb, var(--color-accent-blue) 30%, transparent);
+}
+
+.detectButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ── Spinner ── */
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ── Error ── */
+.errorMessage {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-danger) 20%, transparent);
+    border-radius: var(--radius-md);
+    color: var(--color-danger);
+    font-size: 0.8rem;
+}
+
+/* ── Results ── */
+.results {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* ── Detection success ── */
+.detectionSuccess {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: color-mix(in srgb, var(--color-success) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-success) 20%, transparent);
+    border-radius: var(--radius-md);
+    color: var(--color-success);
+    font-size: 0.82rem;
+    font-weight: 500;
+}
+
+/* ── Section labels ── */
+.sectionLabel {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+/* ── Palette strip ── */
+.paletteSection {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.paletteStrip {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.paletteSwatch {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    cursor: default;
+    transition: transform 0.15s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.paletteSwatch:hover {
+    transform: scale(1.15);
+    z-index: 1;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Suggestions ── */
+.suggestionsSection {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.suggestionsList {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.suggestionCard {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    transition: all 0.15s ease;
+}
+
+.suggestionCard:hover {
+    border-color: color-mix(in srgb, var(--color-accent-blue) 20%, transparent);
+}
+
+.suggestionApplied {
+    background: color-mix(in srgb, var(--color-success) 4%, transparent);
+    border-color: color-mix(in srgb, var(--color-success) 15%, transparent);
+}
+
+.suggestionColor {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.suggestionSwatch {
+    width: 24px;
+    height: 24px;
+    border-radius: 5px;
+    border: 1px solid var(--color-border);
+    flex-shrink: 0;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.suggestionHex {
+    font-size: 0.78rem;
+    font-family: monospace;
+    color: var(--color-text-secondary);
+}
+
+.suggestionArrow {
+    color: var(--color-text-secondary);
+    opacity: 0.4;
+    flex-shrink: 0;
+}
+
+.suggestionField {
+    font-size: 0.82rem;
+    color: var(--color-text-primary);
+    flex: 1;
+    min-width: 0;
+    font-weight: 500;
+}
+
+.suggestionActions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.applyButton {
+    height: 28px;
+    padding: 0 12px;
+    background: color-mix(in srgb, var(--color-accent-blue) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-accent-blue) 20%, transparent);
+    border-radius: 6px;
+    color: var(--color-accent-blue);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.applyButton:hover {
+    background: color-mix(in srgb, var(--color-accent-blue) 20%, transparent);
+    border-color: color-mix(in srgb, var(--color-accent-blue) 30%, transparent);
+}
+
+.dismissButton {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.dismissButton:hover {
+    border-color: color-mix(in srgb, var(--color-danger) 30%, transparent);
+    color: var(--color-danger);
+    background: color-mix(in srgb, var(--color-danger) 5%, transparent);
+}
+
+.appliedBadge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    color: var(--color-success);
+    font-weight: 500;
+}
+
+/* ── Bulk actions ── */
+.bulkActions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.applyAllButton {
+    height: 34px;
+    padding: 0 16px;
+    background: color-mix(in srgb, var(--color-success) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-success) 20%, transparent);
+    border-radius: var(--radius-md);
+    color: var(--color-success);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+}
+
+.applyAllButton:hover {
+    background: color-mix(in srgb, var(--color-success) 15%, transparent);
+    border-color: color-mix(in srgb, var(--color-success) 30%, transparent);
+}
+
+/* ── Empty state ── */
+.emptyState {
+    padding: 16px;
+    text-align: center;
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+    background: var(--color-bg-primary);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+/* ── Assets (favicon + fonts) ── */
+.assetSection {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.fontsList {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.assetCard {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    transition: all 0.15s ease;
+    overflow: hidden;
+}
+
+.assetCard:hover {
+    border-color: color-mix(in srgb, var(--color-accent-blue) 20%, transparent);
+}
+
+.assetApplied {
+    background: color-mix(in srgb, var(--color-success) 4%, transparent);
+    border-color: color-mix(in srgb, var(--color-success) 15%, transparent);
+}
+
+.assetPreview {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
+}
+
+.assetIcon {
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+}
+
+.faviconPreview {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.logoPreview {
+    max-width: 120px;
+    max-height: 32px;
+    object-fit: contain;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.assetUrl {
+    font-size: 0.78rem;
+    color: var(--color-text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fontName {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--color-text-primary);
+}
+
+.fontSample {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    opacity: 0.6;
+}
+
+/* ── Footer ── */
+.footerActions {
+    display: flex;
+    gap: 8px;
+}
+
+.newAnalysisButton {
+    height: 32px;
+    padding: 0 14px;
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-secondary);
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+}
+
+.newAnalysisButton:hover {
+    border-color: var(--color-text-secondary);
+    color: var(--color-text-primary);
+}
+
+/* ── Brandkit (hele merkevarekitet) ── */
+.brandkitAction {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.brandkitButton {
+    width: 100%;
+    height: 52px;
+    padding: 0 24px;
+    background: linear-gradient(135deg, var(--color-success) 0%, color-mix(in srgb, var(--color-success) 80%, #000) 100%);
+    border: none;
+    border-radius: var(--radius-md);
+    color: var(--color-button-text);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 12px color-mix(in srgb, var(--color-success) 25%, transparent);
+    position: relative;
+}
+
+.brandkitButton:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px color-mix(in srgb, var(--color-success) 35%, transparent);
+    filter: brightness(1.05);
+}
+
+.brandkitBtnSub {
+    font-size: 0.72rem;
+    font-weight: 400;
+    opacity: 0.85;
+}
+
+.brandkitHint {
+    font-size: 0.72rem;
+    color: var(--color-text-secondary);
+    opacity: 0.7;
+}
+
+.brandkitApplied {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 14px;
+    background: color-mix(in srgb, var(--color-success) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-success) 20%, transparent);
+    border-radius: var(--radius-md);
+    color: var(--color-success);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* ── Font role buttons ── */
+.fontRoleButtons {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}

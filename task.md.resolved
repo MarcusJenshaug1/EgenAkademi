@@ -1,0 +1,42 @@
+# Oppgaveliste: Whitelabel LMS
+
+> **Global Regel:** Emojis skal ALDRI brukes i UI! Vi benytter by-default ikoner fra `lucide-react`.
+
+## 1. Teknisk arkitektur og prosjektoppsett
+- [x] Definer teknisk stack og tjenester (Database, Auth, Hosting)
+- [x] Initier web-applikasjon (Next.js, TypeScript)
+- [x] Etabler CSS-rammeverk og design tokens (svart base, accent blue, 1px grid)
+- [x] Sett opp database og ORM med multi-tenant struktur
+- [ ] Etabler linting, formatering og CI/CD pipelines
+- [ ] Konfigurer observabilitet og logging (for SOC 2 / ISO 27001 støtte)
+
+## 2. Autentisering, SSO og Tilgangsstyring (RBAC)
+- [x] Grunnleggende autentisering (DB-basert og e-post OTP)
+- [x] Rolle- og tilgangsstyringssystem (RBAC) og Onboarding
+- [ ] API-endepunkter for SCIM 2.0 (brukerprovisjonering)
+- [ ] Støtte for SAML 2.0 (Single Sign-On integrasjon)
+- [ ] Tenant-isolert audit-logging av sikkerhetshendelser
+
+## 3. Whitelabel og Branding-infrastruktur
+- [ ] Oppsett av domenehåndtering (custom domains per tenant)
+- [ ] Skjema for lagring av branding (farger, logo, typografi)
+- [ ] Dynamisk injisering av tema og CSS-variabler per tenant basert på domene
+- [ ] Whitelabel e-postmaler
+
+## 4. Kjernefunksjonalitet: Læringsadministrasjon
+- [ ] Datamodell for Kurskatalog (kategorier, tags, målgruppe)
+- [ ] Brukergrensesnitt for kurskatalog og detaljsider
+- [ ] Støtte for SCORM 1.2 / 2004 parsning og avspilling
+- [ ] Tildelingsmotor (grupper, automatiserte regler, frister)
+- [ ] Progresjons- og fullføringssporing
+
+## 5. Administrasjonsdashboard
+- [x] Oversikt over tenant, brukere og tilganger (Visuelt layout)
+- [ ] Grensesnitt for import/eksport av data (CSV/API)
+- [ ] Rapportering og sanntidsinnsikt
+
+## 6. Avanserte Moduler (Fase 2)
+- [ ] Kompetanse- og ferdighetsstyring (Skills management)
+- [ ] Enkel kursbygger for eget innhold
+- [ ] Wiki / Knowledge base modul
+- [ ] Events og planlagte sesjoner

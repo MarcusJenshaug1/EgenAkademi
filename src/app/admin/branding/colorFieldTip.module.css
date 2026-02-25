@@ -1,0 +1,91 @@
+.tipRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: color-mix(in srgb, var(--color-accent-blue) 5%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-accent-blue) 12%, transparent);
+    border-radius: 6px;
+    margin-bottom: 6px;
+}
+
+/* ── Source badges ──────────────────────────────────────── */
+
+.sourceBadge {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    flex-shrink: 0;
+    line-height: 1.6;
+}
+
+.sourceManual {
+    background: color-mix(in srgb, var(--color-accent-blue) 12%, transparent);
+    color: var(--color-accent-blue);
+}
+
+.sourceDetektor {
+    background: color-mix(in srgb, var(--color-accent-blue) 15%, transparent);
+    color: var(--color-accent-blue);
+}
+
+.sourceBaseline {
+    background: color-mix(in srgb, var(--color-text-secondary) 12%, transparent);
+    color: var(--color-text-secondary);
+}
+
+/* ── Tip content ───────────────────────────────────────── */
+
+.tipSwatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid var(--color-border);
+    flex-shrink: 0;
+}
+
+.tipValue {
+    font-size: 12px;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    color: var(--color-text-primary);
+    flex-shrink: 0;
+}
+
+.tipReasoning {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.adjustedDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-warning);
+    flex-shrink: 0;
+}
+
+.tipApplyBtn {
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-accent-blue);
+    background: color-mix(in srgb, var(--color-accent-blue) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-accent-blue) 20%, transparent);
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: background 0.15s;
+}
+
+.tipApplyBtn:hover {
+    background: color-mix(in srgb, var(--color-accent-blue) 18%, transparent);
+}

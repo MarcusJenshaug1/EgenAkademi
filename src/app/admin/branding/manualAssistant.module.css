@@ -1,0 +1,314 @@
+.container {
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    background: var(--color-bg-surface);
+    margin-top: 8px;
+}
+
+/* ── Toggle header ─────────────────────────────────────── */
+
+.toggleBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    color: var(--color-text-primary);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    width: 100%;
+}
+
+.toggleBtn:hover {
+    color: var(--color-text-primary);
+    filter: brightness(1.1);
+}
+
+.toggleBtn span {
+    flex: 1;
+    text-align: left;
+}
+
+.description {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    margin: 8px 0 16px;
+    line-height: 1.4;
+}
+
+/* ── Role input grid ───────────────────────────────────── */
+
+.rolesGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.roleField {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.roleLabel {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+}
+
+.roleInputWrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pickerAnchor {
+    position: relative;
+}
+
+.roleSwatch {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+    cursor: pointer;
+    flex-shrink: 0;
+    padding: 0;
+    transition: border-color 0.15s;
+}
+
+.roleSwatch:hover {
+    border-color: var(--color-accent-blue);
+}
+
+.pickerPopover {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    z-index: 100;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+.pickerPopover :global(.react-colorful) {
+    width: 180px !important;
+    height: 160px !important;
+}
+
+.roleInput {
+    flex: 1;
+    min-width: 0;
+    height: 32px;
+    padding: 0 8px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    color: var(--color-text-primary);
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.roleInput:focus {
+    border-color: var(--color-accent-blue);
+    box-shadow: 0 0 0 1px var(--color-accent-blue);
+}
+
+.roleHint {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    line-height: 1.3;
+}
+
+/* ── Preset row ────────────────────────────────────────── */
+
+.presetRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 4px;
+}
+
+.presetLabel {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+
+.presetSelect {
+    flex: 1;
+    max-width: 300px;
+    height: 36px;
+    padding: 0 10px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    color: var(--color-text-primary);
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+}
+
+.presetSelect option {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+}
+
+.presetDesc {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    margin-bottom: 16px;
+}
+
+/* ── Action buttons ────────────────────────────────────── */
+
+.actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.generateBtn {
+    padding: 8px 16px;
+    background: var(--color-button-primary);
+    color: var(--color-button-text);
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: filter 0.15s;
+}
+
+.generateBtn:hover {
+    filter: brightness(0.9);
+}
+
+.applyAllBtn {
+    padding: 8px 16px;
+    background: color-mix(in srgb, var(--color-success) 12%, transparent);
+    color: var(--color-success);
+    border: 1px solid color-mix(in srgb, var(--color-success) 30%, transparent);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.15s;
+}
+
+.applyAllBtn:hover {
+    background: color-mix(in srgb, var(--color-success) 22%, transparent);
+}
+
+.resetBtn {
+    padding: 8px 16px;
+    background: var(--color-bg-surface);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.15s;
+}
+
+.resetBtn:hover {
+    background: var(--color-bg-secondary);
+}
+
+/* ── Generated results ─────────────────────────────────── */
+
+.results {
+    margin-top: 16px;
+    border-top: 1px solid var(--color-border);
+    padding-top: 16px;
+}
+
+.resultsTitle {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: 8px;
+}
+
+.resultsList {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.resultRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    transition: background 0.1s;
+}
+
+.resultRow:hover {
+    background: var(--color-bg-surface);
+}
+
+.resultSwatch {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: 1px solid var(--color-border);
+    flex-shrink: 0;
+}
+
+.resultField {
+    color: var(--color-text-secondary);
+    min-width: 130px;
+    flex-shrink: 0;
+}
+
+.resultValue {
+    color: var(--color-text-primary);
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    min-width: 70px;
+    flex-shrink: 0;
+}
+
+.resultReasoning {
+    color: var(--color-text-secondary);
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.adjustedBadge {
+    font-size: 10px;
+    padding: 1px 5px;
+    background: color-mix(in srgb, var(--color-warning) 15%, transparent);
+    color: var(--color-warning);
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.contrastInfo {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    flex-shrink: 0;
+}

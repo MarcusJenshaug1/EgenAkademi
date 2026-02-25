@@ -1,0 +1,168 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  domain    String?  @unique // Subdomene eller custom domene, f.eks "acme.lms.no"
+  
+  // ── Whitelabel Branding ──────────────────────────────
+  // Bakgrunner
+  colorBgPrimary    String?  // Hovedbakgrunn (default: #050505)
+  colorBgSecondary  String?  // Sekundær bakgrunn / kort (default: #0f0f11)
+  
+  // Tekst
+  colorTextPrimary   String?  // Hovedtekst (default: #ffffff)
+  colorTextSecondary String?  // Sekundær tekst / labels (default: #9ca3af)
+  
+  // Ramme / border
+  colorBorder        String?  // Kanter og skillelinjer (default: rgba via hex #1a1a2e)
+  
+  // Accent / merkevarefarge
+  colorAccent        String?  // Aksentfarge – lenker, knapper, fokus (default: #3b82f6)
+  
+  // Knapper
+  colorButtonPrimary String?  // Primærknapp bakgrunn (default: #3b82f6)
+  colorButtonText    String?  // Primærknapp tekst (default: #ffffff)
+  
+  // Sidebar / navigasjon
+  colorSidebarBg     String?  // Sidebar bakgrunn (default: #0a0a0a)
+  colorSidebarText   String?  // Sidebar tekst (default: #a1a1aa)
+  colorSidebarActive String?  // Sidebar aktiv lenke (default: #3b82f6)
+  
+  // Suksess / advarsel / feil
+  colorSuccess       String?  // Suksessfarge (default: #22c55e)
+  colorWarning       String?  // Advarselsfarge (default: #f59e0b)
+  colorDanger        String?  // Feilfarge (default: #ef4444)
+  
+  // Logo
+  logoUrl            String?  // URL til logo (PNG/SVG) eller data-URI
+  logoSvgContent     String?  @db.Text // Original SVG-innhold for fargeredigering
+  logoSvgModified    String?  @db.Text // SVG med endrede farger
+  faviconUrl         String?  // URL til favicon
+  faviconSvgContent  String?  @db.Text // Original SVG for favicon fargeredigering
+  faviconSvgModified String?  @db.Text // Favicon SVG med endrede farger
+  
+  // Typografi
+  fontFamily         String?  // Font for brodtekst (body)
+  fontHeading        String?  // Font for overskrifter (headings)
+  fontSource         String?  // 'google' | 'custom'
+  customFontUrl      String?  // URL til opplastet fontfil
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relasjoner
+  users     User[]
+  groups    Group[]
+}
+
+enum GlobalRole {
+  USER
+  TENANT_ADMIN
+  SYSTEM_ADMIN
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  
+  firstName     String?
+  lastName      String?
+  avatarUrl     String?
+  
+  // SCIM st\u00f8tte attributter
+  externalId    String?  // ID fra kundens IdP
+  active        Boolean   @default(true)
+  
+  globalRole    GlobalRole @default(USER)
+  
+  tenantId      String?
+  tenant        Tenant?    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  groupMemberships GroupMembership[]
+
+  @@index([tenantId])
+}
+
+model Account {
+  id                 String  @id @default(uuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Group {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  externalId  String?  // SCIM gruppe ID
+  
+  members     GroupMembership[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId])
+}
+
+model GroupMembership {
+  id        String   @id @default(uuid())
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  groupId   String
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+
+  @@unique([userId, groupId])
+  @@index([userId])
+  @@index([groupId])
+}
