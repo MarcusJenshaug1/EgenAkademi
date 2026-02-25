@@ -145,20 +145,18 @@ interface TemplateSelectorProps {
 
 export default function TemplateSelector({ currentColors, defaults, onApply }: TemplateSelectorProps) {
     const [activeId, setActiveId] = useState<string | null>(null);
-    const justApplied = useRef(false);
+    const appliedAt = useRef(0);
 
-    // Clear active when user makes manual color changes after applying a template
+    // Clear active when user makes manual color changes (but not from template apply)
     useEffect(() => {
-        if (justApplied.current) {
-            justApplied.current = false;
-            return;
-        }
+        // Ignore color changes within 500ms of applying a template
+        if (Date.now() - appliedAt.current < 500) return;
         if (activeId) setActiveId(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentColors]);
 
     function handleApply(preset: BrandingPreset) {
-        justApplied.current = true;
+        appliedAt.current = Date.now();
         setActiveId(preset.id);
         onApply(preset.colors);
     }
