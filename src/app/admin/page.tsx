@@ -1,4 +1,5 @@
 import styles from './page.module.css';
+import Link from 'next/link';
 import { UserPlus, BookPlus, Paintbrush, CheckCircle2, LogIn } from 'lucide-react';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
@@ -7,12 +8,21 @@ export default async function AdminDashboard() {
     // Fetch tenant name for display
     const session = await auth();
     let tenantName = 'din organisasjon';
+    let userCount = 0;
+    let activeUserCount = 0;
+
     if (session?.user?.tenantId) {
-        const tenant = await prisma.tenant.findUnique({
-            where: { id: session.user.tenantId },
-            select: { name: true },
-        });
+        const [tenant, total, active] = await Promise.all([
+            prisma.tenant.findUnique({
+                where: { id: session.user.tenantId },
+                select: { name: true },
+            }),
+            prisma.user.count({ where: { tenantId: session.user.tenantId } }),
+            prisma.user.count({ where: { tenantId: session.user.tenantId, active: true } }),
+        ]);
         if (tenant) tenantName = tenant.name;
+        userCount = total;
+        activeUserCount = active;
     }
 
     return (
@@ -25,7 +35,7 @@ export default async function AdminDashboard() {
             <div className={styles.statsGrid}>
                 <div className={styles.statCard}>
                     <span className={styles.statLabel}>Aktive Brukere</span>
-                    <span className={styles.statValue}>42</span>
+                    <span className={styles.statValue}>{activeUserCount}</span>
                 </div>
                 <div className={styles.statCard}>
                     <span className={styles.statLabel}>Pågående Tildelinger</span>
@@ -69,21 +79,21 @@ export default async function AdminDashboard() {
                 <div className={styles.panel}>
                     <h2 className={styles.panelTitle}>Hurtighandlinger</h2>
                     <div className={styles.actionList}>
-                        <button className={styles.actionButton}>
+                        <Link href="/admin/users" className={styles.actionButton}>
                             <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <UserPlus size={18} /> Legg til bruker
+                                <UserPlus size={18} /> Administrer brukere
                             </span>
-                        </button>
-                        <button className={styles.actionButton}>
+                        </Link>
+                        <Link href="/admin/courses" className={styles.actionButton}>
                             <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <BookPlus size={18} /> Opprett kurs
                             </span>
-                        </button>
-                        <button className={styles.actionButton}>
+                        </Link>
+                        <Link href="/admin/branding" className={styles.actionButton}>
                             <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <Paintbrush size={18} /> Tilpass branding
                             </span>
-                        </button>
+                        </Link>
                     </div>
                 </div>
             </div>
