@@ -554,7 +554,7 @@ export default function LogoUploader({
                                 <h3 className={styles.editorTitle}>Rediger SVG-farger</h3>
                                 <p className={styles.editorSubtitle}>
                                     {labels.editorSubject} inneholder {detectedColors.length} {detectedColors.length === 1 ? 'unik farge' : 'unike farger'}.
-                                    Velg en ny farge for aa oppdatere alle forekomster.
+                                    Velg en ny farge for å oppdatere alle forekomster.
                                 </p>
                             </div>
                         </div>

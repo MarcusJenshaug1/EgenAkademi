@@ -83,7 +83,7 @@ export default function BrandDetector({ onApplyAll, onApplyFavicon, onApplyLogo,
                 }
             }
         } catch {
-            setError('Kunne ikke analysere siden. Sjekk URL og proev igjen.');
+            setError('Kunne ikke analysere siden. Sjekk URL og prøv igjen.');
         }
         setLoading(false);
     }
