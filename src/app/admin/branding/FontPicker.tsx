@@ -130,7 +130,7 @@ export default function FontPicker({
 
     // Last inn Google Fonts for synlige fonter
     useEffect(() => {
-        const fontNames = filteredFonts.slice(0, 30).map(f => f.name);
+        const fontNames = filteredFonts.slice(0, 12).map(f => f.name);
         if (fontNames.length > 0) {
             loadGoogleFonts(fontNames);
         }
@@ -270,7 +270,7 @@ export default function FontPicker({
 
             {!showCustomUpload ? (
                 <>
-                    {/* Soek */}
+                    {/* Søk */}
                     <div className={styles.searchWrapper}>
                         <Search size={16} className={styles.searchIcon} />
                         <input
@@ -278,7 +278,7 @@ export default function FontPicker({
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             className={styles.searchInput}
-                            placeholder="Soek blant 50+ fonter..."
+                            placeholder="Søk blant 50+ fonter..."
                         />
                         {search && (
                             <button
@@ -308,9 +308,9 @@ export default function FontPicker({
                     {/* Font-grid */}
                     <div className={styles.fontGrid}>
                         {filteredFonts.length === 0 && (
-                            <p className={styles.emptyMsg}>Ingen fonter matcher soeket ditt.</p>
+                            <p className={styles.emptyMsg}>Ingen fonter matcher søket ditt.</p>
                         )}
-                        {filteredFonts.slice(0, 30).map((font) => (
+                        {filteredFonts.slice(0, 12).map((font) => (
                             <button
                                 key={font.name}
                                 type="button"
@@ -329,16 +329,16 @@ export default function FontPicker({
                                 </div>
                                 {isSelected(font.name) && (
                                     <div className={styles.fontCardCheck}>
-                                        <Check size={14} />
+                                        <Check size={10} />
                                     </div>
                                 )}
                             </button>
                         ))}
                     </div>
 
-                    {filteredFonts.length > 30 && (
+                    {filteredFonts.length > 12 && (
                         <p className={styles.moreHint}>
-                            Viser 30 av {filteredFonts.length} fonter. Bruk soek for aa finne flere.
+                            Viser 12 av {filteredFonts.length} fonter. Bruk søk for å finne flere.
                         </p>
                     )}
                 </>

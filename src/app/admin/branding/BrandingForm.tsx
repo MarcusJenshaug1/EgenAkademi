@@ -10,6 +10,7 @@ import LogoUploader from './LogoUploader';
 import FontPicker from './FontPicker';
 import BrandDetector from './BrandDetector';
 import ManualAssistant from './ManualAssistant';
+import TemplateSelector from './TemplateSelector';
 import ColorFieldTip, { type TipData } from './ColorFieldTip';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import {
@@ -39,9 +40,9 @@ const DEFAULTS: Record<string, string> = {
     colorSidebarBg: '#0a0a0a',
     colorSidebarText: '#a1a1aa',
     colorSidebarActive: '#3b82f6',
-    colorSuccess: '#10b981',
-    colorWarning: '#f59e0b',
-    colorDanger: '#f43f5e',
+    colorSuccess: '#22c55e',
+    colorWarning: '#f97316',
+    colorDanger: '#ef4444',
 };
 
 interface FieldDef {
@@ -63,36 +64,36 @@ const SECTIONS: SectionDef[] = [
         description: 'Kontroller bakgrunnsfargene i hele plattformen.',
         fields: [
             { key: 'colorBgPrimary', label: 'Hovedbakgrunn', hint: 'Brukes som bakgrunn for hele siden' },
-            { key: 'colorBgSecondary', label: 'Sekundaer bakgrunn', hint: 'Brukes i kort, paneler og sidebar' },
+            { key: 'colorBgSecondary', label: 'Sekundær bakgrunn', hint: 'Brukes i kort, paneler og sidebar' },
         ],
     },
     {
         title: 'Tekst',
         description: 'Alle tekstfarger. Kontrast mot bakgrunn sjekkes automatisk (WCAG AA).',
         fields: [
-            { key: 'colorTextPrimary', label: 'Hovedtekst', hint: 'Overskrifter og brodtekst', contrastAgainst: 'colorBgPrimary' },
-            { key: 'colorTextSecondary', label: 'Sekundaertekst', hint: 'Labels, hjelpetekst, metadata', contrastAgainst: 'colorBgPrimary' },
+            { key: 'colorTextPrimary', label: 'Hovedtekst', hint: 'Overskrifter og brødtekst', contrastAgainst: 'colorBgPrimary' },
+            { key: 'colorTextSecondary', label: 'Sekundærtekst', hint: 'Labels, hjelpetekst, metadata', contrastAgainst: 'colorBgPrimary' },
         ],
     },
     {
         title: 'Rammer og skillelinjer',
-        description: 'Kanter paa kort, inputfelter og separatorer.',
+        description: 'Kanter på kort, inputfelter og separatorer.',
         fields: [
-            { key: 'colorBorder', label: 'Border', hint: 'Brukes paa alle rammer og skillelinjer' },
+            { key: 'colorBorder', label: 'Border', hint: 'Brukes på alle rammer og skillelinjer' },
         ],
     },
     {
         title: 'Aksentfarge',
-        description: 'Merkevarefargen brukt paa lenker, fokusmarkering og viktige UI-elementer.',
+        description: 'Merkevarefargen brukt på lenker, fokusmarkering og viktige UI-elementer.',
         fields: [
             { key: 'colorAccent', label: 'Accent', hint: 'Lenker, fokusringer, valgte elementer', contrastAgainst: 'colorBgPrimary' },
         ],
     },
     {
         title: 'Knapper',
-        description: 'Farger for primaerknapper.',
+        description: 'Farger for primærknapper.',
         fields: [
-            { key: 'colorButtonPrimary', label: 'Knapp bakgrunn', hint: 'Bakgrunnsfargen for primaerknapper' },
+            { key: 'colorButtonPrimary', label: 'Knapp bakgrunn', hint: 'Bakgrunnsfargen for primærknapper' },
             { key: 'colorButtonText', label: 'Knapp tekst', hint: 'Tekstfargen inne i knappen', contrastAgainst: 'colorButtonPrimary' },
         ],
     },
@@ -110,7 +111,7 @@ const SECTIONS: SectionDef[] = [
         description: 'Farger for suksess, advarsel og feilmeldinger.',
         fields: [
             { key: 'colorSuccess', label: 'Suksess', hint: 'Brukes ved vellykkede handlinger' },
-            { key: 'colorWarning', label: 'Advarsel', hint: 'Brukes for advarsler og paaminnelser' },
+            { key: 'colorWarning', label: 'Advarsel', hint: 'Brukes for advarsler og påminnelser' },
             { key: 'colorDanger', label: 'Feil', hint: 'Brukes for feil og destruktive handlinger' },
         ],
     },
@@ -182,7 +183,7 @@ function ColorField({
                 )}
             </div>
             {tip && (
-                <ColorFieldTip tip={tip} onApply={() => onChange(fieldKey, tip.value)} />
+                <ColorFieldTip tip={tip} onApply={() => { onChange(fieldKey, tip.value); }} />
             )}
             <div className={styles.colorInputWrapper}>
                 {/* Clickable swatch that opens the picker */}
@@ -311,6 +312,7 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
     const [manualSuggestions, setManualSuggestions] = useState<GeneratorResult | null>(null);
     const [detectorSuggestions, setDetectorSuggestions] = useState<Record<string, string> | null>(null);
     const [detectedRoles, setDetectedRoles] = useState<BrandingRoles | null>(null);
+    const [dismissedTipFields, setDismissedTipFields] = useState<Set<string>>(new Set());
 
     // Baseline: auto-derive suggestions from current role colours
     const baselineSuggestions = useMemo(() => {
@@ -343,6 +345,9 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
      * Only returns a tip if the suggested value differs from current.
      */
     function getTipForField(field: string): TipData | null {
+        // Skip tips for fields where user already applied a suggestion
+        if (dismissedTipFields.has(field)) return null;
+
         const currentValue = (colors[field] || DEFAULTS[field] || '#000000').toLowerCase();
 
         // Priority 1: Manual
@@ -391,18 +396,23 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
 
     function handleDetectionComplete(roles: BrandingRoles, rawSuggestions: Record<string, string>) {
         setDetectedRoles(roles);
-        // Store raw detector suggestions for tip fallback
         setDetectorSuggestions(rawSuggestions);
+        setDismissedTipFields(new Set()); // Reset so new suggestions can show
     }
 
     function handleManualGenerate(result: GeneratorResult | null) {
         setManualSuggestions(result);
+        setDismissedTipFields(new Set()); // Reset so new suggestions can show
     }
 
     function handleColorChange(key: string, value: string) {
-        // Bare lagre verdien som den er - normalisering skjer kun paa blur/Enter
-        setColors(prev => ({ ...prev, [key]: value }));
-    }
+        // Bare lagre verdien som den er - normalisering skjer kun på blur/Enter
+        setColors(prev => ({ ...prev, [key]: value }));        // Dismiss tips for this field so other sources don't pop up
+        setDismissedTipFields(prev => {
+            const next = new Set(prev);
+            next.add(key);
+            return next;
+        });    }
 
     function resolveColor(key: string): string {
         return colors[key] || DEFAULTS[key] || '#000000';
@@ -556,6 +566,15 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
                     />
                 </div>
 
+                {/* Ferdige maler */}
+                <div className={styles.section}>
+                    <TemplateSelector
+                        currentColors={colors}
+                        defaults={DEFAULTS}
+                        onApply={handleBrandSuggestAll}
+                    />
+                </div>
+
                 {/* Organisasjonsnavn */}
                 <div className={styles.section}>
                     <div className={styles.sectionHeader}>
@@ -629,7 +648,7 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
                 <div className={styles.section}>
                     <div className={styles.sectionHeader}>
                         <h2 className={styles.sectionTitle}>Favicon</h2>
-                        <p className={styles.sectionDesc}>Nettleserikonet for plattformen. SVG-favicons stottter fargeredigering.</p>
+                        <p className={styles.sectionDesc}>Nettleserikonet for plattformen. SVG-favicons støtter fargeredigering.</p>
                     </div>
                     <LogoUploader
                         variant="favicon"
@@ -649,7 +668,7 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
                 <div className={styles.section}>
                     <div className={styles.sectionHeader}>
                         <h2 className={styles.sectionTitle}>Typografi</h2>
-                        <p className={styles.sectionDesc}>Velg fonter for overskrifter og brodtekst. Anbefalt: maks 2 fonter for best ytelse og lesbarhet.</p>
+                        <p className={styles.sectionDesc}>Velg fonter for overskrifter og brødtekst. Anbefalt: maks 2 fonter for best ytelse og lesbarhet.</p>
                     </div>
                     <div className={styles.fontDualSection}>
                         <div className={styles.fontSlot}>
@@ -665,7 +684,7 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
                             />
                         </div>
                         <div className={styles.fontSlot}>
-                            <span className={styles.fontSlotLabel}>Brodtekst</span>
+                            <span className={styles.fontSlotLabel}>Brødtekst</span>
                             <FontPicker
                                 currentFont={fontFamily}
                                 currentSource={fontSource}
@@ -747,7 +766,7 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
                 onCancel={() => setShowResetConfirm(false)}
             />
 
-            {/* Hoeyre: Live forhaandsvisning */}
+            {/* Høyre: Live forhåndsvisning */}
             <div className={styles.previewPanel}>
                 <div className={styles.previewHeader}>
                     {faviconUrl && (
@@ -759,7 +778,7 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
                         />
                     )}
                     <Eye size={16} />
-                    <span>Live forhaandsvisning</span>
+                    <span>Live forhåndsvisning</span>
                     <button
                         type="button"
                         className={styles.previewToggle}

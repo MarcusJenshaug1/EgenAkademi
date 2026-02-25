@@ -110,9 +110,9 @@ export interface GeneratorResult {
 // ── Status colour defaults ──────────────────────────────────
 
 const STATUS_DEFAULTS = {
-    success: '#10b981',   // Vivid emerald green
-    warning: '#f59e0b',   // Warm amber
-    danger: '#f43f5e',    // Vibrant rose-red
+    success: '#22c55e',   // Bright green
+    warning: '#f97316',   // Vibrant orange
+    danger: '#ef4444',    // Bright red
 };
 
 // ── Field labels (for display in results) ───────────────────

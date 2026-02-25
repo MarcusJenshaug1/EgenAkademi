@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
-import { Upload, Image, Trash2, Palette, RotateCcw, Pencil, ArrowRight, Check, AlertTriangle } from 'lucide-react';
+import { Upload, Image, Trash2, Palette, RotateCcw, Pencil, ArrowRight, Check, AlertTriangle, Sun, Moon, Monitor } from 'lucide-react';
 import styles from './logoUploader.module.css';
 
 // ── SVG farge-ekstraksjon ──────────────────────────────
@@ -428,6 +428,37 @@ export default function LogoUploader({
         return fileUrl;
     }, [svgModified, svgContent, fileUrl]);
 
+    // ── Adaptive preview background ──
+    type PreviewBgMode = 'auto' | 'dark' | 'light';
+    const [previewBgMode, setPreviewBgMode] = useState<PreviewBgMode>('auto');
+
+    const autoBgIsLight = useMemo(() => {
+        // Determine if the logo is predominantly dark → show light bg, or vice versa
+        const colors = detectedColors.length > 0 ? detectedColors : [];
+        if (colors.length === 0) return true; // default: light background
+
+        // Weighted average luminance (by usage count)
+        let totalWeight = 0;
+        let totalLum = 0;
+        for (const c of colors) {
+            try {
+                const [r, g, b] = hexToRgb(c.newHex || c.hex);
+                const lum = relativeLuminance(r, g, b);
+                totalLum += lum * c.count;
+                totalWeight += c.count;
+            } catch { /* skip */ }
+        }
+        if (totalWeight === 0) return true;
+        const avgLum = totalLum / totalWeight;
+        // If logo is light (lum > 0.5) → dark bg; if dark → light bg
+        return avgLum <= 0.5;
+    }, [detectedColors]);
+
+    const previewBgColor = useMemo(() => {
+        const isLight = previewBgMode === 'auto' ? autoBgIsLight : previewBgMode === 'light';
+        return isLight ? '#f0f0f0' : '#1a1a1a';
+    }, [previewBgMode, autoBgIsLight]);
+
     const hasColorChanges = Object.values(colorOverrides).some(v => !!v);
 
     return (
@@ -451,11 +482,37 @@ export default function LogoUploader({
                 </div>
             ) : (
                 <div className={styles.previewArea}>
-                    <div className={styles.previewBox}>
+                    <div className={styles.previewBox} style={{ background: previewBgColor }}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={previewContent} alt={`${variant} preview`} className={styles.previewImg} />
                     </div>
                     <div className={styles.previewActions}>
+                        <div className={styles.bgToggle}>
+                            <button
+                                type="button"
+                                className={`${styles.bgToggleBtn} ${previewBgMode === 'auto' ? styles.bgToggleBtnActive : ''}`}
+                                onClick={() => setPreviewBgMode('auto')}
+                                title="Automatisk bakgrunn"
+                            >
+                                <Monitor size={13} />
+                            </button>
+                            <button
+                                type="button"
+                                className={`${styles.bgToggleBtn} ${previewBgMode === 'light' ? styles.bgToggleBtnActive : ''}`}
+                                onClick={() => setPreviewBgMode('light')}
+                                title="Lys bakgrunn"
+                            >
+                                <Sun size={13} />
+                            </button>
+                            <button
+                                type="button"
+                                className={`${styles.bgToggleBtn} ${previewBgMode === 'dark' ? styles.bgToggleBtnActive : ''}`}
+                                onClick={() => setPreviewBgMode('dark')}
+                                title="Mørk bakgrunn"
+                            >
+                                <Moon size={13} />
+                            </button>
+                        </div>
                         <button type="button" className={styles.changeButton} onClick={() => fileInputRef.current?.click()}>
                             <Image size={14} />
                             {labels.change}
@@ -497,7 +554,7 @@ export default function LogoUploader({
                                 <h3 className={styles.editorTitle}>Rediger SVG-farger</h3>
                                 <p className={styles.editorSubtitle}>
                                     {labels.editorSubject} inneholder {detectedColors.length} {detectedColors.length === 1 ? 'unik farge' : 'unike farger'}.
-                                    Velg en ny farge for aa oppdatere alle forekomster.
+                                    Velg en ny farge for å oppdatere alle forekomster.
                                 </p>
                             </div>
                         </div>
