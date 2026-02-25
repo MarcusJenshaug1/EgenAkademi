@@ -146,6 +146,7 @@ model Group {
   id          String   @id @default(uuid())
   name        String
   description String?
+  color       String?  // Hex farge for gruppen (f.eks. "#3b82f6")
   
   tenantId    String
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)

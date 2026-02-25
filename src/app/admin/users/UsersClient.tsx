@@ -17,8 +17,8 @@ import {
 
 const ROLE_LABELS: Record<string, string> = {
     USER: 'Bruker',
-    TENANT_ADMIN: 'Administrator',
-    SYSTEM_ADMIN: 'Systemadmin',
+    TENANT_ADMIN: 'Organisasjonsadministrator',
+    SYSTEM_ADMIN: 'Systemadministrator',
 };
 
 function getRoleBadgeClass(role: string) {
@@ -374,6 +374,10 @@ export default function UsersClient({ initialUsers, stats }: UsersClientProps) {
                                                             href="/admin/groups"
                                                             className={styles.groupBadge}
                                                             onClick={(e) => e.stopPropagation()}
+                                                            style={g.color ? {
+                                                                background: `color-mix(in srgb, ${g.color} 15%, transparent)`,
+                                                                color: g.color,
+                                                            } : undefined}
                                                         >
                                                             {g.name}
                                                         </Link>
@@ -474,7 +478,7 @@ export default function UsersClient({ initialUsers, stats }: UsersClientProps) {
                                     <label className={styles.formLabel}>Rolle</label>
                                     <select className={styles.formSelect} name="role" defaultValue="USER">
                                         <option value="USER">Bruker</option>
-                                        <option value="TENANT_ADMIN">Administrator</option>
+                                        <option value="TENANT_ADMIN">Organisasjonsadministrator</option>
                                     </select>
                                 </div>
                             </div>
@@ -566,7 +570,8 @@ export default function UsersClient({ initialUsers, stats }: UsersClientProps) {
                                             defaultValue={editUser.globalRole}
                                         >
                                             <option value="USER">Bruker</option>
-                                            <option value="TENANT_ADMIN">Administrator</option>
+                                            <option value="TENANT_ADMIN">Organisasjonsadministrator</option>
+                                            <option value="SYSTEM_ADMIN">Systemadministrator</option>
                                         </select>
                                     </div>
                                     <div className={styles.formGroup}>

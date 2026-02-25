@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
     Plus, Search, X, Pencil, Trash2, Users, UserPlus,
-    FolderOpen, CheckCircle, UserMinus
+    FolderOpen, CheckCircle, UserMinus, Palette,
 } from 'lucide-react';
 import {
     listGroups, getGroup, createGroup, updateGroup,
@@ -11,6 +11,7 @@ import {
     listAvailableMembers, getGroupStats,
     type GroupListItem, type GroupDetail,
 } from '@/app/actions/groupActions';
+import { suggestGroupColors, type ColorSuggestion } from '@/lib/groupColors';
 import styles from './groups.module.css';
 
 function getInitials(user: { firstName?: string | null; lastName?: string | null; name?: string | null; email?: string | null }): string {
@@ -44,6 +45,15 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
     // Form state
     const [formName, setFormName] = useState('');
     const [formDesc, setFormDesc] = useState('');
+    const [formColor, setFormColor] = useState<string | null>(null);
+
+    // Color suggestions (computed from existing groups)
+    function getColorSuggestions(): ColorSuggestion[] {
+        const usedColors = groups
+            .filter((g) => g.color && g.id !== selectedGroup?.id)
+            .map((g) => g.color!);
+        return suggestGroupColors(usedColors);
+    }
 
     // Add member state
     const [memberSearch, setMemberSearch] = useState('');
@@ -77,12 +87,17 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
     async function handleCreate() {
         setError(null);
         setLoading(true);
-        const result = await createGroup({ name: formName, description: formDesc || undefined });
+        const result = await createGroup({
+            name: formName,
+            description: formDesc || undefined,
+            color: formColor || undefined,
+        });
         setLoading(false);
         if ('error' in result) { setError(result.error); return; }
         setShowCreate(false);
         setFormName('');
         setFormDesc('');
+        setFormColor(null);
         showToast('Gruppe opprettet');
         refreshData();
     }
@@ -92,6 +107,7 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
         setSelectedGroup(group);
         setFormName(group.name);
         setFormDesc(group.description || '');
+        setFormColor(group.color || null);
         setError(null);
         setShowEdit(true);
     }
@@ -100,7 +116,11 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
         if (!selectedGroup) return;
         setError(null);
         setLoading(true);
-        const result = await updateGroup(selectedGroup.id, { name: formName, description: formDesc });
+        const result = await updateGroup(selectedGroup.id, {
+            name: formName,
+            description: formDesc,
+            color: formColor,
+        });
         setLoading(false);
         if ('error' in result) { setError(result.error); return; }
         setShowEdit(false);
@@ -184,7 +204,7 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
                     <h1 className={styles.title}>Grupper</h1>
                     <p className={styles.subtitle}>Organiser brukere i grupper for enklere administrasjon av kurs og tilganger.</p>
                 </div>
-                <button className={styles.createButton} onClick={() => { setFormName(''); setFormDesc(''); setError(null); setShowCreate(true); }}>
+                <button className={styles.createButton} onClick={() => { setFormName(''); setFormDesc(''); setFormColor(null); setError(null); setShowCreate(true); }}>
                     <Plus size={16} /> Ny gruppe
                 </button>
             </div>
@@ -227,16 +247,26 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
                     <p className={styles.emptyText}>
                         Opprett din første gruppe for å organisere brukere og forenkle kursadministrasjon.
                     </p>
-                    <button className={styles.createButton} onClick={() => { setFormName(''); setFormDesc(''); setError(null); setShowCreate(true); }}>
+                    <button className={styles.createButton} onClick={() => { setFormName(''); setFormDesc(''); setFormColor(null); setError(null); setShowCreate(true); }}>
                         <Plus size={16} /> Opprett gruppe
                     </button>
                 </div>
             ) : (
                 <div className={styles.groupGrid}>
                     {groups.map((g) => (
-                        <div key={g.id} className={styles.groupCard} onClick={() => openDetail(g)}>
+                        <div key={g.id} className={styles.groupCard} onClick={() => openDetail(g)}
+                            style={g.color ? { borderTopColor: g.color, borderTopWidth: '3px' } : undefined}
+                        >
                             <div className={styles.cardHeader}>
-                                <span className={styles.cardTitle}>{g.name}</span>
+                                <div className={styles.cardTitleRow}>
+                                    {g.color && (
+                                        <span
+                                            className={styles.colorDot}
+                                            style={{ background: g.color }}
+                                        />
+                                    )}
+                                    <span className={styles.cardTitle}>{g.name}</span>
+                                </div>
                                 <div className={styles.cardActions}>
                                     <button
                                         className={styles.actionBtn}
@@ -296,6 +326,37 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
                                     placeholder="Kort beskrivelse av gruppens formål..."
                                 />
                             </div>
+                            <div className={styles.formGroup}>
+                                <label className={styles.formLabel}>
+                                    <Palette size={12} /> Gruppefarge
+                                </label>
+                                <div className={styles.colorPicker}>
+                                    <button
+                                        type="button"
+                                        className={`${styles.colorSwatch} ${!formColor ? styles.colorSwatchActive : ''}`}
+                                        onClick={() => setFormColor(null)}
+                                        title="Ingen farge"
+                                    >
+                                        <X size={10} />
+                                    </button>
+                                    {getColorSuggestions().slice(0, 12).map((c) => (
+                                        <button
+                                            key={c.hex}
+                                            type="button"
+                                            className={`${styles.colorSwatch} ${formColor === c.hex ? styles.colorSwatchActive : ''}`}
+                                            style={{ background: c.hex }}
+                                            onClick={() => setFormColor(c.hex)}
+                                            title={`${c.name} — kontrast ${c.contrastOnDark}:1${c.meetsAA ? ' ✓ WCAG AA' : ''}`}
+                                        />
+                                    ))}
+                                </div>
+                                {formColor && (
+                                    <span className={styles.colorPreview}>
+                                        <span className={styles.colorDot} style={{ background: formColor }} />
+                                        {formColor}
+                                    </span>
+                                )}
+                            </div>
                         </div>
                         <div className={styles.modalFooter}>
                             <button className={styles.btnSecondary} onClick={() => setShowCreate(false)}>Avbryt</button>
@@ -335,6 +396,37 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
                                     value={formDesc}
                                     onChange={(e) => setFormDesc(e.target.value)}
                                 />
+                            </div>
+                            <div className={styles.formGroup}>
+                                <label className={styles.formLabel}>
+                                    <Palette size={12} /> Gruppefarge
+                                </label>
+                                <div className={styles.colorPicker}>
+                                    <button
+                                        type="button"
+                                        className={`${styles.colorSwatch} ${!formColor ? styles.colorSwatchActive : ''}`}
+                                        onClick={() => setFormColor(null)}
+                                        title="Ingen farge"
+                                    >
+                                        <X size={10} />
+                                    </button>
+                                    {getColorSuggestions().slice(0, 12).map((c) => (
+                                        <button
+                                            key={c.hex}
+                                            type="button"
+                                            className={`${styles.colorSwatch} ${formColor === c.hex ? styles.colorSwatchActive : ''}`}
+                                            style={{ background: c.hex }}
+                                            onClick={() => setFormColor(c.hex)}
+                                            title={`${c.name} — kontrast ${c.contrastOnDark}:1${c.meetsAA ? ' ✓ WCAG AA' : ''}`}
+                                        />
+                                    ))}
+                                </div>
+                                {formColor && (
+                                    <span className={styles.colorPreview}>
+                                        <span className={styles.colorDot} style={{ background: formColor }} />
+                                        {formColor}
+                                    </span>
+                                )}
                             </div>
                         </div>
                         <div className={styles.modalFooter}>

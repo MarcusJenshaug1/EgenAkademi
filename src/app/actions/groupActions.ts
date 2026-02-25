@@ -22,6 +22,7 @@ export interface GroupListItem {
     id: string;
     name: string;
     description: string | null;
+    color: string | null;
     memberCount: number;
     createdAt: Date;
 }
@@ -30,6 +31,7 @@ export interface GroupDetail {
     id: string;
     name: string;
     description: string | null;
+    color: string | null;
     createdAt: Date;
     updatedAt: Date;
     members: {
@@ -65,6 +67,7 @@ export async function listGroups(search?: string): Promise<{ groups: GroupListIt
                 id: true,
                 name: true,
                 description: true,
+                color: true,
                 createdAt: true,
                 _count: { select: { members: true } },
             },
@@ -76,6 +79,7 @@ export async function listGroups(search?: string): Promise<{ groups: GroupListIt
                 id: g.id,
                 name: g.name,
                 description: g.description,
+                color: g.color,
                 memberCount: g._count.members,
                 createdAt: g.createdAt,
             })),
@@ -97,6 +101,7 @@ export async function getGroup(groupId: string): Promise<{ group: GroupDetail } 
                 id: true,
                 name: true,
                 description: true,
+                color: true,
                 createdAt: true,
                 updatedAt: true,
                 members: {
@@ -126,6 +131,7 @@ export async function getGroup(groupId: string): Promise<{ group: GroupDetail } 
                 id: group.id,
                 name: group.name,
                 description: group.description,
+                color: group.color,
                 createdAt: group.createdAt,
                 updatedAt: group.updatedAt,
                 members: group.members.map((m) => ({
@@ -150,6 +156,7 @@ export async function getGroup(groupId: string): Promise<{ group: GroupDetail } 
 export async function createGroup(data: {
     name: string;
     description?: string;
+    color?: string;
 }): Promise<{ success: true; groupId: string } | { error: string }> {
     try {
         const { tenantId } = await requireTenantAdmin();
@@ -162,6 +169,7 @@ export async function createGroup(data: {
             data: {
                 name: data.name.trim(),
                 description: data.description?.trim() || null,
+                color: data.color || null,
                 tenantId,
             },
         });
@@ -176,7 +184,7 @@ export async function createGroup(data: {
 
 export async function updateGroup(
     groupId: string,
-    data: { name?: string; description?: string }
+    data: { name?: string; description?: string; color?: string | null }
 ): Promise<{ success: true } | { error: string }> {
     try {
         const { tenantId } = await requireTenantAdmin();
@@ -196,6 +204,7 @@ export async function updateGroup(
             data: {
                 ...(data.name !== undefined && { name: data.name.trim() }),
                 ...(data.description !== undefined && { description: data.description.trim() || null }),
+                ...(data.color !== undefined && { color: data.color || null }),
             },
         });
 

@@ -207,8 +207,8 @@ export default function RolesClient({ initialRoles }: RolesClientProps) {
                                                             onChange={(e) => handleRoleChange(u.id, e.target.value)}
                                                         >
                                                             <option value="USER">Bruker</option>
-                                                            <option value="TENANT_ADMIN">Admin</option>
-                                                            <option value="SYSTEM_ADMIN">System Admin</option>
+                                                            <option value="TENANT_ADMIN">Organisasjonsadministrator</option>
+                                                            <option value="SYSTEM_ADMIN">Systemadministrator</option>
                                                         </select>
                                                     </div>
                                                 ))}

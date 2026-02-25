@@ -74,13 +74,25 @@
 .userEmail { font-size: 0.8rem; color: var(--color-text-secondary); }
 
 .roleSelect {
-    height: 32px; padding: 0 8px;
-    background: var(--color-bg-surface); border: 1px solid var(--color-border);
+    height: 36px; padding: 0 32px 0 12px;
+    background: var(--color-bg-primary); border: 1px solid var(--color-border);
     border-radius: var(--radius-md); color: var(--color-text-primary);
     font-size: 0.8rem; cursor: pointer; outline: none;
-    transition: border-color var(--transition-fast);
+    transition: all var(--transition-fast);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
 }
-.roleSelect:focus { border-color: var(--color-accent-blue); }
+.roleSelect:focus { border-color: var(--color-accent-blue); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent-blue) 15%, transparent); }
+.roleSelect:hover { border-color: color-mix(in srgb, var(--color-accent-blue) 50%, transparent); }
+
+/* Style native dropdown options for dark theme */
+.roleSelect option {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    padding: 8px 12px;
+}
 
 .emptyUsers { padding: 16px; text-align: center; color: var(--color-text-secondary); font-size: 0.85rem; }
 

@@ -34,7 +34,7 @@ export default async function UsersPage() {
                 updatedAt: true,
                 _count: { select: { groupMemberships: true } },
                 groupMemberships: {
-                    select: { group: { select: { id: true, name: true } } },
+                    select: { group: { select: { id: true, name: true, color: true } } },
                     take: 5,
                 },
             },

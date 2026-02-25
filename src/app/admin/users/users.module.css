@@ -274,19 +274,19 @@
     letter-spacing: 0.02em;
 }
 
-.roleAdmin {
+.roleUser {
     background: color-mix(in srgb, var(--color-accent-blue) 15%, transparent);
     color: var(--color-accent-blue);
 }
 
-.roleUser {
-    background: color-mix(in srgb, var(--color-text-secondary) 15%, transparent);
-    color: var(--color-text-secondary);
+.roleAdmin {
+    background: color-mix(in srgb, var(--color-warning) 15%, transparent);
+    color: var(--color-warning);
 }
 
 .roleSystem {
-    background: color-mix(in srgb, var(--color-warning) 15%, transparent);
-    color: var(--color-warning);
+    background: color-mix(in srgb, var(--color-danger) 15%, transparent);
+    color: var(--color-danger);
 }
 
 .statusBadge {
@@ -623,6 +623,16 @@
 .formSelect:focus {
     border-color: var(--color-accent-blue);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent-blue) 15%, transparent);
+}
+
+.formSelect:hover {
+    border-color: color-mix(in srgb, var(--color-accent-blue) 50%, transparent);
+}
+
+.formSelect option {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    padding: 8px 12px;
 }
 
 .formRow {

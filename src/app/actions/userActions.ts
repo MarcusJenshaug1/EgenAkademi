@@ -32,7 +32,7 @@ export interface UserListItem {
     createdAt: Date;
     updatedAt: Date;
     groupCount: number;
-    groups: { id: string; name: string }[];
+    groups: { id: string; name: string; color: string | null }[];
 }
 
 export async function listUsers(search?: string): Promise<{ users: UserListItem[] } | { error: string }> {
@@ -66,7 +66,7 @@ export async function listUsers(search?: string): Promise<{ users: UserListItem[
                 updatedAt: true,
                 _count: { select: { groupMemberships: true } },
                 groupMemberships: {
-                    select: { group: { select: { id: true, name: true } } },
+                    select: { group: { select: { id: true, name: true, color: true } } },
                     take: 5,
                 },
             },
@@ -115,7 +115,7 @@ export interface UserDetail {
     active: boolean;
     createdAt: Date;
     updatedAt: Date;
-    groups: { id: string; name: string }[];
+    groups: { id: string; name: string; color: string | null }[];
 }
 
 export async function getUser(userId: string): Promise<{ user: UserDetail } | { error: string }> {
@@ -144,7 +144,7 @@ export async function getUser(userId: string): Promise<{ user: UserDetail } | { 
                 updatedAt: true,
                 groupMemberships: {
                     select: {
-                        group: { select: { id: true, name: true } },
+                        group: { select: { id: true, name: true, color: true } },
                     },
                 },
             },
