@@ -261,7 +261,7 @@ export default function BrandDetector({ onApplyAll, onApplyFavicon, onApplyLogo,
                         <div className={styles.assetSection}>
                             <span className={styles.sectionLabel}>Google Fonts</span>
                             <div className={styles.fontsList}>
-                                {result.googleFonts.map((font) => (
+                                {result.googleFonts.slice(0, 12).map((font) => (
                                     <div
                                         key={font}
                                         className={`${styles.assetCard} ${fontApplied === font ? styles.assetApplied : ''}`}
@@ -316,7 +316,7 @@ export default function BrandDetector({ onApplyAll, onApplyFavicon, onApplyLogo,
                         <div className={styles.assetSection}>
                             <span className={styles.sectionLabel}>Fonter fra CSS</span>
                             <div className={styles.fontsList}>
-                                {result.detectedFonts.map((font) => (
+                                {result.detectedFonts.slice(0, 12).map((font) => (
                                     <div
                                         key={font}
                                         className={`${styles.assetCard} ${fontApplied === font ? styles.assetApplied : ''}`}

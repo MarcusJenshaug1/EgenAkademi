@@ -369,8 +369,8 @@
 }
 
 .fontsList {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: 6px;
 }
 
@@ -378,13 +378,37 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
-    padding: 10px 14px;
+    gap: 8px;
+    padding: 8px 10px;
     background: var(--color-bg-primary);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     transition: all 0.15s ease;
     overflow: hidden;
+}
+
+/* Compact card variant for fonts in grid */
+.fontsList .assetCard {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    padding: 10px;
+}
+
+.fontsList .assetPreview {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+.fontsList .fontRoleButtons {
+    width: 100%;
+    justify-content: stretch;
+}
+
+.fontsList .fontRoleButtons .applyButton {
+    flex: 1;
+    justify-content: center;
 }
 
 .assetCard:hover {
@@ -409,6 +433,10 @@
     flex-shrink: 0;
 }
 
+.fontsList .assetIcon {
+    display: none;
+}
+
 .faviconPreview {
     width: 24px;
     height: 24px;
@@ -423,6 +451,8 @@
     object-fit: contain;
     border-radius: 4px;
     flex-shrink: 0;
+    background: #e0e0e0;
+    padding: 4px 8px;
 }
 
 .assetUrl {
@@ -434,13 +464,16 @@
 }
 
 .fontName {
-    font-size: 0.88rem;
+    font-size: 0.82rem;
     font-weight: 500;
     color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .fontSample {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--color-text-secondary);
     opacity: 0.6;
 }
