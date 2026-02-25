@@ -57,7 +57,7 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
 
     // Add member state
     const [memberSearch, setMemberSearch] = useState('');
-    const [availableMembers, setAvailableMembers] = useState<{ id: string; name: string | null; email: string | null; firstName: string | null; lastName: string | null }[]>([]);
+    const [availableMembers, setAvailableMembers] = useState<{ id: string; name: string | null; email: string | null; firstName: string | null; lastName: string | null; avatarUrl: string | null }[]>([]);
     const [loadingMembers, setLoadingMembers] = useState(false);
 
     function showToast(msg: string) {
@@ -499,7 +499,11 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
                                         <div className={styles.memberList}>
                                             {groupDetail.members.map((m) => (
                                                 <div key={m.id} className={styles.memberRow}>
-                                                    <div className={styles.avatar}>{getInitials(m)}</div>
+                                                    {m.avatarUrl ? (
+                                                        <img src={m.avatarUrl} alt="" className={styles.avatarImg} />
+                                                    ) : (
+                                                        <div className={styles.avatar}>{getInitials(m)}</div>
+                                                    )}
                                                     <div className={styles.memberInfo}>
                                                         <span className={styles.memberName}>
                                                             {m.firstName && m.lastName
@@ -540,7 +544,11 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
                                             <div className={styles.addMemberResults}>
                                                 {availableMembers.map((u) => (
                                                     <div key={u.id} className={styles.addMemberRow}>
-                                                        <div className={styles.avatar}>{getInitials(u)}</div>
+                                                        {u.avatarUrl ? (
+                                                            <img src={u.avatarUrl} alt="" className={styles.avatarImg} />
+                                                        ) : (
+                                                            <div className={styles.avatar}>{getInitials(u)}</div>
+                                                        )}
                                                         <div>
                                                             <div className={styles.addMemberName}>
                                                                 {u.firstName && u.lastName

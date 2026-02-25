@@ -24,6 +24,7 @@ export default async function AdminLayout({
     let tenantName = 'Egen Akademi';
     let tenantLogoUrl: string | null = null;
     let userAvatarUrl: string | null = null;
+    let currentUser: { avatarUrl: string | null; firstName: string | null; lastName: string | null } | null = null;
     if (session.user.tenantId) {
         const tenant = await prisma.tenant.findUnique({
             where: { id: session.user.tenantId },
@@ -43,7 +44,7 @@ export default async function AdminLayout({
     }
     // Fetch user avatar
     if (session.user.id) {
-        const currentUser = await prisma.user.findUnique({
+        currentUser = await prisma.user.findUnique({
             where: { id: session.user.id },
             select: { avatarUrl: true, firstName: true, lastName: true },
         });
@@ -124,12 +125,19 @@ export default async function AdminLayout({
                         <button className={styles.headerButton} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <HelpCircle size={16} /> Hjelp
                         </button>
-                        <Link href="/admin/profile" className={styles.userProfile} title={session.user.email || 'Bruker'}>
-                            {userAvatarUrl ? (
-                                <img src={userAvatarUrl} alt="Profil" className={styles.userProfileImg} />
-                            ) : (
-                                initials
-                            )}
+                        <Link href="/admin/profile" className={styles.userProfileLink} title={session.user.email || 'Bruker'}>
+                            <div className={styles.userProfile}>
+                                {userAvatarUrl ? (
+                                    <img src={userAvatarUrl} alt="Profil" className={styles.userProfileImg} />
+                                ) : (
+                                    initials
+                                )}
+                            </div>
+                            <span className={styles.userName}>
+                                {currentUser?.firstName && currentUser?.lastName
+                                    ? `${currentUser.firstName} ${currentUser.lastName}`
+                                    : session.user.email || 'Bruker'}
+                            </span>
                         </Link>
                         <form action={async () => {
                             'use server';

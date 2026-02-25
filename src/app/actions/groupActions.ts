@@ -41,6 +41,7 @@ export interface GroupDetail {
         email: string | null;
         firstName: string | null;
         lastName: string | null;
+        avatarUrl: string | null;
         globalRole: string;
         active: boolean;
     }[];
@@ -114,6 +115,7 @@ export async function getGroup(groupId: string): Promise<{ group: GroupDetail } 
                                 email: true,
                                 firstName: true,
                                 lastName: true,
+                                avatarUrl: true,
                                 globalRole: true,
                                 active: true,
                             },
@@ -141,6 +143,7 @@ export async function getGroup(groupId: string): Promise<{ group: GroupDetail } 
                     email: m.user.email,
                     firstName: m.user.firstName,
                     lastName: m.user.lastName,
+                    avatarUrl: m.user.avatarUrl,
                     globalRole: m.user.globalRole,
                     active: m.user.active,
                 })),
@@ -310,7 +313,7 @@ export async function removeGroupMember(
 export async function listAvailableMembers(
     groupId: string,
     search?: string
-): Promise<{ users: { id: string; name: string | null; email: string | null; firstName: string | null; lastName: string | null }[] } | { error: string }> {
+): Promise<{ users: { id: string; name: string | null; email: string | null; firstName: string | null; lastName: string | null; avatarUrl: string | null }[] } | { error: string }> {
     try {
         const { tenantId } = await requireTenantAdmin();
 
@@ -345,6 +348,7 @@ export async function listAvailableMembers(
                 email: true,
                 firstName: true,
                 lastName: true,
+                avatarUrl: true,
             },
             orderBy: { email: 'asc' },
             take: 20,

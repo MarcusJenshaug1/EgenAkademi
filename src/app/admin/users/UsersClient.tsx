@@ -479,6 +479,7 @@ export default function UsersClient({ initialUsers, stats }: UsersClientProps) {
                                     <select className={styles.formSelect} name="role" defaultValue="USER">
                                         <option value="USER">Bruker</option>
                                         <option value="TENANT_ADMIN">Organisasjonsadministrator</option>
+                                        <option value="SYSTEM_ADMIN">Systemadministrator</option>
                                     </select>
                                 </div>
                             </div>
