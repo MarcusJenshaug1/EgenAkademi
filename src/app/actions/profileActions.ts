@@ -13,6 +13,13 @@ export async function getMyProfile(): Promise<{
         firstName: string | null;
         lastName: string | null;
         avatarUrl: string | null;
+        jobTitle: string | null;
+        department: string | null;
+        bio: string | null;
+        phone: string | null;
+        location: string | null;
+        workSchedule: string | null;
+        startDate: Date | null;
         globalRole: string;
         createdAt: Date;
         tenant: { name: string } | null;
@@ -34,6 +41,13 @@ export async function getMyProfile(): Promise<{
                 firstName: true,
                 lastName: true,
                 avatarUrl: true,
+                jobTitle: true,
+                department: true,
+                bio: true,
+                phone: true,
+                location: true,
+                workSchedule: true,
+                startDate: true,
                 globalRole: true,
                 createdAt: true,
                 tenant: { select: { name: true } },
@@ -51,6 +65,13 @@ export async function getMyProfile(): Promise<{
                 firstName: user.firstName,
                 lastName: user.lastName,
                 avatarUrl: user.avatarUrl,
+                jobTitle: user.jobTitle,
+                department: user.department,
+                bio: user.bio,
+                phone: user.phone,
+                location: user.location,
+                workSchedule: user.workSchedule,
+                startDate: user.startDate,
                 globalRole: user.globalRole,
                 createdAt: user.createdAt,
                 tenant: user.tenant,
@@ -67,6 +88,12 @@ export async function getMyProfile(): Promise<{
 export async function updateMyProfile(data: {
     firstName?: string;
     lastName?: string;
+    jobTitle?: string;
+    department?: string;
+    bio?: string;
+    phone?: string;
+    location?: string;
+    workSchedule?: string;
     avatarUrl?: string | null;
 }): Promise<{ success: true } | { error: string }> {
     try {
@@ -82,6 +109,24 @@ export async function updateMyProfile(data: {
         }
         if (data.lastName !== undefined) {
             updateData.lastName = data.lastName.trim() || null;
+        }
+        if (data.jobTitle !== undefined) {
+            updateData.jobTitle = data.jobTitle.trim() || null;
+        }
+        if (data.department !== undefined) {
+            updateData.department = data.department.trim() || null;
+        }
+        if (data.bio !== undefined) {
+            updateData.bio = data.bio.trim() || null;
+        }
+        if (data.phone !== undefined) {
+            updateData.phone = data.phone.trim() || null;
+        }
+        if (data.location !== undefined) {
+            updateData.location = data.location.trim() || null;
+        }
+        if (data.workSchedule !== undefined) {
+            updateData.workSchedule = data.workSchedule.trim() || null;
         }
         if (data.avatarUrl !== undefined) {
             updateData.avatarUrl = data.avatarUrl;

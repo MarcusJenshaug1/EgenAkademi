@@ -40,6 +40,7 @@
 
 .avatarInfo { display: flex; flex-direction: column; gap: 8px; }
 .avatarName { font-size: 1.25rem; font-weight: 700; color: var(--color-text-primary); }
+.avatarJobTitle { font-size: 0.9rem; color: var(--color-text-secondary); font-weight: 500; }
 .avatarEmail { font-size: 0.9rem; color: var(--color-text-secondary); }
 .avatarActions { display: flex; gap: 8px; margin-top: 4px; }
 .avatarBtn {
@@ -76,6 +77,22 @@
 }
 .formInput:focus { border-color: var(--color-accent-blue); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent-blue) 15%, transparent); }
 .formInput:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.formTextarea {
+    padding: 12px 14px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: 0.875rem;
+    font-family: inherit;
+    outline: none;
+    resize: vertical;
+    min-height: 100px;
+    line-height: 1.5;
+    transition: border-color var(--transition-fast);
+}
+.formTextarea:focus { border-color: var(--color-accent-blue); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent-blue) 15%, transparent); }
 
 .formActions { display: flex; justify-content: flex-end; gap: 12px; padding-top: 8px; }
 .btnPrimary {

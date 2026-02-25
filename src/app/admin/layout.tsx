@@ -20,9 +20,10 @@ export default async function AdminLayout({
         redirect('/login');
     }
 
-    // Fetch tenant info for sidebar branding
+    // Fetch tenant info for sidebar branding + user avatar
     let tenantName = 'Egen Akademi';
     let tenantLogoUrl: string | null = null;
+    let userAvatarUrl: string | null = null;
     if (session.user.tenantId) {
         const tenant = await prisma.tenant.findUnique({
             where: { id: session.user.tenantId },
@@ -38,6 +39,16 @@ export default async function AdminLayout({
             } else if (tenant.logoUrl) {
                 tenantLogoUrl = tenant.logoUrl;
             }
+        }
+    }
+    // Fetch user avatar
+    if (session.user.id) {
+        const currentUser = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { avatarUrl: true, firstName: true, lastName: true },
+        });
+        if (currentUser?.avatarUrl) {
+            userAvatarUrl = currentUser.avatarUrl;
         }
     }
 
@@ -114,7 +125,11 @@ export default async function AdminLayout({
                             <HelpCircle size={16} /> Hjelp
                         </button>
                         <Link href="/admin/profile" className={styles.userProfile} title={session.user.email || 'Bruker'}>
-                            {initials}
+                            {userAvatarUrl ? (
+                                <img src={userAvatarUrl} alt="Profil" className={styles.userProfileImg} />
+                            ) : (
+                                initials
+                            )}
                         </Link>
                         <form action={async () => {
                             'use server';

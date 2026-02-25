@@ -3,7 +3,8 @@
 import { useState, useRef } from 'react';
 import {
     Camera, Trash2, CheckCircle, User, ShieldCheck, ShieldAlert,
-    Calendar, Building2, Users
+    Calendar, Building2, Users, Briefcase, MapPin, Phone, Clock,
+    FileText,
 } from 'lucide-react';
 import {
     updateMyProfile, uploadAvatar, removeAvatar,
@@ -23,6 +24,13 @@ interface ProfileData {
     firstName: string | null;
     lastName: string | null;
     avatarUrl: string | null;
+    jobTitle: string | null;
+    department: string | null;
+    bio: string | null;
+    phone: string | null;
+    location: string | null;
+    workSchedule: string | null;
+    startDate: Date | null;
     globalRole: string;
     createdAt: Date;
     tenant: { name: string } | null;
@@ -37,6 +45,12 @@ export default function ProfileClient({ initialProfile }: ProfileClientProps) {
     const [profile, setProfile] = useState<ProfileData>(initialProfile);
     const [firstName, setFirstName] = useState(profile.firstName || '');
     const [lastName, setLastName] = useState(profile.lastName || '');
+    const [jobTitle, setJobTitle] = useState(profile.jobTitle || '');
+    const [department, setDepartment] = useState(profile.department || '');
+    const [bio, setBio] = useState(profile.bio || '');
+    const [phone, setPhone] = useState(profile.phone || '');
+    const [location, setLocation] = useState(profile.location || '');
+    const [workSchedule, setWorkSchedule] = useState(profile.workSchedule || '');
     const [saving, setSaving] = useState(false);
     const [toast, setToast] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -57,13 +71,28 @@ export default function ProfileClient({ initialProfile }: ProfileClientProps) {
     async function handleSave() {
         setError(null);
         setSaving(true);
-        const result = await updateMyProfile({ firstName, lastName });
+        const result = await updateMyProfile({
+            firstName,
+            lastName,
+            jobTitle: jobTitle || undefined,
+            department: department || undefined,
+            bio: bio || undefined,
+            phone: phone || undefined,
+            location: location || undefined,
+            workSchedule: workSchedule || undefined,
+        });
         setSaving(false);
         if ('error' in result) { setError(result.error); return; }
         setProfile((p) => ({
             ...p,
             firstName,
             lastName,
+            jobTitle: jobTitle || null,
+            department: department || null,
+            bio: bio || null,
+            phone: phone || null,
+            location: location || null,
+            workSchedule: workSchedule || null,
             name: [firstName, lastName].filter(Boolean).join(' ') || p.name,
         }));
         showToast('Profil oppdatert');
@@ -77,7 +106,6 @@ export default function ProfileClient({ initialProfile }: ProfileClientProps) {
         const reader = new FileReader();
         reader.onload = async () => {
             const result = reader.result as string;
-            // Extract base64 part
             const base64 = result.split(',')[1];
             const uploadResult = await uploadAvatar(base64, file.type);
             if ('error' in uploadResult) {
@@ -88,7 +116,6 @@ export default function ProfileClient({ initialProfile }: ProfileClientProps) {
             showToast('Avatar oppdatert');
         };
         reader.readAsDataURL(file);
-        // Reset file input
         if (fileRef.current) fileRef.current.value = '';
     }
 
@@ -107,7 +134,7 @@ export default function ProfileClient({ initialProfile }: ProfileClientProps) {
         <div className={styles.profilePage}>
             <div className={styles.header}>
                 <h1 className={styles.title}>Min profil</h1>
-                <p className={styles.subtitle}>Administrer din profilinformasjon og avatar.</p>
+                <p className={styles.subtitle}>Administrer din profilinformasjon, stillingstittel og kontaktdetaljer.</p>
             </div>
 
             {error && <div className={styles.errorBanner}>{error}</div>}
@@ -144,6 +171,9 @@ export default function ProfileClient({ initialProfile }: ProfileClientProps) {
                             ? `${firstName} ${lastName}`
                             : profile.name || profile.email || 'Bruker'}
                     </span>
+                    {jobTitle && (
+                        <span className={styles.avatarJobTitle}>{jobTitle}</span>
+                    )}
                     <span className={styles.avatarEmail}>{profile.email}</span>
                     <div className={styles.avatarActions}>
                         <button
@@ -164,7 +194,7 @@ export default function ProfileClient({ initialProfile }: ProfileClientProps) {
                 </div>
             </div>
 
-            {/* Edit form */}
+            {/* Personal info form */}
             <div className={styles.formCard}>
                 <span className={styles.formCardTitle}>Personlig informasjon</span>
                 <div className={styles.formRow}>
@@ -194,6 +224,86 @@ export default function ProfileClient({ initialProfile }: ProfileClientProps) {
                         value={profile.email || ''}
                         disabled
                         title="E-post kan ikke endres"
+                    />
+                </div>
+            </div>
+
+            {/* Employee info form */}
+            <div className={styles.formCard}>
+                <span className={styles.formCardTitle}>
+                    <Briefcase size={18} style={{ verticalAlign: 'middle', marginRight: 8 }} />
+                    Ansattinformasjon
+                </span>
+                <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                        <label className={styles.formLabel}>
+                            <Briefcase size={12} /> Stillingstittel
+                        </label>
+                        <input
+                            className={styles.formInput}
+                            value={jobTitle}
+                            onChange={(e) => setJobTitle(e.target.value)}
+                            placeholder="F.eks. Seniorutvikler"
+                        />
+                    </div>
+                    <div className={styles.formGroup}>
+                        <label className={styles.formLabel}>
+                            <Building2 size={12} /> Avdeling
+                        </label>
+                        <input
+                            className={styles.formInput}
+                            value={department}
+                            onChange={(e) => setDepartment(e.target.value)}
+                            placeholder="F.eks. Teknologi"
+                        />
+                    </div>
+                </div>
+                <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                        <label className={styles.formLabel}>
+                            <Phone size={12} /> Telefon
+                        </label>
+                        <input
+                            className={styles.formInput}
+                            type="tel"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            placeholder="+47 123 45 678"
+                        />
+                    </div>
+                    <div className={styles.formGroup}>
+                        <label className={styles.formLabel}>
+                            <MapPin size={12} /> Arbeidssted
+                        </label>
+                        <input
+                            className={styles.formInput}
+                            value={location}
+                            onChange={(e) => setLocation(e.target.value)}
+                            placeholder="F.eks. Oslo"
+                        />
+                    </div>
+                </div>
+                <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>
+                        <Clock size={12} /> Arbeidstid
+                    </label>
+                    <input
+                        className={styles.formInput}
+                        value={workSchedule}
+                        onChange={(e) => setWorkSchedule(e.target.value)}
+                        placeholder="F.eks. Man–Fre 08:00–16:00"
+                    />
+                </div>
+                <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>
+                        <FileText size={12} /> Biografi
+                    </label>
+                    <textarea
+                        className={styles.formTextarea}
+                        value={bio}
+                        onChange={(e) => setBio(e.target.value)}
+                        placeholder="Fortell litt om deg selv, din bakgrunn og ekspertise..."
+                        rows={4}
                     />
                 </div>
                 <div className={styles.formActions}>
@@ -230,6 +340,19 @@ export default function ProfileClient({ initialProfile }: ProfileClientProps) {
                         {profile.groupCount} {profile.groupCount === 1 ? 'gruppe' : 'grupper'}
                     </span>
                 </div>
+                {profile.startDate && (
+                    <div className={styles.infoRow}>
+                        <span className={styles.infoLabel}>Startdato</span>
+                        <span className={styles.infoValue}>
+                            <Calendar size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                            {new Date(profile.startDate).toLocaleDateString('nb-NO', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                            })}
+                        </span>
+                    </div>
+                )}
                 <div className={styles.infoRow}>
                     <span className={styles.infoLabel}>Medlem siden</span>
                     <span className={styles.infoValue}>
