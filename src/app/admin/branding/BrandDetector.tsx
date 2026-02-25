@@ -88,6 +88,24 @@ export default function BrandDetector({ onApplyAll, onApplyFavicon, onApplyLogo,
         setLoading(false);
     }
 
+    /** Assign a role to a font exclusively — removes that role from all other fonts */
+    function assignFontRole(font: string, role: 'heading' | 'body', source: string) {
+        onApplyFont?.(font, source, role);
+        setFontAppliedRoles(prev => {
+            const next: Record<string, Set<string>> = {};
+            // Remove this role from all other fonts
+            for (const [f, roles] of Object.entries(prev)) {
+                const updated = new Set(roles);
+                if (f !== font) updated.delete(role);
+                if (updated.size > 0) next[f] = updated;
+            }
+            // Add this role to the target font
+            if (!next[font]) next[font] = new Set();
+            next[font].add(role);
+            return next;
+        });
+    }
+
     function handleNewAnalysis() {
         setResult(null);
         setFaviconApplied(false);
@@ -299,15 +317,7 @@ export default function BrandDetector({ onApplyAll, onApplyFavicon, onApplyLogo,
                                                     <button
                                                         type="button"
                                                         className={styles.applyButton}
-                                                        onClick={() => {
-                                                            onApplyFont?.(font, 'google', 'heading');
-                                                            setFontAppliedRoles(prev => {
-                                                                const next = { ...prev };
-                                                                next[font] = new Set(prev[font] || []);
-                                                                next[font].add('heading');
-                                                                return next;
-                                                            });
-                                                        }}
+                                                        onClick={() => assignFontRole(font, 'heading', 'google')}
                                                     >
                                                         Overskrift
                                                     </button>
@@ -321,15 +331,7 @@ export default function BrandDetector({ onApplyAll, onApplyFavicon, onApplyLogo,
                                                     <button
                                                         type="button"
                                                         className={styles.applyButton}
-                                                        onClick={() => {
-                                                            onApplyFont?.(font, 'google', 'body');
-                                                            setFontAppliedRoles(prev => {
-                                                                const next = { ...prev };
-                                                                next[font] = new Set(prev[font] || []);
-                                                                next[font].add('body');
-                                                                return next;
-                                                            });
-                                                        }}
+                                                        onClick={() => assignFontRole(font, 'body', 'google')}
                                                     >
                                                         Brødtekst
                                                     </button>
@@ -382,15 +384,7 @@ export default function BrandDetector({ onApplyAll, onApplyFavicon, onApplyLogo,
                                                     <button
                                                         type="button"
                                                         className={styles.applyButton}
-                                                        onClick={() => {
-                                                            onApplyFont?.(font, 'custom', 'heading');
-                                                            setFontAppliedRoles(prev => {
-                                                                const next = { ...prev };
-                                                                next[font] = new Set(prev[font] || []);
-                                                                next[font].add('heading');
-                                                                return next;
-                                                            });
-                                                        }}
+                                                        onClick={() => assignFontRole(font, 'heading', 'custom')}
                                                     >
                                                         Overskrift
                                                     </button>
@@ -404,15 +398,7 @@ export default function BrandDetector({ onApplyAll, onApplyFavicon, onApplyLogo,
                                                     <button
                                                         type="button"
                                                         className={styles.applyButton}
-                                                        onClick={() => {
-                                                            onApplyFont?.(font, 'custom', 'body');
-                                                            setFontAppliedRoles(prev => {
-                                                                const next = { ...prev };
-                                                                next[font] = new Set(prev[font] || []);
-                                                                next[font].add('body');
-                                                                return next;
-                                                            });
-                                                        }}
+                                                        onClick={() => assignFontRole(font, 'body', 'custom')}
                                                     >
                                                         Brødtekst
                                                     </button>
