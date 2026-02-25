@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Palette, Check, Moon, Sparkles, Sun, Mountain, TreePine } from 'lucide-react';
 import styles from './templateSelector.module.css';
 
@@ -21,12 +21,6 @@ const ICON_MAP = {
     mountain: Mountain,
     tree: TreePine,
 } as const;
-
-// The 5 key fields used for matching active template
-const MATCH_KEYS = [
-    'colorBgPrimary', 'colorAccent', 'colorSidebarBg',
-    'colorTextPrimary', 'colorButtonPrimary',
-] as const;
 
 export const PRESETS: BrandingPreset[] = [
     {
@@ -150,17 +144,24 @@ interface TemplateSelectorProps {
 }
 
 export default function TemplateSelector({ currentColors, defaults, onApply }: TemplateSelectorProps) {
-    // Detect which preset matches the current form state
-    const activeId = useMemo(() => {
-        for (const preset of PRESETS) {
-            const matches = MATCH_KEYS.every(key => {
-                const current = (currentColors[key] || defaults[key] || '').toLowerCase();
-                return current === preset.colors[key].toLowerCase();
-            });
-            if (matches) return preset.id;
+    const [activeId, setActiveId] = useState<string | null>(null);
+    const justApplied = useRef(false);
+
+    // Clear active when user makes manual color changes after applying a template
+    useEffect(() => {
+        if (justApplied.current) {
+            justApplied.current = false;
+            return;
         }
-        return null;
-    }, [currentColors, defaults]);
+        if (activeId) setActiveId(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentColors]);
+
+    function handleApply(preset: BrandingPreset) {
+        justApplied.current = true;
+        setActiveId(preset.id);
+        onApply(preset.colors);
+    }
 
     return (
         <div className={styles.wrapper}>
@@ -185,7 +186,7 @@ export default function TemplateSelector({ currentColors, defaults, onApply }: T
                             key={preset.id}
                             type="button"
                             className={`${styles.card} ${isActive ? styles.cardActive : ''}`}
-                            onClick={() => onApply(preset.colors)}
+                            onClick={() => handleApply(preset)}
                         >
                             {/* Color preview strip */}
                             <div className={styles.previewStrip}>
