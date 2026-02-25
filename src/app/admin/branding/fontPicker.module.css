@@ -186,9 +186,9 @@
 /* ── Font-grid ── */
 .fontGrid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    max-height: 360px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    max-height: 280px;
     overflow-y: auto;
     padding-right: 4px;
 }
@@ -209,8 +209,8 @@
 .fontCard {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
+    gap: 6px;
+    padding: 6px 8px;
     background: var(--color-bg-primary);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
@@ -232,10 +232,10 @@
 }
 
 .fontPreview {
-    font-size: 1.3rem;
+    font-size: 1.05rem;
     font-weight: 500;
     color: var(--color-text-primary);
-    width: 36px;
+    width: 28px;
     flex-shrink: 0;
     text-align: center;
 }
@@ -264,10 +264,10 @@
 
 .fontCardCheck {
     position: absolute;
-    top: 6px;
-    right: 6px;
-    width: 20px;
-    height: 20px;
+    top: 4px;
+    right: 4px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     background: var(--color-accent-blue);
     color: var(--color-button-text);

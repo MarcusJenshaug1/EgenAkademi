@@ -59,7 +59,7 @@ export default function BrandDetector({ onApplyAll, onApplyFavicon, onApplyLogo,
     const [result, setResult] = useState<DetectionResult | null>(null);
     const [faviconApplied, setFaviconApplied] = useState(false);
     const [logoApplied, setLogoApplied] = useState(false);
-    const [fontApplied, setFontApplied] = useState<string | null>(null);
+    const [fontAppliedRoles, setFontAppliedRoles] = useState<Record<string, Set<string>>>({});
 
     async function handleDetect() {
         if (!url.trim()) return;
@@ -92,7 +92,7 @@ export default function BrandDetector({ onApplyAll, onApplyFavicon, onApplyLogo,
         setResult(null);
         setFaviconApplied(false);
         setLogoApplied(false);
-        setFontApplied(null);
+        setFontAppliedRoles({});
         setError('');
     }
 
@@ -261,10 +261,17 @@ export default function BrandDetector({ onApplyAll, onApplyFavicon, onApplyLogo,
                         <div className={styles.assetSection}>
                             <span className={styles.sectionLabel}>Google Fonts</span>
                             <div className={styles.fontsList}>
-                                {result.googleFonts.slice(0, 12).map((font) => (
+                                {result.googleFonts.slice(0, 12).map((font) => {
+                                    const roles = fontAppliedRoles[font];
+                                    const appliedHeading = roles?.has('heading');
+                                    const appliedBody = roles?.has('body');
+                                    const appliedBoth = appliedHeading && appliedBody;
+                                    const hasAny = appliedHeading || appliedBody;
+
+                                    return (
                                     <div
                                         key={font}
-                                        className={`${styles.assetCard} ${fontApplied === font ? styles.assetApplied : ''}`}
+                                        className={`${styles.assetCard} ${hasAny ? styles.assetApplied : ''}`}
                                     >
                                         <div className={styles.assetPreview}>
                                             <Type size={14} className={styles.assetIcon} />
@@ -276,37 +283,62 @@ export default function BrandDetector({ onApplyAll, onApplyFavicon, onApplyLogo,
                                             </span>
                                             <span className={styles.fontSample}>Aa Bb Cc 123</span>
                                         </div>
-                                        {fontApplied === font ? (
+                                        {appliedBoth ? (
                                             <span className={styles.appliedBadge}>
                                                 <Check size={12} />
-                                                Brukt
+                                                Begge
                                             </span>
                                         ) : (
                                             <div className={styles.fontRoleButtons}>
-                                                <button
-                                                    type="button"
-                                                    className={styles.applyButton}
-                                                    onClick={() => {
-                                                        onApplyFont?.(font, 'google', 'heading');
-                                                        setFontApplied(font);
-                                                    }}
-                                                >
-                                                    Overskrift
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    className={styles.applyButton}
-                                                    onClick={() => {
-                                                        onApplyFont?.(font, 'google', 'body');
-                                                        setFontApplied(font);
-                                                    }}
-                                                >
-                                                    Brødtekst
-                                                </button>
+                                                {appliedHeading ? (
+                                                    <span className={styles.appliedBadge}>
+                                                        <Check size={10} />
+                                                        Overskrift
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        className={styles.applyButton}
+                                                        onClick={() => {
+                                                            onApplyFont?.(font, 'google', 'heading');
+                                                            setFontAppliedRoles(prev => {
+                                                                const next = { ...prev };
+                                                                next[font] = new Set(prev[font] || []);
+                                                                next[font].add('heading');
+                                                                return next;
+                                                            });
+                                                        }}
+                                                    >
+                                                        Overskrift
+                                                    </button>
+                                                )}
+                                                {appliedBody ? (
+                                                    <span className={styles.appliedBadge}>
+                                                        <Check size={10} />
+                                                        Brødtekst
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        className={styles.applyButton}
+                                                        onClick={() => {
+                                                            onApplyFont?.(font, 'google', 'body');
+                                                            setFontAppliedRoles(prev => {
+                                                                const next = { ...prev };
+                                                                next[font] = new Set(prev[font] || []);
+                                                                next[font].add('body');
+                                                                return next;
+                                                            });
+                                                        }}
+                                                    >
+                                                        Brødtekst
+                                                    </button>
+                                                )}
                                             </div>
                                         )}
                                     </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
@@ -316,10 +348,17 @@ export default function BrandDetector({ onApplyAll, onApplyFavicon, onApplyLogo,
                         <div className={styles.assetSection}>
                             <span className={styles.sectionLabel}>Fonter fra CSS</span>
                             <div className={styles.fontsList}>
-                                {result.detectedFonts.slice(0, 12).map((font) => (
+                                {result.detectedFonts.slice(0, 12).map((font) => {
+                                    const roles = fontAppliedRoles[font];
+                                    const appliedHeading = roles?.has('heading');
+                                    const appliedBody = roles?.has('body');
+                                    const appliedBoth = appliedHeading && appliedBody;
+                                    const hasAny = appliedHeading || appliedBody;
+
+                                    return (
                                     <div
                                         key={font}
-                                        className={`${styles.assetCard} ${fontApplied === font ? styles.assetApplied : ''}`}
+                                        className={`${styles.assetCard} ${hasAny ? styles.assetApplied : ''}`}
                                     >
                                         <div className={styles.assetPreview}>
                                             <Type size={14} className={styles.assetIcon} />
@@ -327,37 +366,62 @@ export default function BrandDetector({ onApplyAll, onApplyFavicon, onApplyLogo,
                                                 {font}
                                             </span>
                                         </div>
-                                        {fontApplied === font ? (
+                                        {appliedBoth ? (
                                             <span className={styles.appliedBadge}>
                                                 <Check size={12} />
-                                                Brukt
+                                                Begge
                                             </span>
                                         ) : (
                                             <div className={styles.fontRoleButtons}>
-                                                <button
-                                                    type="button"
-                                                    className={styles.applyButton}
-                                                    onClick={() => {
-                                                        onApplyFont?.(font, 'custom', 'heading');
-                                                        setFontApplied(font);
-                                                    }}
-                                                >
-                                                    Overskrift
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    className={styles.applyButton}
-                                                    onClick={() => {
-                                                        onApplyFont?.(font, 'custom', 'body');
-                                                        setFontApplied(font);
-                                                    }}
-                                                >
-                                                    Brødtekst
-                                                </button>
+                                                {appliedHeading ? (
+                                                    <span className={styles.appliedBadge}>
+                                                        <Check size={10} />
+                                                        Overskrift
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        className={styles.applyButton}
+                                                        onClick={() => {
+                                                            onApplyFont?.(font, 'custom', 'heading');
+                                                            setFontAppliedRoles(prev => {
+                                                                const next = { ...prev };
+                                                                next[font] = new Set(prev[font] || []);
+                                                                next[font].add('heading');
+                                                                return next;
+                                                            });
+                                                        }}
+                                                    >
+                                                        Overskrift
+                                                    </button>
+                                                )}
+                                                {appliedBody ? (
+                                                    <span className={styles.appliedBadge}>
+                                                        <Check size={10} />
+                                                        Brødtekst
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        className={styles.applyButton}
+                                                        onClick={() => {
+                                                            onApplyFont?.(font, 'custom', 'body');
+                                                            setFontAppliedRoles(prev => {
+                                                                const next = { ...prev };
+                                                                next[font] = new Set(prev[font] || []);
+                                                                next[font].add('body');
+                                                                return next;
+                                                            });
+                                                        }}
+                                                    >
+                                                        Brødtekst
+                                                    </button>
+                                                )}
                                             </div>
                                         )}
                                     </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
