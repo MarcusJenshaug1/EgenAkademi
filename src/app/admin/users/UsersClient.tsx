@@ -1,22 +1,24 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import {
     Search, UserPlus, Edit3, Trash2, Users, Shield,
     ShieldCheck, X, CheckCircle, AlertTriangle, Filter,
+    Briefcase, MapPin, Phone, Clock,
 } from 'lucide-react';
 import styles from './users.module.css';
 import {
-    listUsers, inviteUser, updateUser, removeUser,
-    type UserListItem,
+    listUsers, inviteUser, updateUser, removeUser, getUser,
+    type UserListItem, type UserDetail,
 } from '@/app/actions/userActions';
 
 // ── Role helpers ────────────────────────────────────────────
 
 const ROLE_LABELS: Record<string, string> = {
     USER: 'Bruker',
-    TENANT_ADMIN: 'Administrator',
-    SYSTEM_ADMIN: 'Systemadmin',
+    TENANT_ADMIN: 'Organisasjonsadministrator',
+    SYSTEM_ADMIN: 'Systemadministrator',
 };
 
 function getRoleBadgeClass(role: string) {
@@ -80,8 +82,21 @@ export default function UsersClient({ initialUsers, stats }: UsersClientProps) {
 
     // Modals
     const [inviteOpen, setInviteOpen] = useState(false);
-    const [editUser, setEditUser] = useState<UserListItem | null>(null);
+    const [editUser, setEditUser] = useState<UserDetail | null>(null);
+    const [editLoading, setEditLoading] = useState(false);
     const [deleteUser, setDeleteUser] = useState<UserListItem | null>(null);
+
+    // Open edit modal: fetch full user detail
+    async function openEditModal(user: UserListItem) {
+        setEditLoading(true);
+        const result = await getUser(user.id);
+        setEditLoading(false);
+        if ('user' in result) {
+            setEditUser(result.user);
+        } else {
+            setError(result.error);
+        }
+    }
 
     // ── Search & filter ─────────────────────────────────────
 
@@ -152,12 +167,22 @@ export default function UsersClient({ initialUsers, stats }: UsersClientProps) {
         const lastName = form.get('lastName') as string;
         const role = form.get('role') as string;
         const active = form.get('active') === 'true';
+        const jobTitle = form.get('jobTitle') as string;
+        const department = form.get('department') as string;
+        const phone = form.get('phone') as string;
+        const location = form.get('location') as string;
+        const workSchedule = form.get('workSchedule') as string;
 
         const result = await updateUser(editUser.id, {
             firstName,
             lastName,
             globalRole: role as 'USER' | 'TENANT_ADMIN',
             active,
+            jobTitle: jobTitle || undefined,
+            department: department || undefined,
+            phone: phone || undefined,
+            location: location || undefined,
+            workSchedule: workSchedule || undefined,
         });
 
         if ('success' in result) {
@@ -299,17 +324,26 @@ export default function UsersClient({ initialUsers, stats }: UsersClientProps) {
                             {filteredUsers.map((user) => (
                                 <tr
                                     key={user.id}
-                                    onClick={() => setEditUser(user)}
+                                    onClick={() => openEditModal(user)}
                                 >
                                     <td>
                                         <div className={styles.userCell}>
                                             <div className={`${styles.avatar} ${!user.active ? styles.avatarInactive : ''}`}>
-                                                {getInitials(user)}
+                                                {user.avatarUrl ? (
+                                                    <img src={user.avatarUrl} alt="" className={styles.avatarImg} />
+                                                ) : (
+                                                    getInitials(user)
+                                                )}
                                             </div>
                                             <div className={styles.userInfo}>
                                                 <span className={styles.userName}>
                                                     {getDisplayName(user)}
                                                 </span>
+                                                {user.jobTitle && (
+                                                    <span className={styles.userJobTitle}>
+                                                        {user.jobTitle}
+                                                    </span>
+                                                )}
                                                 <span className={styles.userEmail}>
                                                     {user.email}
                                                 </span>
@@ -331,9 +365,31 @@ export default function UsersClient({ initialUsers, stats }: UsersClientProps) {
                                         </span>
                                     </td>
                                     <td>
-                                        <span className={styles.groupCount}>
-                                            {user.groupCount}
-                                        </span>
+                                        <div className={styles.groupBadges}>
+                                            {user.groups.length > 0 ? (
+                                                <>
+                                                    {user.groups.slice(0, 2).map((g) => (
+                                                        <Link
+                                                            key={g.id}
+                                                            href="/admin/groups"
+                                                            className={styles.groupBadge}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            style={g.color ? {
+                                                                background: `color-mix(in srgb, ${g.color} 15%, transparent)`,
+                                                                color: g.color,
+                                                            } : undefined}
+                                                        >
+                                                            {g.name}
+                                                        </Link>
+                                                    ))}
+                                                    {user.groups.length > 2 && (
+                                                        <span className={styles.groupMore}>+{user.groups.length - 2}</span>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <span className={styles.groupNone}>Ingen</span>
+                                            )}
+                                        </div>
                                     </td>
                                     <td>
                                         <span className={styles.dateText}>
@@ -346,7 +402,7 @@ export default function UsersClient({ initialUsers, stats }: UsersClientProps) {
                                                 className={styles.actionBtn}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    setEditUser(user);
+                                                    openEditModal(user);
                                                 }}
                                                 aria-label="Rediger bruker"
                                             >
@@ -422,7 +478,8 @@ export default function UsersClient({ initialUsers, stats }: UsersClientProps) {
                                     <label className={styles.formLabel}>Rolle</label>
                                     <select className={styles.formSelect} name="role" defaultValue="USER">
                                         <option value="USER">Bruker</option>
-                                        <option value="TENANT_ADMIN">Administrator</option>
+                                        <option value="TENANT_ADMIN">Organisasjonsadministrator</option>
+                                        <option value="SYSTEM_ADMIN">Systemadministrator</option>
                                     </select>
                                 </div>
                             </div>
@@ -442,6 +499,16 @@ export default function UsersClient({ initialUsers, stats }: UsersClientProps) {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Edit loading overlay ──────────────────── */}
+            {editLoading && (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.loading}>
+                        <div className={styles.spinner} />
+                        Laster brukerdata...
                     </div>
                 </div>
             )}
@@ -504,7 +571,8 @@ export default function UsersClient({ initialUsers, stats }: UsersClientProps) {
                                             defaultValue={editUser.globalRole}
                                         >
                                             <option value="USER">Bruker</option>
-                                            <option value="TENANT_ADMIN">Administrator</option>
+                                            <option value="TENANT_ADMIN">Organisasjonsadministrator</option>
+                                            <option value="SYSTEM_ADMIN">Systemadministrator</option>
                                         </select>
                                     </div>
                                     <div className={styles.formGroup}>
@@ -518,6 +586,72 @@ export default function UsersClient({ initialUsers, stats }: UsersClientProps) {
                                             <option value="false">Inaktiv</option>
                                         </select>
                                     </div>
+                                </div>
+
+                                <div className={styles.formDivider} />
+                                <span className={styles.formSectionLabel}>Ansattinformasjon</span>
+
+                                <div className={styles.formRow}>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>
+                                            <Briefcase size={14} /> Stillingstittel
+                                        </label>
+                                        <input
+                                            className={styles.formInput}
+                                            type="text"
+                                            name="jobTitle"
+                                            defaultValue={editUser.jobTitle || ''}
+                                            placeholder="F.eks. Utvikler"
+                                        />
+                                    </div>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>Avdeling</label>
+                                        <input
+                                            className={styles.formInput}
+                                            type="text"
+                                            name="department"
+                                            defaultValue={editUser.department || ''}
+                                            placeholder="F.eks. Teknologi"
+                                        />
+                                    </div>
+                                </div>
+                                <div className={styles.formRow}>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>
+                                            <Phone size={14} /> Telefon
+                                        </label>
+                                        <input
+                                            className={styles.formInput}
+                                            type="tel"
+                                            name="phone"
+                                            defaultValue={editUser.phone || ''}
+                                            placeholder="+47 123 45 678"
+                                        />
+                                    </div>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>
+                                            <MapPin size={14} /> Arbeidssted
+                                        </label>
+                                        <input
+                                            className={styles.formInput}
+                                            type="text"
+                                            name="location"
+                                            defaultValue={editUser.location || ''}
+                                            placeholder="F.eks. Oslo"
+                                        />
+                                    </div>
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label className={styles.formLabel}>
+                                        <Clock size={14} /> Arbeidstid
+                                    </label>
+                                    <input
+                                        className={styles.formInput}
+                                        type="text"
+                                        name="workSchedule"
+                                        defaultValue={editUser.workSchedule || ''}
+                                        placeholder="F.eks. Man–Fre 08:00–16:00"
+                                    />
                                 </div>
                             </div>
                             <div className={styles.modalFooter}>

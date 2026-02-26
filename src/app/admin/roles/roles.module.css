@@ -1,0 +1,108 @@
+.rolesPage { display: flex; flex-direction: column; gap: 32px; }
+
+/* ── Header ────────────────────────────────────── */
+.header { display: flex; flex-direction: column; gap: 6px; }
+.title { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; color: var(--color-text-primary); }
+.subtitle { color: var(--color-text-secondary); font-size: 1rem; }
+
+/* ── Role cards ────────────────────────────────── */
+.roleGrid { display: flex; flex-direction: column; gap: 20px; }
+
+.roleCard {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden; transition: all var(--transition-fast);
+}
+.roleCard:hover { border-color: color-mix(in srgb, var(--color-accent-blue) 40%, transparent); }
+
+.roleHeader {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 24px 28px; cursor: pointer; user-select: none;
+}
+.roleHeaderLeft { display: flex; align-items: center; gap: 16px; }
+.roleIcon {
+    width: 44px; height: 44px; border-radius: var(--radius-md);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.roleIconUser { background: color-mix(in srgb, var(--color-accent-blue) 12%, transparent); color: var(--color-accent-blue); }
+.roleIconAdmin { background: color-mix(in srgb, var(--color-warning) 12%, transparent); color: var(--color-warning); }
+.roleIconSystem { background: color-mix(in srgb, var(--color-danger) 12%, transparent); color: var(--color-danger); }
+
+.roleInfo { display: flex; flex-direction: column; gap: 4px; }
+.roleName { font-size: 1.1rem; font-weight: 700; color: var(--color-text-primary); }
+.roleDesc { font-size: 0.85rem; color: var(--color-text-secondary); line-height: 1.5; }
+
+.roleHeaderRight { display: flex; align-items: center; gap: 16px; }
+.userCount {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border-radius: 20px;
+    background: color-mix(in srgb, var(--color-accent-blue) 10%, transparent);
+    font-size: 0.8rem; font-weight: 600;
+    color: var(--color-accent-blue);
+}
+.chevron { color: var(--color-text-secondary); transition: transform var(--transition-fast); }
+.chevronOpen { transform: rotate(180deg); }
+
+/* ── Expanded content ──────────────────────────── */
+.roleBody { padding: 0 28px 24px 28px; display: flex; flex-direction: column; gap: 24px; border-top: 1px solid var(--color-border); }
+
+.permissionsSection { padding-top: 20px; }
+.sectionLabel { font-size: 0.8rem; font-weight: 600; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+.permissionList { display: flex; flex-direction: column; gap: 8px; }
+.permissionItem { display: flex; align-items: center; gap: 10px; font-size: 0.875rem; color: var(--color-text-primary); }
+.permCheck { color: var(--color-success); flex-shrink: 0; }
+
+/* ── User list inside role ─────────────────────── */
+.usersSection { border-top: 1px solid var(--color-border); padding-top: 20px; }
+.userListHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.searchInput { height: 36px; padding: 0 12px; background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); color: var(--color-text-primary); font-size: 0.85rem; outline: none; width: 260px; transition: border-color var(--transition-fast); }
+.searchInput:focus { border-color: var(--color-accent-blue); }
+
+.userList { display: flex; flex-direction: column; gap: 4px; }
+.userRow { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--radius-md); transition: background var(--transition-fast); }
+.userRow:hover { background: color-mix(in srgb, var(--color-accent-blue) 5%, transparent); }
+.avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: 0.75rem; flex-shrink: 0;
+    background: var(--gradient-primary); color: var(--color-button-text);
+}
+.userInfo { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.userName { font-size: 0.875rem; font-weight: 600; color: var(--color-text-primary); }
+.userEmail { font-size: 0.8rem; color: var(--color-text-secondary); }
+
+.roleSelect {
+    height: 36px; padding: 0 32px 0 12px;
+    background: var(--color-bg-primary); border: 1px solid var(--color-border);
+    border-radius: var(--radius-md); color: var(--color-text-primary);
+    font-size: 0.8rem; cursor: pointer; outline: none;
+    transition: all var(--transition-fast);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+}
+.roleSelect:focus { border-color: var(--color-accent-blue); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent-blue) 15%, transparent); }
+.roleSelect:hover { border-color: color-mix(in srgb, var(--color-accent-blue) 50%, transparent); }
+
+/* Style native dropdown options for dark theme */
+.roleSelect option {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    padding: 8px 12px;
+}
+
+.emptyUsers { padding: 16px; text-align: center; color: var(--color-text-secondary); font-size: 0.85rem; }
+
+/* ── Loading ───────────────────────────────────── */
+.loading { display: flex; align-items: center; justify-content: center; padding: 24px; color: var(--color-text-secondary); font-size: 0.9rem; gap: 10px; }
+.spinner { width: 18px; height: 18px; border: 2px solid var(--color-border); border-top-color: var(--color-accent-blue); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Toast ─────────────────────────────────────── */
+.toast { position: fixed; bottom: 32px; right: 32px; display: flex; align-items: center; gap: 10px; padding: 14px 20px; background: var(--color-bg-secondary); border: 1px solid color-mix(in srgb, var(--color-success) 30%, transparent); border-radius: var(--radius-md); color: var(--color-success); font-size: 0.875rem; font-weight: 500; box-shadow: 0 12px 40px -12px rgba(0,0,0,0.4); animation: slideIn 0.2s ease-out; z-index: 200; }
+@keyframes slideIn { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.errorBanner { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: color-mix(in srgb, var(--color-danger) 10%, transparent); border: 1px solid color-mix(in srgb, var(--color-danger) 30%, transparent); border-radius: var(--radius-md); color: var(--color-danger); font-size: 0.85rem; }

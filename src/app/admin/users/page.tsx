@@ -26,11 +26,17 @@ export default async function UsersPage() {
                 email: true,
                 firstName: true,
                 lastName: true,
+                avatarUrl: true,
+                jobTitle: true,
                 globalRole: true,
                 active: true,
                 createdAt: true,
                 updatedAt: true,
                 _count: { select: { groupMemberships: true } },
+                groupMemberships: {
+                    select: { group: { select: { id: true, name: true, color: true } } },
+                    take: 5,
+                },
             },
             orderBy: { createdAt: 'desc' },
         }),
@@ -46,11 +52,14 @@ export default async function UsersPage() {
         email: u.email,
         firstName: u.firstName,
         lastName: u.lastName,
+        avatarUrl: u.avatarUrl,
+        jobTitle: u.jobTitle,
         globalRole: u.globalRole,
         active: u.active,
         createdAt: u.createdAt,
         updatedAt: u.updatedAt,
         groupCount: u._count.groupMemberships,
+        groups: u.groupMemberships.map((m) => m.group),
     }));
 
     return (

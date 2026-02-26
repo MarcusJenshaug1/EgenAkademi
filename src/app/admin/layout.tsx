@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import {
-    LayoutDashboard, Users, Shield, BookOpen,
-    Calendar, Files, Palette, Plug, BarChart3, HelpCircle, LogOut
+    LayoutDashboard, Users, UsersRound, Shield, BookOpen,
+    Calendar, Files, Palette, Plug, BarChart3, HelpCircle, LogOut, UserCircle
 } from 'lucide-react';
 import styles from './layout.module.css';
 import { auth, signOut } from '@/auth';
@@ -20,9 +20,11 @@ export default async function AdminLayout({
         redirect('/login');
     }
 
-    // Fetch tenant info for sidebar branding
+    // Fetch tenant info for sidebar branding + user avatar
     let tenantName = 'Egen Akademi';
     let tenantLogoUrl: string | null = null;
+    let userAvatarUrl: string | null = null;
+    let currentUser: { avatarUrl: string | null; firstName: string | null; lastName: string | null; jobTitle: string | null } | null = null;
     if (session.user.tenantId) {
         const tenant = await prisma.tenant.findUnique({
             where: { id: session.user.tenantId },
@@ -38,6 +40,16 @@ export default async function AdminLayout({
             } else if (tenant.logoUrl) {
                 tenantLogoUrl = tenant.logoUrl;
             }
+        }
+    }
+    // Fetch user avatar
+    if (session.user.id) {
+        currentUser = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { avatarUrl: true, firstName: true, lastName: true, jobTitle: true },
+        });
+        if (currentUser?.avatarUrl) {
+            userAvatarUrl = currentUser.avatarUrl;
         }
     }
 
@@ -73,7 +85,7 @@ export default async function AdminLayout({
                         <Users size={18} /> Brukere
                     </NavLink>
                     <NavLink href="/admin/groups">
-                        <Users size={18} /> Grupper
+                        <UsersRound size={18} /> Grupper
                     </NavLink>
                     <NavLink href="/admin/roles">
                         <Shield size={18} /> Roller og tilgang
@@ -113,9 +125,25 @@ export default async function AdminLayout({
                         <button className={styles.headerButton} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <HelpCircle size={16} /> Hjelp
                         </button>
-                        <div className={styles.userProfile} title={session.user.email || 'Bruker'}>
-                            {initials}
-                        </div>
+                        <Link href="/admin/profile" className={styles.userProfileLink} title={session.user.email || 'Bruker'}>
+                            <div className={styles.userProfile}>
+                                {userAvatarUrl ? (
+                                    <img src={userAvatarUrl} alt="Profil" className={styles.userProfileImg} />
+                                ) : (
+                                    initials
+                                )}
+                            </div>
+                            <div className={styles.userInfo}>
+                                <span className={styles.userName}>
+                                    {currentUser?.firstName && currentUser?.lastName
+                                        ? `${currentUser.firstName} ${currentUser.lastName}`
+                                        : session.user.email || 'Bruker'}
+                                </span>
+                                {currentUser?.jobTitle && (
+                                    <span className={styles.userJobTitle}>{currentUser.jobTitle}</span>
+                                )}
+                            </div>
+                        </Link>
                         <form action={async () => {
                             'use server';
                             await signOut({ redirectTo: '/login' });

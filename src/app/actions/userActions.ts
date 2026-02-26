@@ -25,11 +25,14 @@ export interface UserListItem {
     email: string | null;
     firstName: string | null;
     lastName: string | null;
+    avatarUrl: string | null;
+    jobTitle: string | null;
     globalRole: GlobalRole;
     active: boolean;
     createdAt: Date;
     updatedAt: Date;
     groupCount: number;
+    groups: { id: string; name: string; color: string | null }[];
 }
 
 export async function listUsers(search?: string): Promise<{ users: UserListItem[] } | { error: string }> {
@@ -55,11 +58,17 @@ export async function listUsers(search?: string): Promise<{ users: UserListItem[
                 email: true,
                 firstName: true,
                 lastName: true,
+                avatarUrl: true,
+                jobTitle: true,
                 globalRole: true,
                 active: true,
                 createdAt: true,
                 updatedAt: true,
                 _count: { select: { groupMemberships: true } },
+                groupMemberships: {
+                    select: { group: { select: { id: true, name: true, color: true } } },
+                    take: 5,
+                },
             },
             orderBy: { createdAt: 'desc' },
         });
@@ -71,11 +80,14 @@ export async function listUsers(search?: string): Promise<{ users: UserListItem[
                 email: u.email,
                 firstName: u.firstName,
                 lastName: u.lastName,
+                avatarUrl: u.avatarUrl,
+                jobTitle: u.jobTitle,
                 globalRole: u.globalRole,
                 active: u.active,
                 createdAt: u.createdAt,
                 updatedAt: u.updatedAt,
                 groupCount: u._count.groupMemberships,
+                groups: u.groupMemberships.map((m) => m.group),
             })),
         };
     } catch (e: unknown) {
@@ -91,11 +103,19 @@ export interface UserDetail {
     email: string | null;
     firstName: string | null;
     lastName: string | null;
+    avatarUrl: string | null;
+    jobTitle: string | null;
+    department: string | null;
+    bio: string | null;
+    phone: string | null;
+    location: string | null;
+    workSchedule: string | null;
+    startDate: Date | null;
     globalRole: GlobalRole;
     active: boolean;
     createdAt: Date;
     updatedAt: Date;
-    groups: { id: string; name: string }[];
+    groups: { id: string; name: string; color: string | null }[];
 }
 
 export async function getUser(userId: string): Promise<{ user: UserDetail } | { error: string }> {
@@ -110,13 +130,21 @@ export async function getUser(userId: string): Promise<{ user: UserDetail } | { 
                 email: true,
                 firstName: true,
                 lastName: true,
+                avatarUrl: true,
+                jobTitle: true,
+                department: true,
+                bio: true,
+                phone: true,
+                location: true,
+                workSchedule: true,
+                startDate: true,
                 globalRole: true,
                 active: true,
                 createdAt: true,
                 updatedAt: true,
                 groupMemberships: {
                     select: {
-                        group: { select: { id: true, name: true } },
+                        group: { select: { id: true, name: true, color: true } },
                     },
                 },
             },
@@ -131,6 +159,14 @@ export async function getUser(userId: string): Promise<{ user: UserDetail } | { 
                 email: user.email,
                 firstName: user.firstName,
                 lastName: user.lastName,
+                avatarUrl: user.avatarUrl,
+                jobTitle: user.jobTitle,
+                department: user.department,
+                bio: user.bio,
+                phone: user.phone,
+                location: user.location,
+                workSchedule: user.workSchedule,
+                startDate: user.startDate,
                 globalRole: user.globalRole,
                 active: user.active,
                 createdAt: user.createdAt,
@@ -150,6 +186,11 @@ export async function updateUser(
     data: {
         firstName?: string;
         lastName?: string;
+        jobTitle?: string;
+        department?: string;
+        phone?: string;
+        location?: string;
+        workSchedule?: string;
         globalRole?: GlobalRole;
         active?: boolean;
     }
@@ -179,6 +220,11 @@ export async function updateUser(
             data: {
                 firstName: data.firstName,
                 lastName: data.lastName,
+                jobTitle: data.jobTitle,
+                department: data.department,
+                phone: data.phone,
+                location: data.location,
+                workSchedule: data.workSchedule,
                 globalRole: data.globalRole,
                 active: data.active,
             },

@@ -203,10 +203,12 @@ export async function myAction(formData: FormData) {
 
 ## Viktige regler for AI-agenter
 1. **Les dette dokumentet** FØR du gjør endringer.
-2. **Sjekk `PROJECT_MANIFEST.md`** for fullstendig implementeringsstatus.
-3. **ALDRI hardkod farger** — bruk CSS-variabler (se branding-system).
-4. **ALDRI bruk emojis** i kode — bruk `lucide-react`.
-5. **Middleware = kun `auth.config.ts`** — ingen Prisma/Node.js.
-6. **Server Actions** returnerer `{ success: true }` eller `{ error: string }`.
-7. **Prisma v7 = alltid adapter** i `src/lib/prisma.ts`.
-8. **Ved type-endringer i session** → oppdater `src/types/next-auth.d.ts`.
+2. **Sjekk `PROJECT_MANIFEST.md`** for fullstendig implementeringsstatus — gå gjennom ALLE seksjoner og sjekk hva som er ferdig (✅), hva som er neste (❌), og hva som er delvis.
+3. **Etter fullført oppgave:** Foreslå alltid neste naturlige steg fra `PROJECT_MANIFEST.md` sin prioriterte liste.
+4. **ALDRI hardkod farger** — bruk CSS-variabler (se branding-system).
+5. **ALDRI bruk emojis** i kode — bruk `lucide-react`.
+6. **Middleware = kun `auth.config.ts`** — ingen Prisma/Node.js.
+7. **Server Actions** returnerer `{ success: true }` eller `{ error: string }`.
+8. **Prisma v7 = alltid adapter** i `src/lib/prisma.ts`.
+9. **Ved type-endringer i session** → oppdater `src/types/next-auth.d.ts`.
+10. **Oppdater `PROJECT_MANIFEST.md`** når oppgaver fullføres — flytt items fra ❌ til ✅.

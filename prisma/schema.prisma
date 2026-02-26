@@ -77,9 +77,18 @@ model User {
   
   firstName     String?
   lastName      String?
-  avatarUrl     String?
+  avatarUrl     String?  @db.Text
   
-  // SCIM st\u00f8tte attributter
+  // Ansatt-profil
+  jobTitle      String?   // Stillingstittel
+  department    String?   // Avdeling
+  bio           String?   @db.Text // Biografi / om meg
+  phone         String?   // Telefonnummer
+  location      String?   // Arbeidssted / kontor
+  workSchedule  String?   // Arbeidstider (f.eks. "08:00–16:00")
+  startDate     DateTime? // Startdato i organisasjonen
+  
+  // SCIM støtte attributter
   externalId    String?  // ID fra kundens IdP
   active        Boolean   @default(true)
   
@@ -137,6 +146,7 @@ model Group {
   id          String   @id @default(uuid())
   name        String
   description String?
+  color       String?  // Hex farge for gruppen (f.eks. "#3b82f6")
   
   tenantId    String
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)

@@ -274,19 +274,19 @@
     letter-spacing: 0.02em;
 }
 
-.roleAdmin {
+.roleUser {
     background: color-mix(in srgb, var(--color-accent-blue) 15%, transparent);
     color: var(--color-accent-blue);
 }
 
-.roleUser {
-    background: color-mix(in srgb, var(--color-text-secondary) 15%, transparent);
-    color: var(--color-text-secondary);
+.roleAdmin {
+    background: color-mix(in srgb, var(--color-warning) 15%, transparent);
+    color: var(--color-warning);
 }
 
 .roleSystem {
-    background: color-mix(in srgb, var(--color-warning) 15%, transparent);
-    color: var(--color-warning);
+    background: color-mix(in srgb, var(--color-danger) 15%, transparent);
+    color: var(--color-danger);
 }
 
 .statusBadge {
@@ -391,11 +391,76 @@
     max-width: 400px;
 }
 
+/* ── Avatar image ──────────────────────────────── */
+
+.avatarImg {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.userJobTitle {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    opacity: 0.8;
+}
+
 /* ── Groups column ─────────────────────────────── */
 
-.groupCount {
-    font-size: 0.8rem;
+.groupBadges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+}
+
+.groupBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 100px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    background: color-mix(in srgb, var(--color-accent-blue) 12%, transparent);
+    color: var(--color-accent-blue);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+}
+
+.groupBadge:hover {
+    background: color-mix(in srgb, var(--color-accent-blue) 20%, transparent);
+    transform: translateY(-1px);
+}
+
+.groupMore {
+    font-size: 0.7rem;
     color: var(--color-text-secondary);
+    font-weight: 500;
+}
+
+.groupNone {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    opacity: 0.5;
+}
+
+/* ── Form divider & section label ──────────────── */
+
+.formDivider {
+    height: 1px;
+    background: var(--color-border);
+    margin: 8px 0 4px;
+}
+
+.formSectionLabel {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
 }
 
 /* ── Date ──────────────────────────────────────── */
@@ -558,6 +623,16 @@
 .formSelect:focus {
     border-color: var(--color-accent-blue);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent-blue) 15%, transparent);
+}
+
+.formSelect:hover {
+    border-color: color-mix(in srgb, var(--color-accent-blue) 50%, transparent);
+}
+
+.formSelect option {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    padding: 8px 12px;
 }
 
 .formRow {

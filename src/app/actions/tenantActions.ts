@@ -27,12 +27,12 @@ export async function createTenantAndAssign(formData: FormData) {
             },
         });
 
-        // 2. Oppdater Bruker
+        // 2. Oppdater Bruker – oppretteren får SYSTEM_ADMIN (høyeste tilgang)
         await prisma.user.update({
             where: { id: session.user.id },
             data: {
                 tenantId: newTenant.id,
-                globalRole: 'TENANT_ADMIN',
+                globalRole: 'SYSTEM_ADMIN',
             },
         });
 
