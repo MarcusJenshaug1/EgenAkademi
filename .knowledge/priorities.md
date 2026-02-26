@@ -11,21 +11,21 @@
 
 | # | Task | ICE | Status | Notes |
 |---|---|---|---|---|
-| 1 | Content block editor for lessons | 8.0 | Not started | Core MVP feature — lessons need actual content |
-| 2 | Course assignment UI | 7.7 | Not started | DB model ready, UI missing. Needed for end-to-end flow |
+| 1 | SCORM 1.2/2004 import + runtime | 6.0 | Not started | Enterprise requirement, complex. imsmanifest.xml, JS API |
+| 2 | Custom domain / subdomain support | 5.7 | Not started | DNS verification, CNAME, auto-TLS. Domain status panel |
+| 3 | Frister og resertifisering | 5.3 | Not started | Due dates, recertification intervals, escalation logic |
 
 ### SCHEDULE (Important + Not Urgent)
 
 | # | Task | ICE | Status | Notes |
 |---|---|---|---|---|
-| 3 | Learner-facing course player | 7.3 | Not started | Front-end for students to consume courses |
-| 4 | Progress tracking system | 7.0 | Not started | DB models exist (`LessonProgress`, `ModuleProgress`, `ProgressEvent`) |
-| 5 | SCORM 1.2/2004 import + runtime | 6.0 | Not started | Enterprise requirement, complex |
-| 6 | Custom domain / subdomain support | 5.7 | Not started | DNS verification, CNAME, auto-TLS |
-| 7 | Session/event management | 5.3 | Not started | Instructor-led training support |
-| 8 | Admin analytics dashboard | 5.0 | Not started | Completion rates, drill-downs, exports |
-| 9 | Onboarding program templates | 4.7 | Not started | "New hire", "New manager" etc. |
-| 10 | UI gating by tenant plan | 4.3 | Not started | Feature flag system exists, UI enforcement missing |
+| 4 | Admin analytics dashboard | 5.7 | Not started | Real-time learning paths, deadline violations, drill-downs |
+| 5 | Session/event management | 5.3 | Not started | Instructor-led: scheduling, enrollment, attendance, notifications |
+| 6 | Onboarding program templates | 5.0 | Not started | "Nyansatt", "Ny leder", auto-assignment, timed rollout |
+| 7 | UI gating by tenant plan | 4.7 | Not started | Feature flag system exists, UI enforcement + system admin panel missing |
+| 8 | CSV export / BI API | 4.3 | Not started | Users, courses, completions, test results |
+| 9 | Dynamic groups (rule-based) | 4.0 | Not started | Auto-membership from user attributes |
+| 10 | Storybook setup + component library | 3.7 | Not started | Reusable components, Autodocs, accessibility testing |
 
 ### DELEGATE (Not Important + Urgent)
 
@@ -43,16 +43,16 @@ Each score is (Impact + Confidence + Ease) / 3, rated 1-10.
 
 | Task | Impact | Confidence | Ease | ICE |
 |---|---|---|---|---|
-| Content block editor | 9 | 8 | 7 | 8.0 |
-| Course assignment UI | 8 | 8 | 7 | 7.7 |
-| Learner course player | 9 | 7 | 6 | 7.3 |
-| Progress tracking | 8 | 7 | 6 | 7.0 |
 | SCORM import/runtime | 8 | 5 | 5 | 6.0 |
 | Custom domain support | 6 | 6 | 5 | 5.7 |
+| Frister og resertifisering | 7 | 5 | 4 | 5.3 |
+| Admin analytics dashboard | 7 | 6 | 4 | 5.7 |
 | Session/event mgmt | 6 | 6 | 4 | 5.3 |
-| Admin analytics | 6 | 5 | 4 | 5.0 |
-| Onboarding templates | 5 | 5 | 4 | 4.7 |
-| UI gating by plan | 4 | 5 | 4 | 4.3 |
+| Onboarding templates | 6 | 5 | 4 | 5.0 |
+| UI gating by plan | 5 | 5 | 4 | 4.7 |
+| CSV export / BI API | 5 | 5 | 3 | 4.3 |
+| Dynamic groups | 4 | 5 | 3 | 4.0 |
+| Storybook setup | 3 | 5 | 3 | 3.7 |
 
 ---
 
@@ -66,11 +66,23 @@ Each score is (Impact + Confidence + Ease) / 3, rated 1-10.
 - [x] User, group, role management
 - [x] User profile with avatar
 - [x] Feature flag system (`TenantPlan`, addons, trial)
+- [x] Content block editor (LessonBlockEditor with per-type editing, preview, ordering, CRUD)
+- [x] Course assignment UI (assignment tab with create/delete/activate/pause rules, force-enroll)
+- [x] Learner-facing course player (shell, dashboard, course detail, player with content blocks, progress bar)
+- [x] Progress tracking system (LessonProgress, ModuleProgress, ProgressEvent, mark-as-complete)
+- [x] Learner dashboard (continue-lesson, stats, in-progress/overdue/completed courses)
+- [x] My Learning page (status filter, search, sorting)
+- [x] Certificates page (grid view of issued certificates)
+- [x] Notifications page (filter all/unread, mark-as-read, type icons)
+- [x] Learner profile (editable form: name, phone, location, job title, department, bio)
+- [x] Role-based routing (USER to /learn, ADMIN to /admin, with protection)
+- [x] Knowledge management system setup (BASB: PARA + CODE + Eisenhower+ICE)
 
 ---
 
 ## Notes on Prioritization
 
-- **MVP Focus:** Content block editor → Assignment → Player → Progress. This is the end-to-end learning flow.
+- **MVP Core is DONE:** Content blocks, assignment, player, progress tracking, certificates, notifications — full end-to-end learning flow works.
+- **Next focus:** SCORM, custom domains, analytics — features that differentiate the platform for paying customers.
 - **Enterprise features** (SSO, SCIM, compliance, gamification) are Phase 2-3 per manifest.
-- **Market site** is separate track, not blocking MVP.
+- **Market site** is separate track, not blocking core product.
