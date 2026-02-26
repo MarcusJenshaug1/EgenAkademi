@@ -9,26 +9,39 @@ export const authConfig = {
         authorized({ auth, request: { nextUrl } }) {
             const isLoggedIn = !!auth?.user;
             const isOnAdmin = nextUrl.pathname.startsWith('/admin');
+            const isOnLearn = nextUrl.pathname.startsWith('/learn');
             const isOnOnboarding = nextUrl.pathname.startsWith('/onboarding');
 
-            if (isOnAdmin || isOnOnboarding) {
+            // Protected routes: admin, learn, onboarding
+            if (isOnAdmin || isOnLearn || isOnOnboarding) {
                 if (!isLoggedIn) return false; // Redirects til login
             }
 
             if (isLoggedIn) {
-                // tenantId er satt til string i typene v\u00e5re
                 const hasTenant = !!auth.user.tenantId;
+                const isAdmin = auth.user.globalRole === 'TENANT_ADMIN' || auth.user.globalRole === 'SYSTEM_ADMIN';
 
                 if (!hasTenant && !isOnOnboarding) {
                     return Response.redirect(new URL('/onboarding', nextUrl));
                 }
 
                 if (hasTenant && isOnOnboarding) {
-                    return Response.redirect(new URL('/admin', nextUrl));
+                    return Response.redirect(new URL(isAdmin ? '/admin' : '/learn', nextUrl));
+                }
+
+                // Admin-only: block non-admins from /admin
+                if (isOnAdmin && !isAdmin) {
+                    return Response.redirect(new URL('/learn', nextUrl));
                 }
 
                 if (nextUrl.pathname.startsWith('/login')) {
-                    return Response.redirect(new URL(hasTenant ? '/admin' : '/onboarding', nextUrl));
+                    if (!hasTenant) return Response.redirect(new URL('/onboarding', nextUrl));
+                    return Response.redirect(new URL(isAdmin ? '/admin' : '/learn', nextUrl));
+                }
+
+                // Root redirect
+                if (nextUrl.pathname === '/' && hasTenant) {
+                    return Response.redirect(new URL(isAdmin ? '/admin' : '/learn', nextUrl));
                 }
             }
             return true;
