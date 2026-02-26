@@ -201,14 +201,53 @@ export async function myAction(formData: FormData) {
 
 ---
 
+## Knowledge Management System (BASB)
+
+Prosjektet bruker et kunnskapshåndteringssystem basert på Tiago Fortes "Building a Second Brain" (PARA + CODE + Eisenhower+ICE prioritering). Alt ligger i `.knowledge/`-mappen.
+
+### Før du starter arbeid:
+1. **Les `.knowledge/priorities.md`** — gjeldende prioriteringer med ICE-scoring
+2. **Les siste daglige notat** i `.knowledge/daily/` — kontekst fra forrige sesjon
+3. **Les relevant prosjektfil** i `.knowledge/projects/` — aktiv prosjektstatus
+
+### Under arbeid:
+1. **Logg viktige beslutninger** i dagens daglige notat
+2. **Logg problemer og løsninger** i "Work Log"
+3. **Oppdater prosjektfiler** når scope eller status endres
+4. **Fang ny informasjon** i riktig PARA-plassering
+
+### Etter fullført arbeid:
+1. **Oppdater daglig notat** med oppsummering
+2. **Oppdater `priorities.md`** hvis prioriteringer endret seg
+3. **Oppdater prosjektfil** med ny status
+4. **Legg til "Tomorrow / Next Session"** notater for kontinuitet
+5. **Oppdater `PROJECT_MANIFEST.md`** — flytt items fra ❌ til ✅
+
+### Filstruktur:
+```
+.knowledge/
+├── SYSTEM.md              ← Systemregler (les dette for detaljer)
+├── inbox.md               ← Hurtigfangst
+├── priorities.md          ← Eisenhower-matrise + ICE-scoring
+├── daily/YYYY-MM-DD.md    ← Daglige arbeidsnotater
+├── projects/              ← Aktive prosjekter
+├── areas/                 ← Løpende ansvarsområder
+├── resources/             ← Referansemateriale
+└── archive/               ← Fullførte/inaktive elementer
+```
+
+---
+
 ## Viktige regler for AI-agenter
 1. **Les dette dokumentet** FØR du gjør endringer.
-2. **Sjekk `PROJECT_MANIFEST.md`** for fullstendig implementeringsstatus — gå gjennom ALLE seksjoner og sjekk hva som er ferdig (✅), hva som er neste (❌), og hva som er delvis.
-3. **Etter fullført oppgave:** Foreslå alltid neste naturlige steg fra `PROJECT_MANIFEST.md` sin prioriterte liste.
-4. **ALDRI hardkod farger** — bruk CSS-variabler (se branding-system).
-5. **ALDRI bruk emojis** i kode — bruk `lucide-react`.
-6. **Middleware = kun `auth.config.ts`** — ingen Prisma/Node.js.
-7. **Server Actions** returnerer `{ success: true }` eller `{ error: string }`.
-8. **Prisma v7 = alltid adapter** i `src/lib/prisma.ts`.
-9. **Ved type-endringer i session** → oppdater `src/types/next-auth.d.ts`.
-10. **Oppdater `PROJECT_MANIFEST.md`** når oppgaver fullføres — flytt items fra ❌ til ✅.
+2. **Les `.knowledge/priorities.md` og siste daglige notat** FØR du starter arbeid.
+3. **Sjekk `PROJECT_MANIFEST.md`** for fullstendig implementeringsstatus — gå gjennom ALLE seksjoner og sjekk hva som er ferdig (✅), hva som er neste (❌), og hva som er delvis.
+4. **Etter fullført oppgave:** Oppdater daglig notat, priorities.md, og foreslå neste steg.
+5. **ALDRI hardkod farger** — bruk CSS-variabler (se branding-system).
+6. **ALDRI bruk emojis** i kode — bruk `lucide-react`.
+7. **Middleware = kun `auth.config.ts`** — ingen Prisma/Node.js.
+8. **Server Actions** returnerer `{ success: true }` eller `{ error: string }`.
+9. **Prisma v7 = alltid adapter** i `src/lib/prisma.ts`.
+10. **Ved type-endringer i session** → oppdater `src/types/next-auth.d.ts`.
+11. **Oppdater `PROJECT_MANIFEST.md`** når oppgaver fullføres — flytt items fra ❌ til ✅.
+12. **Logg alle viktige beslutninger** i `.knowledge/resources/decisions.md`.
