@@ -36,6 +36,13 @@
 - **Rationale:** Prevents context loss between sessions; provides structured capture/organize/distill workflow
 - **Consequence:** `.knowledge/` folder at project root; daily notes mandatory; AI agent must read/update knowledge system
 
+### ADR-006: Hierarchical daily note folder structure
+- **Date:** 2026-02-26
+- **Decision:** Organize daily notes in `YYYY/MM - MonthName/YYYY-MM-DD.md` subfolders instead of flat `YYYY-MM-DD.md`
+- **Rationale:** Better navigation as notes accumulate over months/years; named month folders are human-readable
+- **Alternatives:** Flat structure (simpler but clutters folder as notes grow); `YYYY/MM/` numeric-only (less readable)
+- **Consequence:** All new daily notes must be created in `daily/YYYY/MM - MonthName/` subfolders; old flat notes migrated
+
 ---
 
 ## Decision Template

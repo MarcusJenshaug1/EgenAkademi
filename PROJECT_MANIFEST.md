@@ -4,21 +4,22 @@
 
 ---
 
-## 🛠 Teknisk Stack
+## Teknisk Stack
 
 | Lag | Teknologi |
 |---|---|
-| Framework | Next.js 15+ (App Router, Turbopack) |
+| Framework | Next.js 16+ (App Router, Turbopack) |
 | Database | PostgreSQL via **Neon.tech** (serverless) |
-| ORM | **Prisma v7** – MÅ bruke `@prisma/adapter-pg` + `pg`-pakken |
-| Auth | **Auth.js v5 (NextAuth beta)** – Magic Links via Nodemailer SMTP |
-| Styling | Vanilla CSS + CSS Modules (glassmorphism, dark mode) |
+| ORM | **Prisma v7** med `@prisma/adapter-pg` + `pg` |
+| Auth | **Auth.js v5 (NextAuth beta)** — Magic Links via **Nodemailer** SMTP |
+| Styling | CSS Modules + CSS Custom Properties (glassmorphism, dark mode) |
 | Ikoner | **`lucide-react`** — ALDRI emojis |
-| Typografi | System font stack (kan utvides til Sana Sans / Inter) |
+| Editor | **Lexical** v0.41 — rik tekst-editor for kursinnhold |
+| Typografi | System font stack + Google Fonts per tenant |
 
 ---
 
-## 🎨 Designregler (OBLIGATORISKE)
+## Designregler (OBLIGATORISKE)
 
 1. **Null emojis** – Alle ikoner er `lucide-react` SVG-vektorer.
 2. **Dark First** – Mørk base (`#0a0a0a`), blå accent (`#3b82f6`).
@@ -47,7 +48,7 @@
 
 ---
 
-## 🏗 Arkitektur – Viktige mønstre
+## Arkitektur — Viktige monstre
 
 ### Multi-Tenancy
 - Alle brukere tilhører en `Tenant` (organisasjon).
@@ -89,12 +90,12 @@ export async function myAction(formData: FormData) {
 
 ---
 
-## ✅ Fullstendig Implementeringsstatus
+## Fullstendig Implementeringsstatus
 
-### ✅ Ferdig implementert
+### Ferdig implementert
 
 #### Fundament
-- [x] Next.js 15 prosjektoppsett med TypeScript og Turbopack
+- [x] Next.js 16 prosjektoppsett med TypeScript og Turbopack
 - [x] PostgreSQL database via Neon.tech
 - [x] Prisma v7 med `pg` driver adapter (nødvendig for v7)
 - [x] CSS Design System: tokens, glassmorphism, dark mode, CSS-variabler
@@ -135,16 +136,29 @@ export async function myAction(formData: FormData) {
 - [x] `User` (med tenantId, globalRole, Auth.js felter)
 - [x] `Account`, `Session`, `VerificationToken` (Auth.js standard)
 - [x] `Group`, `GroupMembership`
+- [x] `TenantPlan` enum (`FREE`, `STANDARD`, `PLUS`, `ENTERPRISE`) på `Tenant`
+- [x] `Tenant.addons` string-array for feature-flagg
+- [x] `Tenant.trialEndsAt` for prøveperiode
+- [x] Kurs-system: `Course`, `CourseVersion`, `Module`, `Lesson`, `LessonBlock`
+- [x] Taksonomi: `CourseCategory`, `Tag`, `CourseCategoryLink`, `CourseTagLink`
+- [x] Tildeling: `CourseAssignmentRule`, `CourseEnrollment`
+- [x] Progresjon: `LessonProgress`, `ModuleProgress`, `ProgressEvent`
+- [x] Sertifikater: `Certificate` (utstedelse, utløp, sertifikatnummer, mal-data)
+- [x] Varsler: `Notification` med `NotificationType` enum (COURSE_ASSIGNED, COURSE_COMPLETED, CERTIFICATE_ISSUED, DEADLINE_REMINDER, GENERAL, SYSTEM)
+- [x] Enums: `CourseVisibility`, `CourseStatus`, `CourseDifficulty`, `CourseVersionState`, `LessonType`, `CompletionRule`, `BlockType`, `GatingPolicy`, `TagType`, `AssignmentScope`, `AssignmentState`, `EnrollmentStatus`, `ProgressStatus`, `NotificationType`
+
+#### Kurs-system (Admin)
+- [x] Kurskatalog med grid-visning, søk, statusfilter (`/admin/courses`)
+- [x] Opprett/slett/arkiver/gjenopprett kurs
+- [x] Taksonomihåndtering (kategorier + tagger) inline i katalog
+- [x] Kursdetalj med faner: Oversikt, Byggeren, Versjoner (`/admin/courses/[courseId]`)
+- [x] Kursbygger: moduler med leksjoner, CRUD, rekkefølge
+- [x] Publisering og versjonshåndtering
+- [x] Server actions: `courseActions.ts`, `courseBuilderActions.ts`
 
 ---
 
-### ✅ Fullstendig gjennomført (branding separat)
-
-- [~] **Dynamisk CSS-injeksjon:** ~~Fargene injiseres ikke dynamisk~~ → **FERDIG.** Server-side CSS-variabel-injeksjon fra database i `src/app/layout.tsx`. Alle 14 felter + 7 avledede variabler.
-
----
-
-### ❌ Ikke startet (prioritert rekkefølge)
+### Ikke startet (prioritert rekkefølge)
 
 #### Fase 1 – Kjernefunksjonalitet (MVP)
 
@@ -154,13 +168,27 @@ export async function myAction(formData: FormData) {
 - [ ] Domain status-panel for administrator
 
 **Læringsadministrasjon**
-- [ ] Kurskatalog (kategorier, tags, målgruppe, varighet, type)
-- [ ] Kursbygger (modulbasert: tekst, bilde, video, quiz, dokument)
+- [x] Kurskatalog (kategorier, tags, målgruppe, varighet, type) *(admin CRUD, grid-visning, søk, filter)*
+- [x] Kursbygger (modulbasert: tekst, bilde, video, quiz, dokument) *(modul/leksjon CRUD, versjonspublisering)*
+- [x] Innholdsblokk-editor (tekst, bilder, video, quiz, dokument, embed inni leksjoner) *(LessonBlockEditor.tsx med per-type redigering, forhåndsvisning, rekkefølge, CRUD)*
 - [ ] SCORM 1.2 / 2004 import og runtime (imsmanifest.xml, JS API)
-- [ ] Kursversjonering (uten å ødelegge fullføringshistorikk)
-- [ ] Tildeling av kurs til org, grupper, roller eller enkeltpersoner
+- [x] Kursversjonering (uten å ødelegge fullføringshistorikk) *(draft→published→archived, currentPublishedVersionId)*
+- [x] Tildeling av kurs til org, grupper, roller eller enkeltpersoner *(Tildeling-fane med opprett/slett/aktiver/pause regler, tving-innmelding)*
 - [ ] Frister og gjentakelse / resertifisering
 - [ ] Eskaleringslogikk (påminnelser til bruker → leder/HR)
+- [x] Lærerfronted kursvisning (kursspiller for elever) *(learner shell, dashboard, min læring, kursdetalj, player med innholdsblokker, fremdriftsbar, merk som fullført)*
+
+**Learner Experience (ny)**
+- [x] Learner shell (`/learn/*`) med egen sidebar, profil, navigasjon
+- [x] Dashboard med fortsett-leksjon, statistikk, pågående/forfalt/fullført
+- [x] Min læring-side med status-filter, søk, sortering
+- [x] Kursdetalj (learner) med moduloversikt, fremdrift, start/fortsett
+- [x] Kursspiller med sidebar-TOC, innholdsblokker (tekst, video, bilde, fil), merk som fullført, prev/next-navigasjon
+- [x] Rollebasert ruting: USER → `/learn`, TENANT_ADMIN/SYSTEM_ADMIN → `/admin`, med beskyttelse
+- [x] Server actions for learner: dashboard, mine kurs, kursdetalj, player, markering, tracking
+- [x] Sertifikater-side (`/learn/certificates`) med grid-visning av utstedte sertifikater
+- [x] Varsler-side (`/learn/notifications`) med filter (alle/uleste), merk som lest, type-ikoner
+- [x] Profil-side (`/learn/profile`) med redigerbart skjema (navn, telefon, lokasjon, stilling, avdeling, bio)
 
 **Planlagte sesjoner & Events**
 - [ ] Opprette sesjoner (dato, tid, kapasitet, sted/lenke, instruktør)
@@ -177,8 +205,8 @@ export async function myAction(formData: FormData) {
 - [ ] Individuelle brukerprofiler med ferdighetsprofil
 
 **Progresjon & Analytics**
-- [ ] Progresjonssporing per kurs per bruker
-- [ ] Fullføringsstatus og -dato
+- [x] Progresjonssporing per kurs per bruker *(completionPercentCached, LessonProgress, ModuleProgress, ProgressEvent)*
+- [x] Fullføringsstatus og -dato *(CourseEnrollment.completedAt, status: NOT_STARTED/IN_PROGRESS/COMPLETED)*
 - [ ] Sanntidsnær admin-dashboard (aktive læringsløp, fristbrudd)
 - [ ] Drill-down per avdeling/gruppe/rolle
 - [ ] CSV-eksport / API for BI-uttrekk (brukere, kurs, fullføringer, testresultater)
@@ -237,7 +265,7 @@ export async function myAction(formData: FormData) {
 
 ---
 
-## 💰 Prismodell & Tilleggstjenester
+## Prismodell og Tilleggstjenester
 
 ### Abonnement (maanedlig/aarlig)
 
@@ -256,16 +284,18 @@ export async function myAction(formData: FormData) {
 | **Managed Setup** | Engangskjøp | Vi setter opp og konfigurerer hele plattformen for kunden (branding, SSO, SCIM, domene, kursstruktur) |
 | **Migrasjonsassistanse** | Engangskjøp | Import av eksisterende kursinnhold, brukere og fullføringsdata fra annet LMS |
 
-### Feature-flagging (implementeres)
-- Custom branding-seksjonen i admin vises kun for tenants med `plan >= 'plus'`
-- Brand Detector vises kun for tenants med `addons.includes('brand-detector')`
-- System-admin kan aktivere/deaktivere features per tenant
-
-> **TODO:** Implementer `Tenant.plan` enum (`STANDARD`, `PLUS`, `ENTERPRISE`) og `Tenant.addons` string-array i Prisma-skjemaet. Gate UI-seksjoner basert på disse feltene.
+### Feature-flagging (implementert)
+- [x] `TenantPlan` enum (`FREE`, `STANDARD`, `PLUS`, `ENTERPRISE`) i Prisma-schema
+- [x] `Tenant.addons` string-array for tilleggstjenester
+- [x] `Tenant.trialEndsAt` for prøveperiodehåndtering
+- [x] `src/lib/features.ts` – sentralisert feature-gate med plan-hierarki, addon-sjekk, trial-sjekk
+- [x] `tenantPlan` inkludert i JWT-session for klient/server tilgangssjekk
+- [ ] UI-gating av admin-seksjoner basert på plan
+- [ ] System-admin panel for å endre plan/addons per tenant
 
 ---
 
-## 🌐 Markedsnettsted (ikke startet)
+## Markedsnettsted (ikke startet)
 
 - [ ] Forside med verdiforslag, "Bestill demo", whitelabel-profil
 - [ ] "Security you can stand by"-seksjon
@@ -275,7 +305,7 @@ export async function myAction(formData: FormData) {
 
 ---
 
-## 🔑 Viktige regler for AI-agenter
+## Viktige regler for AI-agenter
 
 > **Se `.github/copilot-instructions.md`** for fullstendig regelark inkludert branding-system, CSS-variabel-katalog og koderegler.
 

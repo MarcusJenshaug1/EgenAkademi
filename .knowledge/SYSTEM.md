@@ -68,23 +68,43 @@ For items in the same priority bucket, score 1-10 on:
 
 ## Daily Notes
 
-**Location:** `.knowledge/daily/YYYY-MM-DD.md`
+**Location:** `.knowledge/daily/YYYY/MM - MonthName/YYYY-MM-DD.md`
 
-Every work session gets a daily note. Structure:
+Daily notes are organized into year and named month subfolders for easy navigation:
+
+```
+.knowledge/daily/
+├── 2026/
+│   ├── 01 - January/
+│   │   ├── 2026-01-15.md
+│   │   └── 2026-01-28.md
+│   ├── 02 - February/
+│   │   ├── 2026-02-03.md
+│   │   └── 2026-02-26.md
+│   ├── 03 - March/
+│   │   └── ...
+│   └── ...
+└── 2027/
+    └── ...
+```
+
+Month folder names use the format `MM - MonthName` (e.g., `01 - January`, `02 - February`, ..., `12 - December`).
+
+**When creating a daily note:** Always create it inside the correct `YYYY/MM - MonthName/` subfolder. Create the subfolders if they don't exist.
 
 ```markdown
 # Daily Note — YYYY-MM-DD
 
 ## Focus
-What are we working on today? (Link to project/priority)
+What are we working on today?
 
 ## Work Log
-- HH:MM — What was done (with links to files changed)
+- HH:MM — What was done
 - HH:MM — Decision made: [description] → [rationale]
 - HH:MM — Problem encountered: [description] → [resolution]
 
 ## Decisions Made
-- **Decision:** [what] — **Rationale:** [why] — **Alternatives considered:** [what else]
+- **Decision:** [what] — **Rationale:** [why] — **Alternatives:** [what else]
 
 ## Discoveries
 - Things learned, patterns noticed, insights gained
@@ -102,7 +122,7 @@ What are we working on today? (Link to project/priority)
 
 ### Before Starting Work
 1. **Read `.knowledge/priorities.md`** to know current priorities
-2. **Read the latest daily note** in `.knowledge/daily/` to get session context
+2. **Read the latest daily note** in `.knowledge/daily/YYYY/MM - MonthName/` (check the most recent year → most recent month → latest file)
 3. **Read the relevant project file** in `.knowledge/projects/` for active project state
 4. **Check `PROJECT_MANIFEST.md`** for implementation status
 
@@ -120,9 +140,9 @@ What are we working on today? (Link to project/priority)
 5. **Move completed items** to archive when a project is done
 
 ### When Resuming After a Break
-1. Read the latest daily note's "Tomorrow / Next Session" section
+1. Read the latest daily note's "Tomorrow / Next Session" (find it in `.knowledge/daily/YYYY/MM - MonthName/`)
 2. Read `priorities.md` for current state
-3. Create a new daily note for today
+3. Create a new daily note for today in the correct `YYYY/MM - MonthName/` subfolder
 4. Continue from where we left off
 
 ---
@@ -131,7 +151,7 @@ What are we working on today? (Link to project/priority)
 
 | Type | Pattern | Example |
 |---|---|---|
-| Daily note | `YYYY-MM-DD.md` | `2026-02-26.md` |
+| Daily note | `daily/YYYY/MM - MonthName/YYYY-MM-DD.md` | `daily/2026/02 - February/2026-02-26.md` |
 | Project | `kebab-case.md` | `course-builder.md` |
 | Area | `kebab-case.md` | `branding-system.md` |
 | Resource | `kebab-case.md` | `lms-research.md` |
@@ -147,7 +167,9 @@ What are we working on today? (Link to project/priority)
 ├── inbox.md               ← Quick capture. Process regularly.
 ├── priorities.md          ← Current prioritization (Eisenhower + ICE)
 ├── daily/
-│   └── YYYY-MM-DD.md      ← Daily work notes
+│   └── YYYY/
+│       └── MM - MonthName/
+│           └── YYYY-MM-DD.md  ← Daily work notes
 ├── projects/              ← PARA: Active projects
 ├── areas/                 ← PARA: Ongoing responsibilities
 ├── resources/             ← PARA: Reference material
