@@ -80,9 +80,8 @@ export async function updateBranding(formData: FormData) {
         });
 
         return { success: true };
-    } catch (e: any) {
-        console.error("Feil ved oppdatering av branding:", e);
-        return { error: e.message || 'En uventet systemfeil oppstod.' };
+    } catch {
+        return { error: 'En uventet systemfeil oppstod.' };
     }
 }
 
@@ -109,8 +108,7 @@ export async function resetBranding() {
         });
 
         return { success: true };
-    } catch (e: any) {
-        console.error("Feil ved tilbakestilling av branding:", e);
-        return { error: e.message || 'En uventet systemfeil oppstod.' };
+    } catch {
+        return { error: 'En uventet systemfeil oppstod.' };
     }
 }

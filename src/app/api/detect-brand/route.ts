@@ -458,7 +458,7 @@ export async function POST(request: NextRequest) {
                         'Du kan prøve å laste opp logo og velge farger manuelt.',
                 }, { status: 422 });
             }
-            return NextResponse.json({ error: `Kunne ikke hente nettstedet: ${msg}` }, { status: 500 });
+            return NextResponse.json({ error: 'Kunne ikke hente nettstedet' }, { status: 500 });
         }
 
         /* ── Accumulator ────────────────────────────────────── */
@@ -1222,8 +1222,7 @@ export async function POST(request: NextRequest) {
         };
 
         return NextResponse.json(result);
-    } catch (error: unknown) {
-        console.error('Brand detection error:', error);
+    } catch {
         return NextResponse.json(
             { error: 'Intern feil under merkevaredeteksjon' },
             { status: 500 },

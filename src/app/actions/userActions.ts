@@ -91,7 +91,7 @@ export async function listUsers(search?: string): Promise<{ users: UserListItem[
             })),
         };
     } catch (e: unknown) {
-        return { error: e instanceof Error ? e.message : 'Ukjent feil' };
+        return { error: 'Ukjent feil' };
     }
 }
 
@@ -175,7 +175,7 @@ export async function getUser(userId: string): Promise<{ user: UserDetail } | { 
             },
         };
     } catch (e: unknown) {
-        return { error: e instanceof Error ? e.message : 'Ukjent feil' };
+        return { error: 'Ukjent feil' };
     }
 }
 
@@ -232,7 +232,7 @@ export async function updateUser(
 
         return { success: true };
     } catch (e: unknown) {
-        return { error: e instanceof Error ? e.message : 'Ukjent feil' };
+        return { error: 'Ukjent feil' };
     }
 }
 
@@ -281,7 +281,7 @@ export async function inviteUser(
 
         return { success: true, userId: user.id };
     } catch (e: unknown) {
-        return { error: e instanceof Error ? e.message : 'Ukjent feil' };
+        return { error: 'Ukjent feil' };
     }
 }
 
@@ -314,7 +314,7 @@ export async function removeUser(userId: string): Promise<{ success: true } | { 
 
         return { success: true };
     } catch (e: unknown) {
-        return { error: e instanceof Error ? e.message : 'Ukjent feil' };
+        return { error: 'Ukjent feil' };
     }
 }
 
@@ -338,6 +338,6 @@ export async function getUserStats(): Promise<{
 
         return { total, active, admins, inactive };
     } catch (e: unknown) {
-        return { error: e instanceof Error ? e.message : 'Ukjent feil' };
+        return { error: 'Ukjent feil' };
     }
 }

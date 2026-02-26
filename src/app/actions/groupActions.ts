@@ -86,7 +86,7 @@ export async function listGroups(search?: string): Promise<{ groups: GroupListIt
             })),
         };
     } catch (e: unknown) {
-        return { error: e instanceof Error ? e.message : 'Ukjent feil' };
+        return { error: 'Ukjent feil' };
     }
 }
 
@@ -150,7 +150,7 @@ export async function getGroup(groupId: string): Promise<{ group: GroupDetail } 
             },
         };
     } catch (e: unknown) {
-        return { error: e instanceof Error ? e.message : 'Ukjent feil' };
+        return { error: 'Ukjent feil' };
     }
 }
 
@@ -179,7 +179,7 @@ export async function createGroup(data: {
 
         return { success: true, groupId: group.id };
     } catch (e: unknown) {
-        return { error: e instanceof Error ? e.message : 'Ukjent feil' };
+        return { error: 'Ukjent feil' };
     }
 }
 
@@ -213,7 +213,7 @@ export async function updateGroup(
 
         return { success: true };
     } catch (e: unknown) {
-        return { error: e instanceof Error ? e.message : 'Ukjent feil' };
+        return { error: 'Ukjent feil' };
     }
 }
 
@@ -235,7 +235,7 @@ export async function deleteGroup(groupId: string): Promise<{ success: true } | 
 
         return { success: true };
     } catch (e: unknown) {
-        return { error: e instanceof Error ? e.message : 'Ukjent feil' };
+        return { error: 'Ukjent feil' };
     }
 }
 
@@ -274,7 +274,7 @@ export async function addGroupMember(
 
         return { success: true };
     } catch (e: unknown) {
-        return { error: e instanceof Error ? e.message : 'Ukjent feil' };
+        return { error: 'Ukjent feil' };
     }
 }
 
@@ -304,7 +304,7 @@ export async function removeGroupMember(
 
         return { success: true };
     } catch (e: unknown) {
-        return { error: e instanceof Error ? e.message : 'Ukjent feil' };
+        return { error: 'Ukjent feil' };
     }
 }
 
@@ -356,7 +356,7 @@ export async function listAvailableMembers(
 
         return { users };
     } catch (e: unknown) {
-        return { error: e instanceof Error ? e.message : 'Ukjent feil' };
+        return { error: 'Ukjent feil' };
     }
 }
 
@@ -381,6 +381,6 @@ export async function getGroupStats(): Promise<{
 
         return { totalGroups, totalMemberships, emptyGroups };
     } catch (e: unknown) {
-        return { error: e instanceof Error ? e.message : 'Ukjent feil' };
+        return { error: 'Ukjent feil' };
     }
 }
