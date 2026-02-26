@@ -1,0 +1,213 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* ── Header ──────────────────────────────────── */
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.headerIcon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--color-accent-blue) 10%, transparent);
+    color: var(--color-accent-blue);
+    border-radius: var(--radius-md);
+}
+
+.headerText {
+    flex: 1;
+}
+
+.title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.subtitle {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    margin: 4px 0 0 0;
+}
+
+.markAllBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: color-mix(in srgb, var(--color-accent-blue) 10%, transparent);
+    color: var(--color-accent-blue);
+    border: 1px solid color-mix(in srgb, var(--color-accent-blue) 20%, transparent);
+    border-radius: var(--radius-md);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.markAllBtn:hover {
+    background: color-mix(in srgb, var(--color-accent-blue) 15%, transparent);
+}
+
+/* ── Filter bar ──────────────────────────────── */
+
+.filterBar {
+    display: flex;
+    gap: 8px;
+}
+
+.filterBtn {
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-secondary);
+    font-size: 0.825rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.filterBtn:hover {
+    border-color: var(--color-accent-blue);
+    color: var(--color-text-primary);
+}
+
+.filterBtnActive {
+    background: color-mix(in srgb, var(--color-accent-blue) 10%, transparent);
+    border-color: var(--color-accent-blue);
+    color: var(--color-accent-blue);
+    font-weight: 600;
+}
+
+/* ── Empty state ─────────────────────────────── */
+
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 60px 20px;
+    gap: 12px;
+}
+
+.emptyIcon {
+    color: var(--color-text-secondary);
+    opacity: 0.3;
+}
+
+.emptyTitle {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.emptyText {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    margin: 0;
+    max-width: 400px;
+}
+
+/* ── Notification list ───────────────────────── */
+
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.notifCard {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 18px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    position: relative;
+}
+
+.notifCard:hover {
+    border-color: color-mix(in srgb, var(--color-accent-blue) 30%, transparent);
+}
+
+.notifUnread {
+    background: color-mix(in srgb, var(--color-accent-blue) 3%, var(--color-bg-secondary));
+    border-color: color-mix(in srgb, var(--color-accent-blue) 15%, transparent);
+}
+
+.notifIcon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-bg-surface);
+    border-radius: var(--radius-md);
+    color: var(--color-accent-blue);
+    flex-shrink: 0;
+}
+
+.notifContent {
+    flex: 1;
+    min-width: 0;
+}
+
+.notifHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 4px;
+}
+
+.notifType {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--color-accent-blue);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.notifTime {
+    font-size: 0.725rem;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+
+.notifTitle {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 4px 0;
+}
+
+.notifMessage {
+    font-size: 0.825rem;
+    color: var(--color-text-secondary);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.unreadDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-accent-blue);
+    flex-shrink: 0;
+    margin-top: 8px;
+}

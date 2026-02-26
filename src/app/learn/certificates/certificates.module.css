@@ -1,0 +1,175 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+/* ── Header ──────────────────────────────────── */
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.headerIcon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--color-accent-blue) 10%, transparent);
+    color: var(--color-accent-blue);
+    border-radius: var(--radius-md);
+}
+
+.title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.subtitle {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    margin: 4px 0 0 0;
+}
+
+/* ── Empty state ─────────────────────────────── */
+
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 64px 20px;
+    gap: 12px;
+}
+
+.emptyIcon {
+    color: var(--color-text-secondary);
+    opacity: 0.3;
+}
+
+.emptyTitle {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.emptyText {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    margin: 0;
+    max-width: 400px;
+}
+
+.emptyLink {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 10px 20px;
+    background: var(--color-button-primary);
+    color: var(--color-button-text);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.emptyLink:hover {
+    filter: brightness(1.15);
+}
+
+/* ── Grid ────────────────────────────────────── */
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 18px;
+}
+
+/* ── Certificate Card ────────────────────────── */
+
+.card {
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: border-color 0.15s ease;
+}
+
+.card:hover {
+    border-color: color-mix(in srgb, var(--color-accent-blue) 40%, transparent);
+}
+
+.cardTop {
+    padding: 24px 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.certIcon {
+    color: var(--color-accent-blue);
+    margin-bottom: 4px;
+}
+
+.certTitle {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.certCourse {
+    font-size: 0.825rem;
+    color: var(--color-text-secondary);
+    margin: 0;
+}
+
+.cardMeta {
+    padding: 0 20px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.metaItem {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+.cardActions {
+    padding: 12px 20px;
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    gap: 8px;
+}
+
+.viewCourseBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: color-mix(in srgb, var(--color-accent-blue) 10%, transparent);
+    color: var(--color-accent-blue);
+    border-radius: var(--radius-md);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.viewCourseBtn:hover {
+    background: color-mix(in srgb, var(--color-accent-blue) 15%, transparent);
+}
