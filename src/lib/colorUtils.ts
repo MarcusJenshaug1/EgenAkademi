@@ -287,10 +287,14 @@ export function muteColor(
 /**
  * Derive a border colour from a background.
  * Slightly lighter or darker depending on background luminance.
+ *
+ * `satFactor` controls how much of the background saturation is retained;
+ * a higher value produces a more tinted (and thus more visible) border.
  */
 export function deriveBorder(
     bg: string,
     strength: number = 0.12,
+    satFactor: number = 0.7,
 ): string {
     const [h, s, l] = hexToHsl(bg);
     const bgLum = relativeLuminance(...hexToRgb(bg));
@@ -298,5 +302,105 @@ export function deriveBorder(
         bgLum > 0.5
             ? Math.max(0, l - strength)
             : Math.min(1, l + strength);
-    return hslToHex(h, s * 0.7, newL);
+    return hslToHex(h, Math.min(1, s * satFactor), newL);
+}
+
+// ── Hue / Saturation helpers ──────────────────────────────
+
+/**
+ * Smallest angular distance between two hues (in degrees, 0–180).
+ * Accepts any two hex colours.
+ */
+export function hueDistance(hex1: string, hex2: string): number {
+    const h1 = hexToHsl(hex1)[0] * 360;
+    const h2 = hexToHsl(hex2)[0] * 360;
+    const diff = Math.abs(h1 - h2) % 360;
+    return diff > 180 ? 360 - diff : diff;
+}
+
+/**
+ * Return a copy of `hex` with its HSL saturation set to `targetSat`
+ * (0–1), preserving hue and lightness.
+ */
+export function setSaturation(hex: string, targetSat: number): string {
+    const [h, , l] = hexToHsl(hex);
+    return hslToHex(h, Math.min(1, Math.max(0, targetSat)), l);
+}
+
+/**
+ * Multiply (or otherwise scale) a colour's saturation by `factor`,
+ * preserving hue and lightness. `factor > 1` boosts, `< 1` mutes.
+ */
+export function adjustSaturation(hex: string, factor: number): string {
+    const [h, s, l] = hexToHsl(hex);
+    return hslToHex(h, Math.min(1, Math.max(0, s * factor)), l);
+}
+
+/**
+ * Shift a colour's HSL lightness by `delta` (clamped to 0–1),
+ * preserving hue and saturation.
+ */
+export function adjustLightness(hex: string, delta: number): string {
+    const [h, s, l] = hexToHsl(hex);
+    return hslToHex(h, s, Math.min(1, Math.max(0, l + delta)));
+}
+
+/**
+ * Composite an opaque foreground over an opaque background at `alpha`
+ * (0–1), returning the resulting opaque hex colour. Useful for previewing
+ * how a translucent overlay will read against a solid surface.
+ */
+export function blendOver(fg: string, bg: string, alpha: number): string {
+    const a = Math.min(1, Math.max(0, alpha));
+    const [fr, fgc, fb] = hexToRgb(fg);
+    const [br, bgc, bb] = hexToRgb(bg);
+    return rgbToHex(
+        fr * a + br * (1 - a),
+        fgc * a + bgc * (1 - a),
+        fb * a + bb * (1 - a),
+    );
+}
+
+/**
+ * Normalise a status colour (success/warning/danger) to a vivid, mid-tone
+ * version so it stays unmistakably green/orange/red regardless of how the
+ * incoming default is tuned. Saturation is pushed into [minSat, 1] and
+ * lightness is pulled toward `targetL` while preserving hue.
+ */
+export function vividMidtone(
+    hex: string,
+    minSat: number = 0.7,
+    targetL: number = 0.5,
+    lightnessPull: number = 0.6,
+): string {
+    const [h, s, l] = hexToHsl(hex);
+    const newS = Math.min(1, Math.max(minSat, s));
+    const newL = l + (targetL - l) * Math.min(1, Math.max(0, lightnessPull));
+    return hslToHex(h, newS, newL);
+}
+
+/**
+ * Ensure `fgCandidate` meets `minRatio` against `bg`, then verify it ALSO
+ * meets `secondaryMin` against `bg2`. If the second background fails, the
+ * colour is re-adjusted to satisfy the larger of the two requirements
+ * against whichever background is the worse case, so the returned colour
+ * is guaranteed to clear `minRatio` on `bg` and `secondaryMin` on `bg2`.
+ */
+export function ensureContrastOnBoth(
+    fgCandidate: string,
+    bg: string,
+    bg2: string,
+    minRatio: number = 4.5,
+    secondaryMin: number = minRatio,
+    strategy: 'lighten' | 'darken' | 'auto' = 'auto',
+): string {
+    let result = ensureContrast(fgCandidate, bg, minRatio, strategy);
+    if (contrastRatio(result, bg2) < secondaryMin) {
+        // Re-derive against the harder background, then re-confirm the first.
+        result = ensureContrast(result, bg2, secondaryMin, strategy);
+        if (contrastRatio(result, bg) < minRatio) {
+            result = ensureContrast(result, bg, minRatio, strategy);
+        }
+    }
+    return result;
 }

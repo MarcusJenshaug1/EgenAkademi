@@ -143,6 +143,17 @@
     white-space: nowrap;
 }
 
+.presetInfo {
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+    cursor: help;
+    transition: color 0.15s;
+}
+
+.presetInfo:hover {
+    color: var(--color-accent-blue);
+}
+
 .presetSelect {
     flex: 1;
     max-width: 300px;
@@ -245,6 +256,26 @@
     font-weight: 600;
     color: var(--color-text-primary);
     margin-bottom: 8px;
+}
+
+.resultsNote {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--color-text-secondary);
+    background: color-mix(in srgb, var(--color-accent-blue) 6%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-accent-blue) 14%, transparent);
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin-bottom: 10px;
+}
+
+.resultsNoteIcon {
+    color: var(--color-accent-blue);
+    flex-shrink: 0;
+    margin-top: 1px;
 }
 
 .resultsList {

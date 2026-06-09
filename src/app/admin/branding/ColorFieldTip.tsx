@@ -16,9 +16,9 @@ export interface TipData {
 // ── Source label map ────────────────────────────────────────
 
 const SOURCE_LABELS: Record<TipData['source'], string> = {
-    manual: 'Manual',
-    detektor: 'Detektor',
-    baseline: 'Baseline',
+    manual: 'Fra assistent',
+    detektor: 'Fra URL',
+    baseline: 'Standardforslag',
 };
 
 const SOURCE_STYLE: Record<TipData['source'], string> = {

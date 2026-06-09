@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { updateBranding, resetBranding } from '@/app/actions/brandingActions';
-import { RotateCcw, Check, AlertTriangle, Eye, Save } from 'lucide-react';
+import { RotateCcw, Check, AlertTriangle, Eye, Save, Tag, Wand2 } from 'lucide-react';
 import { HexColorPicker } from 'react-colorful';
 import styles from './branding.module.css';
 import LogoUploader from './LogoUploader';
@@ -14,13 +14,12 @@ import TemplateSelector from './TemplateSelector';
 import ColorFieldTip, { type TipData } from './ColorFieldTip';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import {
-    hexToRgb,
-    relativeLuminance,
     contrastRatio,
     getContrastLevel,
     normalizeHexInput,
-    isValidHex,
+    ensureContrast,
 } from '@/lib/colorUtils';
+import { buildBrandingVars } from '@/lib/brandingVars';
 import {
     deriveBrandingSuggestionsFromRoles,
     type BrandingRoles,
@@ -61,61 +60,77 @@ interface SectionDef {
 const SECTIONS: SectionDef[] = [
     {
         title: 'Bakgrunner',
-        description: 'Kontroller bakgrunnsfargene i hele plattformen.',
+        description: 'Lagene som alt annet hviler på — fra hele siden ned til enkeltkort.',
         fields: [
-            { key: 'colorBgPrimary', label: 'Hovedbakgrunn', hint: 'Brukes som bakgrunn for hele siden' },
-            { key: 'colorBgSecondary', label: 'Sekundær bakgrunn', hint: 'Brukes i kort, paneler og sidebar' },
+            { key: 'colorBgPrimary', label: 'Sidebakgrunn', hint: 'Den dypeste bakgrunnsfargen bak hele innholdsområdet.' },
+            { key: 'colorBgSecondary', label: 'Kort og paneler', hint: 'Bakgrunn for kort, paneler, modaler og dropdowns som ligger oppå hovedbakgrunnen.' },
         ],
     },
     {
         title: 'Tekst',
-        description: 'Alle tekstfarger. Kontrast mot bakgrunn sjekkes automatisk (WCAG AA).',
+        description: 'Tekstfargene. Kontrasten mot bakgrunnen sjekkes automatisk (WCAG AA).',
         fields: [
-            { key: 'colorTextPrimary', label: 'Hovedtekst', hint: 'Overskrifter og brødtekst', contrastAgainst: 'colorBgPrimary' },
-            { key: 'colorTextSecondary', label: 'Sekundærtekst', hint: 'Labels, hjelpetekst, metadata', contrastAgainst: 'colorBgPrimary' },
+            { key: 'colorTextPrimary', label: 'Hovedtekst', hint: 'Overskrifter og brødtekst — den teksten øynene leser mest.', contrastAgainst: 'colorBgPrimary' },
+            { key: 'colorTextSecondary', label: 'Dempet tekst', hint: 'Etiketter, hjelpetekst, metadata og mindre viktig informasjon.', contrastAgainst: 'colorBgPrimary' },
         ],
     },
     {
         title: 'Rammer og skillelinjer',
-        description: 'Kanter på kort, inputfelter og separatorer.',
+        description: 'De tynne linjene som avgrenser og strukturerer grensesnittet.',
         fields: [
-            { key: 'colorBorder', label: 'Border', hint: 'Brukes på alle rammer og skillelinjer' },
+            { key: 'colorBorder', label: 'Kantlinjer', hint: 'Rammer rundt kort og inputfelter, samt skillelinjer mellom seksjoner.' },
         ],
     },
     {
-        title: 'Aksentfarge',
-        description: 'Merkevarefargen brukt på lenker, fokusmarkering og viktige UI-elementer.',
+        title: 'Merkevarefarge',
+        description: 'Signaturfargen som binder grensesnittet til merkevaren din.',
         fields: [
-            { key: 'colorAccent', label: 'Accent', hint: 'Lenker, fokusringer, valgte elementer', contrastAgainst: 'colorBgPrimary' },
+            { key: 'colorAccent', label: 'Merkevarefarge', hint: 'Lenker, fokusring og valgte elementer.', contrastAgainst: 'colorBgPrimary' },
         ],
     },
     {
         title: 'Knapper',
-        description: 'Farger for primærknapper.',
+        description: 'Utseendet på de viktigste handlingsknappene.',
         fields: [
-            { key: 'colorButtonPrimary', label: 'Knapp bakgrunn', hint: 'Bakgrunnsfargen for primærknapper' },
-            { key: 'colorButtonText', label: 'Knapp tekst', hint: 'Tekstfargen inne i knappen', contrastAgainst: 'colorButtonPrimary' },
+            { key: 'colorButtonPrimary', label: 'Knappefarge', hint: 'Fyllfargen bak primærknapper som «Lagre» og «Opprett».' },
+            { key: 'colorButtonText', label: 'Knappetekst', hint: 'Teksten oppå primærknapper.', contrastAgainst: 'colorButtonPrimary' },
         ],
     },
     {
-        title: 'Sidebar / Navigasjon',
-        description: 'Farger brukt i admin-sidebaren.',
+        title: 'Sidemeny',
+        description: 'Navigasjonspanelet til venstre i admin-grensesnittet.',
         fields: [
-            { key: 'colorSidebarBg', label: 'Sidebar bakgrunn', hint: 'Bakgrunn for navigasjonspanelet' },
-            { key: 'colorSidebarText', label: 'Sidebar tekst', hint: 'Menypunkter i sidebaren', contrastAgainst: 'colorSidebarBg' },
-            { key: 'colorSidebarActive', label: 'Aktiv lenke', hint: 'Markering av valgt menyelement', contrastAgainst: 'colorSidebarBg' },
+            { key: 'colorSidebarBg', label: 'Menybakgrunn', hint: 'Bakgrunnsflaten bak hele sidemenyen.' },
+            { key: 'colorSidebarText', label: 'Menytekst', hint: 'Tekst på menypunkter som ikke er valgt.', contrastAgainst: 'colorSidebarBg' },
+            { key: 'colorSidebarActive', label: 'Aktivt menypunkt', hint: 'Markeringen av siden du står på akkurat nå.', contrastAgainst: 'colorSidebarBg' },
         ],
     },
     {
         title: 'Statusfarger',
-        description: 'Farger for suksess, advarsel og feilmeldinger.',
+        description: 'Signalfargene som forteller om noe gikk bra, krever oppmerksomhet eller feilet.',
         fields: [
-            { key: 'colorSuccess', label: 'Suksess', hint: 'Brukes ved vellykkede handlinger' },
-            { key: 'colorWarning', label: 'Advarsel', hint: 'Brukes for advarsler og påminnelser' },
-            { key: 'colorDanger', label: 'Feil', hint: 'Brukes for feil og destruktive handlinger' },
+            { key: 'colorSuccess', label: 'Suksess', hint: 'Bekreftelser og vellykkede handlinger.' },
+            { key: 'colorWarning', label: 'Advarsel', hint: 'Advarsler, påminnelser og ting som nærmer seg en frist.' },
+            { key: 'colorDanger', label: 'Feil', hint: 'Feilmeldinger og destruktive handlinger som sletting.' },
         ],
     },
 ];
+
+// Norsk visningsnavn per fargefelt — brukes i previewens etiketter og kontrastbanneret.
+const FIELD_LABELS: Record<string, string> = {};
+for (const section of SECTIONS) {
+    for (const field of section.fields) {
+        FIELD_LABELS[field.key] = field.label;
+    }
+}
+
+// Hvilken bakgrunn hvert felt sjekkes mot (for kontrastbanneret).
+const CONTRAST_AGAINST: Record<string, string> = {};
+for (const section of SECTIONS) {
+    for (const field of section.fields) {
+        if (field.contrastAgainst) CONTRAST_AGAINST[field.key] = field.contrastAgainst;
+    }
+}
 
 // -- Kontrastberegning importert fra @/lib/colorUtils --
 
@@ -127,7 +142,7 @@ function isValidHex6(v: string): boolean {
 
 // -- Fargefelt-komponent med react-colorful --
 function ColorField({
-    fieldKey, label, hint, value, defaultValue, contrastValue, onChange, tip,
+    fieldKey, label, hint, value, defaultValue, contrastValue, onChange, tip, onHighlight, onAutoFix,
 }: {
     fieldKey: string;
     label: string;
@@ -137,6 +152,8 @@ function ColorField({
     contrastValue?: string;
     onChange: (key: string, val: string) => void;
     tip?: TipData | null;
+    onHighlight?: (fields: string[] | null) => void;
+    onAutoFix?: (fieldKey: string) => void;
 }) {
     const [pickerOpen, setPickerOpen] = useState(false);
     const popoverRef = useRef<HTMLDivElement>(null);
@@ -168,7 +185,13 @@ function ColorField({
     const resolvedColor = isValidHex6(value) ? value : defaultValue;
 
     return (
-        <div className={styles.colorField}>
+        <div
+            className={styles.colorField}
+            onMouseEnter={() => onHighlight?.([fieldKey])}
+            onMouseLeave={() => onHighlight?.(null)}
+            onFocusCapture={() => onHighlight?.([fieldKey])}
+            onBlurCapture={() => onHighlight?.(null)}
+        >
             <div className={styles.colorFieldHeader}>
                 <label className={styles.label}>{label}</label>
                 {isCustom && (
@@ -227,14 +250,55 @@ function ColorField({
                 />
             </div>
             {contrast && (
-                <div className={`${styles.contrastBadge} ${styles[`contrast_${contrast.level}`]}`}>
-                    {contrast.level === 'pass' && <Check size={12} />}
-                    {contrast.level === 'warn' && <AlertTriangle size={12} />}
-                    {contrast.level === 'fail' && <AlertTriangle size={12} />}
-                    <span>{contrast.label}</span>
+                <div className={styles.contrastRow}>
+                    <div className={`${styles.contrastBadge} ${styles[`contrast_${contrast.level}`]}`}>
+                        {contrast.level === 'pass' && <Check size={12} />}
+                        {contrast.level === 'warn' && <AlertTriangle size={12} />}
+                        {contrast.level === 'fail' && <AlertTriangle size={12} />}
+                        <span>{contrast.label}</span>
+                    </div>
+                    {contrast.level !== 'pass' && contrastValue && onAutoFix && (
+                        <button
+                            type="button"
+                            className={styles.fixContrastButton}
+                            onClick={() => onAutoFix(fieldKey)}
+                            title="Juster fargen automatisk til lesbar kontrast"
+                        >
+                            <Wand2 size={12} />
+                            <span>Fiks kontrast</span>
+                        </button>
+                    )}
                 </div>
             )}
             <span className={styles.hint}>{hint}</span>
+        </div>
+    );
+}
+
+// -- Preview-region: rammer inn en del av previewen og kobler den til feltet(ene) som styrer den --
+function PreviewRegion({
+    fields, label, highlight, showLabels, onHover, children, className,
+}: {
+    fields: string[];
+    label: string;
+    highlight: string[] | null;
+    showLabels: boolean;
+    onHover: (fields: string[] | null) => void;
+    children: ReactNode;
+    className?: string;
+}) {
+    const isHighlighted =
+        !!highlight && highlight.some((h) => fields.includes(h));
+    const showLabel = isHighlighted || showLabels;
+
+    return (
+        <div
+            className={`${styles.previewRegion} ${isHighlighted ? styles.previewRegionActive : ''} ${showLabels ? styles.previewRegionShowLabel : ''} ${className || ''}`}
+            onMouseEnter={() => onHover(fields)}
+            onMouseLeave={() => onHover(null)}
+        >
+            {showLabel && <span className={styles.previewRegionLabel}>{label}</span>}
+            {children}
         </div>
     );
 }
@@ -307,6 +371,11 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
     const [message, setMessage] = useState({ type: '', text: '' });
     const [showPreview, setShowPreview] = useState(true);
     const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+    // ── Preview-kobling: hvilke felt som er uthevet, og om alle etiketter vises ──
+    const [highlight, setHighlight] = useState<string[] | null>(null);
+    const [showLabels, setShowLabels] = useState(false);
+    const formRef = useRef<HTMLFormElement>(null);
 
     // ── Tip-system state ──────────────────────────────────────
     const [manualSuggestions, setManualSuggestions] = useState<GeneratorResult | null>(null);
@@ -418,6 +487,68 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
         return colors[key] || DEFAULTS[key] || '#000000';
     }
 
+    // Auto-juster én farge til lesbar kontrast (>= 4.5:1) mot sin referansebakgrunn.
+    const handleAutoFix = useCallback((field: string) => {
+        const against = CONTRAST_AGAINST[field];
+        if (!against) return;
+        const current = colors[field] || DEFAULTS[field] || '#000000';
+        const bg = colors[against] || DEFAULTS[against] || '#000000';
+        if (!isValidHex6(current) || !isValidHex6(bg)) return;
+        const fixed = ensureContrast(current, bg, 4.5);
+        setColors(prev => ({ ...prev, [field]: fixed }));
+        setDismissedTipFields(prev => {
+            const next = new Set(prev);
+            next.add(field);
+            return next;
+        });
+    }, [colors]);
+
+    // Resolvert fargeobjekt (alle 14 + font) → bygg de samme CSS-variablene som produksjon bruker.
+    const previewVars = useMemo(() => {
+        const resolved: Record<string, string> = {};
+        for (const key of Object.keys(DEFAULTS)) {
+            resolved[key] = colors[key] || DEFAULTS[key];
+        }
+        const heading = fontHeading || fontFamily;
+        return buildBrandingVars({
+            ...resolved,
+            fontFamily: fontFamily || heading || undefined,
+        });
+    }, [colors, fontFamily, fontHeading]);
+
+    // Felter som per nå feiler kontrastkravet (WCAG AA) — driver varselbanneret.
+    const failingFields = useMemo(() => {
+        const fails: string[] = [];
+        for (const [field, against] of Object.entries(CONTRAST_AGAINST)) {
+            const fg = colors[field] || DEFAULTS[field] || '#000000';
+            const bg = colors[against] || DEFAULTS[against] || '#000000';
+            if (!isValidHex6(fg) || !isValidHex6(bg)) continue;
+            try {
+                if (getContrastLevel(contrastRatio(fg, bg)).level === 'fail') {
+                    fails.push(field);
+                }
+            } catch {
+                /* hopp over ugyldige verdier */
+            }
+        }
+        return fails;
+    }, [colors]);
+
+    function handleFixAll() {
+        setColors(prev => {
+            const next = { ...prev };
+            for (const field of failingFields) {
+                const against = CONTRAST_AGAINST[field];
+                if (!against) continue;
+                const current = next[field] || DEFAULTS[field] || '#000000';
+                const bg = next[against] || DEFAULTS[against] || '#000000';
+                if (!isValidHex6(current) || !isValidHex6(bg)) continue;
+                next[field] = ensureContrast(current, bg, 4.5);
+            }
+            return next;
+        });
+    }
+
     async function handleSubmit(formData: FormData) {
         setLoading(true);
         setMessage({ type: '', text: '' });
@@ -477,6 +608,20 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
         if (customFontUrl !== (initial.customFontUrl || '')) return true;
         return false;
     }, [tenantName, colors, logoUrl, logoSvgContent, logoSvgModified, faviconUrl, faviconSvgContent, faviconSvgModified, fontFamily, fontHeading, fontSource, customFontUrl, initial]);
+
+    // Ctrl/Cmd+S lagrer skjemaet (kun når det finnes ulagrede endringer).
+    useEffect(() => {
+        function handleKeyDown(e: KeyboardEvent) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                if (hasUnsavedChanges && !loading) {
+                    formRef.current?.requestSubmit();
+                }
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [hasUnsavedChanges, loading]);
 
     function handleRevert() {
         setTenantName(initial.tenantName || '');
@@ -544,7 +689,7 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
     return (
         <div className={styles.brandingLayout}>
             {/* Venstre: Skjema */}
-            <form action={handleSubmit} className={styles.form}>
+            <form ref={formRef} action={handleSubmit} className={styles.form}>
                 {/* URL Brand Detector */}
                 <div className={styles.section}>
                     <BrandDetector
@@ -596,6 +741,34 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
                     </div>
                 </div>
 
+                {/* Kontrastvarsel: vises kun når minst ett felt feiler WCAG AA */}
+                {failingFields.length > 0 && (
+                    <div className={styles.contrastBanner}>
+                        <div className={styles.contrastBannerIcon}>
+                            <AlertTriangle size={18} />
+                        </div>
+                        <div className={styles.contrastBannerBody}>
+                            <strong className={styles.contrastBannerTitle}>
+                                {failingFields.length === 1
+                                    ? '1 farge har for lav kontrast'
+                                    : `${failingFields.length} farger har for lav kontrast`}
+                            </strong>
+                            <p className={styles.contrastBannerText}>
+                                Disse fargene er vanskelige å lese (under WCAG AA):{' '}
+                                {failingFields.map((f) => FIELD_LABELS[f] || f).join(', ')}.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            className={styles.contrastBannerButton}
+                            onClick={handleFixAll}
+                        >
+                            <Wand2 size={14} />
+                            Fiks alle
+                        </button>
+                    </div>
+                )}
+
                 {SECTIONS.map((section) => (
                     <div key={section.title} className={styles.section}>
                         <div className={styles.sectionHeader}>
@@ -618,6 +791,8 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
                                     }
                                     onChange={handleColorChange}
                                     tip={getTipForField(field.key)}
+                                    onHighlight={setHighlight}
+                                    onAutoFix={field.contrastAgainst ? handleAutoFix : undefined}
                                 />
                             ))}
                         </div>
@@ -779,118 +954,284 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
                     )}
                     <Eye size={16} />
                     <span>Live forhåndsvisning</span>
-                    <button
-                        type="button"
-                        className={styles.previewToggle}
-                        onClick={() => setShowPreview(!showPreview)}
-                    >
-                        {showPreview ? 'Skjul' : 'Vis'}
-                    </button>
+                    <div className={styles.previewHeaderActions}>
+                        <button
+                            type="button"
+                            className={`${styles.previewLabelToggle} ${showLabels ? styles.previewLabelToggleActive : ''}`}
+                            onClick={() => setShowLabels((v) => !v)}
+                            aria-pressed={showLabels}
+                            title="Vis hvilke felt som styrer hver region"
+                        >
+                            <Tag size={12} />
+                            Vis etiketter
+                        </button>
+                        <button
+                            type="button"
+                            className={styles.previewToggle}
+                            onClick={() => setShowPreview(!showPreview)}
+                        >
+                            {showPreview ? 'Skjul' : 'Vis'}
+                        </button>
+                    </div>
                 </div>
 
                 {showPreview && (
                     <div
-                        className={styles.previewContainer}
-                        style={{
-                            backgroundColor: resolveColor('colorBgPrimary'),
-                            color: resolveColor('colorTextPrimary'),
-                            fontFamily: fontFamily || undefined,
-                        }}
+                        className={styles.previewRoot}
+                        style={{ ...(previewVars as React.CSSProperties) }}
+                        onMouseLeave={() => setHighlight(null)}
                     >
-                        {/* Mini sidebar */}
-                        <div className={styles.previewSidebar} style={{ backgroundColor: resolveColor('colorSidebarBg') }}>
-                            {(logoUrl || logoSvgContent) && (
-                                <img
-                                    src={
-                                        logoSvgModified
-                                            ? `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(logoSvgModified)))}`
-                                            : logoSvgContent
-                                                ? `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(logoSvgContent)))}`
-                                                : logoUrl
-                                    }
-                                    alt="Logo"
-                                    className={styles.previewLogo}
-                                />
-                            )}
-                            <div
-                                className={styles.previewNavItem}
-                                style={{ color: resolveColor('colorSidebarActive'), borderLeft: `2px solid ${resolveColor('colorSidebarActive')}` }}
+                        <div className={styles.previewApp}>
+                            {/* Topbar */}
+                            <PreviewRegion
+                                fields={['colorBgPrimary', 'colorTextPrimary', 'colorAccent']}
+                                label="Topplinje"
+                                highlight={highlight}
+                                showLabels={showLabels}
+                                onHover={setHighlight}
+                                className={styles.previewTopbar}
                             >
-                                Dashboard
-                            </div>
-                            <div className={styles.previewNavItem} style={{ color: resolveColor('colorSidebarText') }}>
-                                Brukere
-                            </div>
-                            <div className={styles.previewNavItem} style={{ color: resolveColor('colorSidebarText') }}>
-                                Kurs
-                            </div>
-                        </div>
-
-                        {/* Mini main content */}
-                        <div className={styles.previewMain}>
-                            <h3 style={{ color: resolveColor('colorTextPrimary'), margin: '0 0 4px 0', fontSize: '14px', fontFamily: fontHeading || fontFamily || undefined }}>
-                                Oversikt
-                            </h3>
-                            <p style={{ color: resolveColor('colorTextSecondary'), margin: '0 0 12px 0', fontSize: '11px' }}>
-                                Sanntidsdata for din organisasjon
-                            </p>
-
-                            {/* Mini stat cards */}
-                            <div className={styles.previewStats}>
-                                <div
-                                    className={styles.previewStatCard}
-                                    style={{
-                                        backgroundColor: resolveColor('colorBgSecondary'),
-                                        border: `1px solid ${resolveColor('colorBorder')}`,
-                                    }}
-                                >
-                                    <span style={{ color: resolveColor('colorTextSecondary'), fontSize: '9px' }}>Brukere</span>
-                                    <span style={{ color: resolveColor('colorTextPrimary'), fontSize: '16px', fontWeight: 600 }}>42</span>
-                                </div>
-                                <div
-                                    className={styles.previewStatCard}
-                                    style={{
-                                        backgroundColor: resolveColor('colorBgSecondary'),
-                                        border: `1px solid ${resolveColor('colorBorder')}`,
-                                    }}
-                                >
-                                    <span style={{ color: resolveColor('colorTextSecondary'), fontSize: '9px' }}>Fristbrudd</span>
-                                    <span style={{ color: resolveColor('colorDanger'), fontSize: '16px', fontWeight: 600 }}>2</span>
-                                </div>
-                            </div>
-
-                            {/* Button preview */}
-                            <div className={styles.previewButtons}>
-                                <button
-                                    type="button"
-                                    className={styles.previewBtn}
-                                    style={{
-                                        backgroundColor: resolveColor('colorButtonPrimary'),
-                                        color: resolveColor('colorButtonText'),
-                                    }}
-                                >
-                                    Hovedknapp
-                                </button>
-                                <a
-                                    href="#"
-                                    onClick={(e) => e.preventDefault()}
-                                    style={{ color: resolveColor('colorAccent'), fontSize: '12px' }}
-                                >
-                                    Lenketekst
-                                </a>
-                            </div>
-
-                            {/* Status badges */}
-                            <div className={styles.previewBadges}>
-                                <span className={styles.previewBadgeItem} style={{ backgroundColor: `${resolveColor('colorSuccess')}20`, color: resolveColor('colorSuccess'), border: `1px solid ${resolveColor('colorSuccess')}40` }}>
-                                    Suksess
+                                <span className={styles.previewTopbarTitle}>
+                                    {tenantName || 'Din organisasjon'}
                                 </span>
-                                <span className={styles.previewBadgeItem} style={{ backgroundColor: `${resolveColor('colorWarning')}20`, color: resolveColor('colorWarning'), border: `1px solid ${resolveColor('colorWarning')}40` }}>
-                                    Advarsel
-                                </span>
-                                <span className={styles.previewBadgeItem} style={{ backgroundColor: `${resolveColor('colorDanger')}20`, color: resolveColor('colorDanger'), border: `1px solid ${resolveColor('colorDanger')}40` }}>
-                                    Feil
-                                </span>
+                                <span className={styles.previewAvatar} aria-hidden="true" />
+                            </PreviewRegion>
+
+                            <div className={styles.previewBody}>
+                                {/* Sidemeny */}
+                                <PreviewRegion
+                                    fields={['colorSidebarBg']}
+                                    label="Sidemeny"
+                                    highlight={highlight}
+                                    showLabels={showLabels}
+                                    onHover={setHighlight}
+                                    className={styles.previewSidebar}
+                                >
+                                    {(logoUrl || logoSvgContent) && (
+                                        <img
+                                            src={
+                                                logoSvgModified
+                                                    ? `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(logoSvgModified)))}`
+                                                    : logoSvgContent
+                                                        ? `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(logoSvgContent)))}`
+                                                        : logoUrl
+                                            }
+                                            alt="Logo"
+                                            className={styles.previewLogo}
+                                        />
+                                    )}
+                                    <PreviewRegion
+                                        fields={['colorSidebarActive', 'colorSidebarBg']}
+                                        label="Aktivt menypunkt"
+                                        highlight={highlight}
+                                        showLabels={showLabels}
+                                        onHover={setHighlight}
+                                    >
+                                        <div className={`${styles.previewNavItem} ${styles.previewNavItemActive}`}>
+                                            Oversikt
+                                        </div>
+                                    </PreviewRegion>
+                                    <PreviewRegion
+                                        fields={['colorSidebarText']}
+                                        label="Menytekst"
+                                        highlight={highlight}
+                                        showLabels={showLabels}
+                                        onHover={setHighlight}
+                                    >
+                                        <div className={styles.previewNavItem}>Brukere</div>
+                                    </PreviewRegion>
+                                    <PreviewRegion
+                                        fields={['colorSidebarText']}
+                                        label="Menypunkt (hover)"
+                                        highlight={highlight}
+                                        showLabels={showLabels}
+                                        onHover={setHighlight}
+                                    >
+                                        <div className={`${styles.previewNavItem} ${styles.previewNavItemHover}`}>
+                                            Kurs
+                                            <span className={styles.previewStateTag}>hover</span>
+                                        </div>
+                                    </PreviewRegion>
+                                </PreviewRegion>
+
+                                {/* Hovedinnhold */}
+                                <PreviewRegion
+                                    fields={['colorBgPrimary']}
+                                    label="Sidebakgrunn"
+                                    highlight={highlight}
+                                    showLabels={showLabels}
+                                    onHover={setHighlight}
+                                    className={styles.previewMain}
+                                >
+                                    <PreviewRegion
+                                        fields={['colorTextPrimary']}
+                                        label="Hovedtekst"
+                                        highlight={highlight}
+                                        showLabels={showLabels}
+                                        onHover={setHighlight}
+                                    >
+                                        <h3 className={styles.previewHeading}>Oversikt</h3>
+                                    </PreviewRegion>
+                                    <PreviewRegion
+                                        fields={['colorTextSecondary']}
+                                        label="Dempet tekst"
+                                        highlight={highlight}
+                                        showLabels={showLabels}
+                                        onHover={setHighlight}
+                                    >
+                                        <p className={styles.previewLead}>
+                                            Sanntidsdata for din organisasjon
+                                        </p>
+                                    </PreviewRegion>
+
+                                    {/* Merkevare-badge / hero */}
+                                    <PreviewRegion
+                                        fields={['colorAccent']}
+                                        label="Merkevarefarge"
+                                        highlight={highlight}
+                                        showLabels={showLabels}
+                                        onHover={setHighlight}
+                                    >
+                                        <div className={styles.previewHero}>Merkevare</div>
+                                    </PreviewRegion>
+
+                                    {/* Kort */}
+                                    <PreviewRegion
+                                        fields={['colorBgSecondary', 'colorBorder']}
+                                        label="Kort og paneler"
+                                        highlight={highlight}
+                                        showLabels={showLabels}
+                                        onHover={setHighlight}
+                                        className={styles.previewCard}
+                                    >
+                                        <PreviewRegion
+                                            fields={['colorBgPrimary']}
+                                            label="Flate"
+                                            highlight={highlight}
+                                            showLabels={showLabels}
+                                            onHover={setHighlight}
+                                            className={styles.previewSurface}
+                                        >
+                                            <span className={styles.previewSurfaceText}>Innebygd flate</span>
+                                        </PreviewRegion>
+
+                                        <p className={styles.previewBodyText}>
+                                            Brødtekst på kortet.{' '}
+                                            <span className={styles.previewMutedText}>Litt dempet metadata.</span>
+                                        </p>
+
+                                        {/* Input med fokusring */}
+                                        <PreviewRegion
+                                            fields={['colorBorder', 'colorAccent', 'colorTextPrimary']}
+                                            label="Inputfelt (fokus)"
+                                            highlight={highlight}
+                                            showLabels={showLabels}
+                                            onHover={setHighlight}
+                                        >
+                                            <div className={styles.previewInput}>
+                                                Søk …
+                                                <span className={styles.previewStateTag}>fokus</span>
+                                            </div>
+                                        </PreviewRegion>
+
+                                        {/* Knapper */}
+                                        <div className={styles.previewButtons}>
+                                            <PreviewRegion
+                                                fields={['colorButtonPrimary', 'colorButtonText']}
+                                                label="Knapp"
+                                                highlight={highlight}
+                                                showLabels={showLabels}
+                                                onHover={setHighlight}
+                                            >
+                                                <button type="button" className={styles.previewBtnPrimary}>
+                                                    Lagre
+                                                </button>
+                                            </PreviewRegion>
+                                            <PreviewRegion
+                                                fields={['colorBorder', 'colorAccent']}
+                                                label="Sekundærknapp"
+                                                highlight={highlight}
+                                                showLabels={showLabels}
+                                                onHover={setHighlight}
+                                            >
+                                                <button type="button" className={styles.previewBtnGhost}>
+                                                    Avbryt
+                                                </button>
+                                            </PreviewRegion>
+                                            <PreviewRegion
+                                                fields={['colorButtonPrimary', 'colorButtonText']}
+                                                label="Deaktivert"
+                                                highlight={highlight}
+                                                showLabels={showLabels}
+                                                onHover={setHighlight}
+                                            >
+                                                <button type="button" className={styles.previewBtnDisabled} disabled>
+                                                    Send
+                                                </button>
+                                            </PreviewRegion>
+                                        </div>
+
+                                        {/* Lenke */}
+                                        <PreviewRegion
+                                            fields={['colorAccent']}
+                                            label="Lenke"
+                                            highlight={highlight}
+                                            showLabels={showLabels}
+                                            onHover={setHighlight}
+                                        >
+                                            <a
+                                                href="#"
+                                                onClick={(e) => e.preventDefault()}
+                                                className={styles.previewLink}
+                                            >
+                                                Les mer
+                                            </a>
+                                        </PreviewRegion>
+                                    </PreviewRegion>
+
+                                    {/* Statusrader */}
+                                    <div className={styles.previewStatusList}>
+                                        <PreviewRegion
+                                            fields={['colorSuccess']}
+                                            label="Suksess"
+                                            highlight={highlight}
+                                            showLabels={showLabels}
+                                            onHover={setHighlight}
+                                            className={styles.previewStatusRow}
+                                        >
+                                            <span className={`${styles.previewChip} ${styles.previewChipSuccess}`}>OK</span>
+                                            <span className={`${styles.previewAlert} ${styles.previewAlertSuccess}`}>
+                                                Endringene ble lagret
+                                            </span>
+                                        </PreviewRegion>
+                                        <PreviewRegion
+                                            fields={['colorWarning']}
+                                            label="Advarsel"
+                                            highlight={highlight}
+                                            showLabels={showLabels}
+                                            onHover={setHighlight}
+                                            className={styles.previewStatusRow}
+                                        >
+                                            <span className={`${styles.previewChip} ${styles.previewChipWarning}`}>!</span>
+                                            <span className={`${styles.previewAlert} ${styles.previewAlertWarning}`}>
+                                                Fristen nærmer seg
+                                            </span>
+                                        </PreviewRegion>
+                                        <PreviewRegion
+                                            fields={['colorDanger']}
+                                            label="Feil"
+                                            highlight={highlight}
+                                            showLabels={showLabels}
+                                            onHover={setHighlight}
+                                            className={styles.previewStatusRow}
+                                        >
+                                            <span className={`${styles.previewChip} ${styles.previewChipDanger}`}>2</span>
+                                            <span className={`${styles.previewAlert} ${styles.previewAlertDanger}`}>
+                                                Fristbrudd oppdaget
+                                            </span>
+                                        </PreviewRegion>
+                                    </div>
+                                </PreviewRegion>
                             </div>
                         </div>
                     </div>

@@ -12,29 +12,29 @@
 /* ── Source badges ──────────────────────────────────────── */
 
 .sourceBadge {
-    font-size: 10px;
-    padding: 1px 6px;
+    font-size: 11px;
+    padding: 2px 7px;
     border-radius: 4px;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.1px;
+    white-space: nowrap;
     flex-shrink: 0;
-    line-height: 1.6;
+    line-height: 1.4;
 }
 
 .sourceManual {
-    background: color-mix(in srgb, var(--color-accent-blue) 12%, transparent);
+    background: color-mix(in srgb, var(--color-accent-blue) 18%, transparent);
     color: var(--color-accent-blue);
 }
 
 .sourceDetektor {
-    background: color-mix(in srgb, var(--color-accent-blue) 15%, transparent);
+    background: color-mix(in srgb, var(--color-accent-blue) 22%, transparent);
     color: var(--color-accent-blue);
 }
 
 .sourceBaseline {
-    background: color-mix(in srgb, var(--color-text-secondary) 12%, transparent);
-    color: var(--color-text-secondary);
+    background: color-mix(in srgb, var(--color-text-secondary) 18%, transparent);
+    color: var(--color-text-primary);
 }
 
 /* ── Tip content ───────────────────────────────────────── */

@@ -8,6 +8,7 @@ import {
     RotateCcw,
     ChevronDown,
     ChevronUp,
+    Info,
 } from 'lucide-react';
 import { HexColorPicker } from 'react-colorful';
 import {
@@ -156,8 +157,8 @@ export default function ManualAssistant({
             </button>
 
             <p className={styles.description}>
-                Velg 5 nøkkelfarger og generer en komplett fargepalett med
-                kontrastsikring.
+                Velg fem nøkkelfarger — systemet beregner de resterende fargene
+                automatisk med sikret kontrast (WCAG AA).
             </p>
 
             {/* ── Role inputs ──────────────────────────────── */}
@@ -226,7 +227,16 @@ export default function ManualAssistant({
 
             {/* ── Preset selector ──────────────────────────── */}
             <div className={styles.presetRow}>
-                <label className={styles.presetLabel}>Kontrastnivå:</label>
+                <label className={styles.presetLabel}>
+                    Tilgjengelighetsmål:
+                </label>
+                <span
+                    className={styles.presetInfo}
+                    title="Standard = WCAG AA (anbefalt). Streng = WCAG AAA. Avslappet = lempeligere krav."
+                    aria-label="Standard = WCAG AA (anbefalt). Streng = WCAG AAA. Avslappet = lempeligere krav."
+                >
+                    <Info size={14} aria-hidden="true" />
+                </span>
                 <select
                     className={styles.presetSelect}
                     value={preset}
@@ -281,6 +291,13 @@ export default function ManualAssistant({
                     <h4 className={styles.resultsTitle}>
                         Generert palett ({PRESETS[preset]?.label || preset})
                     </h4>
+                    <p className={styles.resultsNote}>
+                        <Info size={13} className={styles.resultsNoteIcon} />
+                        <span>
+                            Disse verdiene er beregnet fra dine fem farger — du
+                            kan finjustere hver farge under seksjonene nedenfor.
+                        </span>
+                    </p>
                     <div className={styles.resultsList}>
                         {result.details.map((d) => (
                             <div key={d.field} className={styles.resultRow}>

@@ -3,29 +3,31 @@ import './globals.css';
 import { Providers } from '@/components/Providers';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
+import {
+  buildBrandingVars,
+  brandingVarsToCssText,
+} from '@/lib/brandingVars';
 
 export const metadata: Metadata = {
   title: 'Egen Akademi LMS',
   description: 'Whitelabel læringsplattform for din virksomhet',
 };
 
-// Mapping fra DB-feltnavn til CSS-variabelnavn
-const CSS_VAR_MAP: Record<string, string> = {
-  colorBgPrimary: '--color-bg-primary',
-  colorBgSecondary: '--color-bg-secondary',
-  colorTextPrimary: '--color-text-primary',
-  colorTextSecondary: '--color-text-secondary',
-  colorBorder: '--color-border',
-  colorAccent: '--color-accent-blue',
-  colorButtonPrimary: '--color-button-primary',
-  colorButtonText: '--color-button-text',
-  colorSidebarBg: '--color-sidebar-bg',
-  colorSidebarText: '--color-sidebar-text',
-  colorSidebarActive: '--color-sidebar-active',
-  colorSuccess: '--color-success',
-  colorWarning: '--color-warning',
-  colorDanger: '--color-danger',
-};
+/**
+ * Deterministic short string hash (djb2 variant) used as a STABLE favicon
+ * cache-busting version. The output depends only on the favicon value, never
+ * on time/clock, so it stays identical across renders — keeping the browser
+ * cache effective and avoiding hydration mismatches, while changing whenever
+ * the favicon itself changes.
+ */
+function stableHash(input: string): string {
+  let hash = 5381;
+  for (let i = 0; i < input.length; i++) {
+    hash = (hash * 33) ^ input.charCodeAt(i);
+  }
+  // Coerce to unsigned 32-bit and base36-encode for a short token.
+  return (hash >>> 0).toString(36);
+}
 
 async function getTenantBranding(): Promise<{ style: string; fontFamily?: string; fontSource?: string; customFontUrl?: string; faviconUrl?: string; tenantName?: string } | null> {
   try {
@@ -59,70 +61,12 @@ async function getTenantBranding(): Promise<{ style: string; fontFamily?: string
 
     if (!tenant) return null;
 
-    // Bygg CSS-variabel-streng fra alle non-null verdier
-    const vars: string[] = [];
-    for (const [dbField, cssVar] of Object.entries(CSS_VAR_MAP)) {
-      const value = (tenant as any)[dbField];
-      if (value) {
-        vars.push(`${cssVar}: ${value}`);
-      }
-    }
-
-    // Accent glow avledet fra accent
-    if (tenant.colorAccent) {
-      vars.push(`--color-accent-glow: ${tenant.colorAccent}26`);
-      vars.push(`--gradient-primary: linear-gradient(135deg, ${tenant.colorAccent} 0%, ${tenant.colorAccent}cc 100%)`);
-    }
-
-    // Topbar derived from bg-primary (semi-transparent with backdrop-filter)
-    if (tenant.colorBgPrimary) {
-      vars.push(`--color-topbar-bg: ${tenant.colorBgPrimary}cc`);
-    }
-    // Topbar text follows text-primary
-    if (tenant.colorTextPrimary) {
-      vars.push(`--color-topbar-text: ${tenant.colorTextPrimary}`);
-    }
-
-    // Sidebar hover derived from sidebar bg — use text-primary for hover text
-    if (tenant.colorSidebarBg) {
-      // Detect if sidebar is light or dark to pick appropriate hover overlay
-      const sbHex = tenant.colorSidebarBg.replace('#', '');
-      const r = parseInt(sbHex.substring(0, 2), 16) || 0;
-      const g = parseInt(sbHex.substring(2, 4), 16) || 0;
-      const b = parseInt(sbHex.substring(4, 6), 16) || 0;
-      const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-      if (lum > 0.5) {
-        // Light sidebar → darken on hover
-        vars.push(`--color-sidebar-hover-bg: rgba(0, 0, 0, 0.08)`);
-      } else {
-        // Dark sidebar → lighten on hover
-        vars.push(`--color-sidebar-hover-bg: rgba(255, 255, 255, 0.08)`);
-      }
-    }
-    if (tenant.colorTextPrimary) {
-      vars.push(`--color-sidebar-hover-text: ${tenant.colorTextPrimary}`);
-    }
-
-    // Bg surface derived from bg-primary (subtle overlay)
-    if (tenant.colorBgPrimary) {
-      const bgHex = tenant.colorBgPrimary.replace('#', '');
-      const r = parseInt(bgHex.substring(0, 2), 16) || 0;
-      const g = parseInt(bgHex.substring(2, 4), 16) || 0;
-      const b = parseInt(bgHex.substring(4, 6), 16) || 0;
-      const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-      if (lum > 0.5) {
-        vars.push(`--color-bg-surface: rgba(0, 0, 0, 0.04)`);
-      } else {
-        vars.push(`--color-bg-surface: rgba(255, 255, 255, 0.03)`);
-      }
-    }
-
-    if (tenant.fontFamily) {
-      vars.push(`--font-sans: ${tenant.fontFamily}`);
-    }
+    // Bygg alle CSS-variabler (base + avledede) via den delte builderen,
+    // slik at live-forhåndsvisningen matcher produksjon nøyaktig.
+    const vars = buildBrandingVars(tenant);
 
     return {
-      style: vars.join('; '),
+      style: brandingVarsToCssText(vars),
       fontFamily: tenant.fontFamily || undefined,
       fontSource: tenant.fontSource || undefined,
       customFontUrl: tenant.customFontUrl || undefined,
@@ -141,11 +85,18 @@ export default async function RootLayout({
 }>) {
   const branding = await getTenantBranding();
 
+  // Stable, deterministic cache-busting version derived from the favicon value.
+  // Same favicon → same ?v= token across every render (cache-friendly, no
+  // hydration mismatch); a new favicon yields a new token to bust the cache.
+  const faviconHref = branding?.faviconUrl
+    ? `${branding.faviconUrl}${branding.faviconUrl.includes('?') ? '&' : '?'}v=${stableHash(branding.faviconUrl)}`
+    : null;
+
   return (
     <html lang="no">
       <head>
-        {branding?.faviconUrl && (
-          <link rel="icon" href={branding.faviconUrl} />
+        {faviconHref && (
+          <link rel="icon" href={faviconHref} />
         )}
         {branding?.fontSource === 'google' && branding?.fontFamily && (
           <link
