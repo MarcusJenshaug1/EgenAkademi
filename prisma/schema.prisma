@@ -114,7 +114,12 @@ model User {
   
   tenantId      String?
   tenant        Tenant?    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+
+  // Leder (for eskalering av frister)
+  managerId     String?
+  manager       User?      @relation("UserManager", fields: [managerId], references: [id])
+  reports       User[]     @relation("UserManager")
+
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -126,6 +131,7 @@ model User {
   notifications    Notification[]
   sessionsTaught     TrainingSession[]   @relation("SessionInstructor")
   sessionEnrollments SessionEnrollment[] @relation("SessionAttendee")
+  onboardingEnrollments OnboardingEnrollment[]
 
   @@index([tenantId])
 }
@@ -173,11 +179,15 @@ model Group {
   
   tenantId    String
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+
   externalId  String?  // SCIM gruppe ID
-  
+
+  // Dynamiske grupper: medlemskap utledes fra regler mot brukerattributter
+  isDynamic   Boolean  @default(false)
+  ruleJson    Json?    // { match: "all"|"any", conditions: [{ attribute, operator, value }] }
+
   members     GroupMembership[]
-  
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -192,7 +202,9 @@ model GroupMembership {
   
   groupId   String
   group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  
+
+  source    String   @default("manual") // "manual" | "rule" (dynamisk gruppe) | "scim"
+
   createdAt DateTime @default(now())
 
   @@unique([userId, groupId])
@@ -635,6 +647,9 @@ enum NotificationType {
   COURSE_COMPLETED
   CERTIFICATE_ISSUED
   DEADLINE_REMINDER
+  ONBOARDING_ASSIGNED
+  RECERTIFICATION_DUE
+  ESCALATION
   GENERAL
   SYSTEM
 }
@@ -854,4 +869,53 @@ model AuditLog {
 
   @@index([tenantId, createdAt])
   @@index([tenantId, action])
+}
+
+// ══════════════════════════════════════════════════════════════
+// ONBOARDING-PROGRAMMER (tidsfaset auto-tildeling)
+// ══════════════════════════════════════════════════════════════
+
+model OnboardingProgram {
+  id                 String   @id @default(uuid())
+  tenantId           String
+  name               String
+  description        String?  @db.Text
+  isActive           Boolean  @default(true)
+  autoAssignOnCreate Boolean  @default(false) // Tildel automatisk til nye brukere
+  autoAssignGroupId  String?  // Eller: tildel til medlemmer av en gruppe
+
+  items              OnboardingProgramItem[]
+  enrollments        OnboardingEnrollment[]
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([tenantId])
+}
+
+model OnboardingProgramItem {
+  id          String            @id @default(uuid())
+  tenantId    String
+  programId   String
+  program     OnboardingProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  courseId    String?           // Kurs som tildeles (frist = tildelingsdato + offsetDays)
+  title       String
+  offsetDays  Int               @default(0) // Uke 1 = 0/7, uke 2 = 14, osv.
+  sortOrder   Int               @default(0)
+
+  @@index([tenantId, programId])
+}
+
+model OnboardingEnrollment {
+  id          String            @id @default(uuid())
+  tenantId    String
+  programId   String
+  program     OnboardingProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignedAt  DateTime          @default(now())
+  completedAt DateTime?
+
+  @@unique([programId, userId])
+  @@index([tenantId, userId])
 }

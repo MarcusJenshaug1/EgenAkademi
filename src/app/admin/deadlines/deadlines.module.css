@@ -1,0 +1,482 @@
+.deadlinesPage {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+/* ── Header ────────────────────────────────────── */
+
+.header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.headerLeft {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.title {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--color-text-primary);
+}
+
+.subtitle {
+    color: var(--color-text-secondary);
+    font-size: 1rem;
+}
+
+.primaryButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 20px;
+    background: var(--color-button-primary);
+    color: var(--color-button-text);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+}
+
+.primaryButton:hover:not(:disabled) {
+    filter: brightness(1.15);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px color-mix(in srgb, var(--color-button-primary) 30%, transparent);
+}
+
+.primaryButton:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.spinning {
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── Info note ─────────────────────────────────── */
+
+.infoNote {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: color-mix(in srgb, var(--color-accent-blue) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-accent-blue) 25%, transparent);
+    border-radius: var(--radius-md);
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+}
+
+.infoNote svg {
+    color: var(--color-accent-blue);
+    flex-shrink: 0;
+}
+
+/* ── Sweep summary ─────────────────────────────── */
+
+.sweepSummary {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 18px 20px;
+    background: var(--color-bg-surface);
+    border: 1px solid color-mix(in srgb, var(--color-success) 30%, transparent);
+    border-radius: var(--radius-lg);
+}
+
+.sweepSummaryHeader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-success);
+}
+
+.sweepStats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.sweepStat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 16px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.sweepStatValue {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    line-height: 1;
+}
+
+.sweepStatLabel {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+}
+
+/* ── KPI cards ──────────────────────────────────── */
+
+.statsRow {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.statCard {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all var(--transition-fast);
+}
+
+.statCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.3);
+    filter: brightness(1.05);
+}
+
+.statIcon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: color-mix(in srgb, var(--color-accent-blue) 12%, transparent);
+    color: var(--color-accent-blue);
+}
+
+.statIconDanger {
+    background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+    color: var(--color-danger);
+}
+
+.statIconWarning {
+    background: color-mix(in srgb, var(--color-warning) 12%, transparent);
+    color: var(--color-warning);
+}
+
+.statBody {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.statLabel {
+    font-size: 0.78rem;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.statValue {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    line-height: 1;
+}
+
+/* ── Table sections ────────────────────────────── */
+
+.tableSection {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sectionTitle {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+.sectionHeaderIcon {
+    color: var(--color-accent-blue);
+}
+
+.sectionHeaderIconDanger {
+    color: var(--color-danger);
+}
+
+.sectionHeaderIconWarning {
+    color: var(--color-warning);
+}
+
+.sectionCount {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 8px;
+    border-radius: 100px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.tableWrapper {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.table thead th {
+    text-align: left;
+    padding: 14px 18px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--color-border);
+    white-space: nowrap;
+}
+
+.table tbody td {
+    padding: 14px 18px;
+    color: var(--color-text-primary);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent);
+    vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.table tbody tr {
+    transition: background-color var(--transition-fast);
+}
+
+.table tbody tr:hover {
+    background: color-mix(in srgb, var(--color-accent-blue) 5%, transparent);
+}
+
+.tableNumCol {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.cellUser {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.cellUserName {
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.cellUserEmail {
+    font-size: 0.78rem;
+    color: var(--color-text-secondary);
+}
+
+.cellDate {
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.daysOverdue {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+    color: var(--color-danger);
+    white-space: nowrap;
+}
+
+.daysUntil {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--color-warning) 12%, transparent);
+    color: var(--color-warning);
+    white-space: nowrap;
+}
+
+/* ── Status badges ─────────────────────────────── */
+
+.statusBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+.badgeNotStarted {
+    background: color-mix(in srgb, var(--color-text-secondary) 15%, transparent);
+    color: var(--color-text-secondary);
+}
+
+.badgeInProgress {
+    background: color-mix(in srgb, var(--color-accent-blue) 15%, transparent);
+    color: var(--color-accent-blue);
+}
+
+.badgeOverdue {
+    background: color-mix(in srgb, var(--color-danger) 15%, transparent);
+    color: var(--color-danger);
+}
+
+.badgeCompleted {
+    background: color-mix(in srgb, var(--color-success) 15%, transparent);
+    color: var(--color-success);
+}
+
+.badgeExempt {
+    background: color-mix(in srgb, var(--color-text-secondary) 12%, transparent);
+    color: var(--color-text-secondary);
+}
+
+/* ── Empty state ───────────────────────────────── */
+
+.emptyState {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 32px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+}
+
+.emptyText {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    text-align: center;
+}
+
+/* ── Icon button ───────────────────────────────── */
+
+.iconButton {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.iconButton:hover {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-border);
+    color: var(--color-text-primary);
+}
+
+/* ── Error banner & toast ──────────────────────── */
+
+.errorBanner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-danger) 30%, transparent);
+    border-radius: var(--radius-md);
+    color: var(--color-danger);
+    font-size: 0.875rem;
+}
+
+.toast {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    background: var(--color-bg-secondary);
+    border: 1px solid color-mix(in srgb, var(--color-success) 30%, transparent);
+    border-radius: var(--radius-md);
+    color: var(--color-success);
+    font-size: 0.875rem;
+    font-weight: 500;
+    box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.4);
+    animation: slideIn 0.2s ease-out;
+    z-index: 200;
+}
+
+@keyframes slideIn {
+    from { transform: translateY(16px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* ── Responsive ────────────────────────────────── */
+
+@media (max-width: 1024px) {
+    .statsRow {
+        grid-template-columns: 1fr;
+    }
+
+    .sweepStats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .sweepStats {
+        grid-template-columns: 1fr;
+    }
+}

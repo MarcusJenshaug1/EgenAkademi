@@ -3,6 +3,8 @@
 import prisma from '@/lib/prisma';
 import { auth } from '@/auth';
 import type { GlobalRole } from '@prisma/client';
+import { runOnboardingAutoAssign } from './onboardingActions';
+import { syncDynamicGroupsForUser } from './groupActions';
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -230,6 +232,9 @@ export async function updateUser(
             },
         });
 
+        // Attributter (avdeling, rolle, status …) kan endre dynamisk gruppemedlemskap
+        await syncDynamicGroupsForUser(tenantId, userId).catch(() => {});
+
         return { success: true };
     } catch (e: unknown) {
         return { error: 'Ukjent feil' };
@@ -278,6 +283,10 @@ export async function inviteUser(
         });
 
         // TODO: Trigger magic link / welcome email via Auth.js
+
+        // Auto-tildel onboarding-programmer + synk dynamiske grupper (best-effort)
+        await runOnboardingAutoAssign(tenantId, user.id).catch(() => {});
+        await syncDynamicGroupsForUser(tenantId, user.id).catch(() => {});
 
         return { success: true, userId: user.id };
     } catch (e: unknown) {
