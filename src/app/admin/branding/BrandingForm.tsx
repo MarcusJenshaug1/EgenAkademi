@@ -46,7 +46,23 @@ const DEFAULTS: Record<string, string> = {
     colorSuccess: '#22c55e',
     colorWarning: '#f97316',
     colorDanger: '#ef4444',
+    // Valgfrie overstyringer — disse standardverdiene brukes KUN som
+    // fargevelgerens plassholder/prøve når feltet er tomt. I previewVars
+    // sendes de IKKE som default (tom = auto-avled, matcher produksjon).
+    colorSidebarHoverBg: '#1f1f23',
+    colorSidebarHoverText: '#ffffff',
+    colorTopbarBg: '#0a0a0a',
+    colorTopbarText: '#ffffff',
 };
+
+// Valgfrie overstyringsfelt: tom verdi betyr «auto-avled» (matcher produksjon),
+// så disse skal IKKE få standardverdi i previewVars — kun som plassholder/prøve.
+const OVERRIDE_KEYS = [
+    'colorSidebarHoverBg',
+    'colorSidebarHoverText',
+    'colorTopbarBg',
+    'colorTopbarText',
+];
 
 interface FieldDef {
     key: string;
@@ -116,6 +132,16 @@ const SECTIONS: SectionDef[] = [
             { key: 'colorSuccess', label: 'Suksess', hint: 'Bekreftelser og vellykkede handlinger.' },
             { key: 'colorWarning', label: 'Advarsel', hint: 'Advarsler, påminnelser og ting som nærmer seg en frist.' },
             { key: 'colorDanger', label: 'Feil', hint: 'Feilmeldinger og destruktive handlinger som sletting.' },
+        ],
+    },
+    {
+        title: 'Tilstander (hover & topbar)',
+        description: 'Valgfrie overstyringer for tilstands- og topbar-farger. La stå tomme for automatisk avledning fra de andre fargene.',
+        fields: [
+            { key: 'colorSidebarHoverBg', label: 'Sidebar hover-bakgrunn', hint: 'Bakgrunn når du holder over et menypunkt. Tom = auto.' },
+            { key: 'colorSidebarHoverText', label: 'Sidebar hover-tekst', hint: 'Tekstfarge ved hover i sidebaren. Tom = auto.', contrastAgainst: 'colorSidebarHoverBg' },
+            { key: 'colorTopbarBg', label: 'Topbar-bakgrunn', hint: 'Bakgrunn for topplinjen. Tom = auto (avledet fra hovedbakgrunn).' },
+            { key: 'colorTopbarText', label: 'Topbar-tekst', hint: 'Tekst/ikoner i topplinjen. Tom = auto.', contrastAgainst: 'colorTopbarBg' },
         ],
     },
 ];
@@ -427,7 +453,7 @@ function BrandingPreview({
 
                         {/* Permanent hover-tilstand: Grupper */}
                         <PreviewRegion
-                            fields={['colorSidebarText']}
+                            fields={['colorSidebarHoverBg', 'colorSidebarHoverText']}
                             label="Sidebar hover"
                             highlight={highlight}
                             showLabels={showLabels}
@@ -480,8 +506,8 @@ function BrandingPreview({
                 <div className={styles.previewMainContent}>
                     {/* Topbar */}
                     <PreviewRegion
-                        fields={['colorBgPrimary', 'colorTextPrimary']}
-                        label="Topbar (avledet)"
+                        fields={['colorTopbarBg', 'colorTopbarText']}
+                        label="Topbar"
                         highlight={highlight}
                         showLabels={showLabels}
                         onHover={onHover}
@@ -679,6 +705,10 @@ export interface BrandingData {
     colorSuccess: string;
     colorWarning: string;
     colorDanger: string;
+    colorSidebarHoverBg: string;
+    colorSidebarHoverText: string;
+    colorTopbarBg: string;
+    colorTopbarText: string;
     logoUrl: string;
     logoSvgContent: string;
     logoSvgModified: string;
@@ -714,6 +744,10 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
         colorSuccess: initial.colorSuccess || '',
         colorWarning: initial.colorWarning || '',
         colorDanger: initial.colorDanger || '',
+        colorSidebarHoverBg: initial.colorSidebarHoverBg || '',
+        colorSidebarHoverText: initial.colorSidebarHoverText || '',
+        colorTopbarBg: initial.colorTopbarBg || '',
+        colorTopbarText: initial.colorTopbarText || '',
     });
     const [logoUrl, setLogoUrl] = useState(initial.logoUrl || '');
     const [logoSvgContent, setLogoSvgContent] = useState(initial.logoSvgContent || '');
@@ -866,15 +900,23 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
         });
     }, [colors]);
 
-    // Resolvert fargeobjekt (alle 14 + font) → bygg de samme CSS-variablene som produksjon bruker.
+    // Resolvert fargeobjekt → bygg de samme CSS-variablene som produksjon bruker.
     const previewVars = useMemo(() => {
+        // De 14 basisfargene: tom verdi faller tilbake på standardverdien.
         const resolved: Record<string, string> = {};
         for (const key of Object.keys(DEFAULTS)) {
+            if (OVERRIDE_KEYS.includes(key)) continue;
             resolved[key] = colors[key] || DEFAULTS[key];
         }
         const heading = fontHeading || fontFamily;
         return buildBrandingVars({
             ...resolved,
+            // Overstyringsfelt: tom = undefined → buildBrandingVars auto-avleder
+            // (preview matcher produksjon). Satt verdi → vises direkte.
+            colorSidebarHoverBg: colors.colorSidebarHoverBg || undefined,
+            colorSidebarHoverText: colors.colorSidebarHoverText || undefined,
+            colorTopbarBg: colors.colorTopbarBg || undefined,
+            colorTopbarText: colors.colorTopbarText || undefined,
             fontFamily: fontFamily || heading || undefined,
         });
     }, [colors, fontFamily, fontHeading]);
@@ -1021,6 +1063,10 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
             colorSuccess: initial.colorSuccess || '',
             colorWarning: initial.colorWarning || '',
             colorDanger: initial.colorDanger || '',
+            colorSidebarHoverBg: initial.colorSidebarHoverBg || '',
+            colorSidebarHoverText: initial.colorSidebarHoverText || '',
+            colorTopbarBg: initial.colorTopbarBg || '',
+            colorTopbarText: initial.colorTopbarText || '',
         });
         setLogoUrl(initial.logoUrl || '');
         setLogoSvgContent(initial.logoSvgContent || '');
