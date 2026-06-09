@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/auth';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 /* ═══════════════════════════════════════════════════════════════════════
    Types – DetectionResult is the public API shape.  DO NOT change.
@@ -396,6 +398,21 @@ const HEX_RE = /#[0-9a-fA-F]{3,8}\b/g;
    ═══════════════════════════════════════════════════════════════════════ */
 export async function POST(request: NextRequest) {
     try {
+        // Auth: kun innloggede brukere kan utløse ekstern henting (SSRF-flate).
+        const session = await auth();
+        if (!session?.user?.id || !session?.user?.tenantId) {
+            return NextResponse.json({ error: 'Ikke autentisert' }, { status: 401 });
+        }
+
+        // Rate limiting (sikkerhetsregel #8): maks 10 deteksjoner per minutt per bruker.
+        const rl = await checkRateLimit(`detect-brand:${session.user.id}`, 10, 60_000);
+        if (!rl.allowed) {
+            return NextResponse.json(
+                { error: 'For mange forespørsler. Prøv igjen senere.' },
+                { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } }
+            );
+        }
+
         const { url } = await request.json();
         if (!url || typeof url !== 'string') {
             return NextResponse.json({ error: 'URL er påkrevd' }, { status: 400 });

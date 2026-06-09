@@ -15,6 +15,7 @@ model Tenant {
   plan          TenantPlan @default(FREE)
   addons        String[]   // Feature-flagg: ["brand-detector", "scorm", "custom-domain", ...]
   trialEndsAt   DateTime?  // Utløpsdato for prøveperiode (null = ingen trial)
+  auditRetentionDays Int?  // Oppbevaringsdager for audit-logg (null = behold for alltid)
   
   // ── Whitelabel Branding ──────────────────────────────
   // Bakgrunner
@@ -1000,6 +1001,18 @@ model ScormPackage {
 // ══════════════════════════════════════════════════════════════
 // CUSTOM DOMENER (whitelabel)
 // ══════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════
+// RATE LIMITING (fixed-window teller)
+// ══════════════════════════════════════════════════════════════
+
+model RateLimit {
+  id          String   @id @default(uuid())
+  key         String   @unique // f.eks. "login:<email>" | "scim:<tenantId>" | "upload:<userId>"
+  count       Int      @default(0)
+  windowStart DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
 
 model TenantDomain {
   id                String    @id @default(uuid())

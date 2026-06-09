@@ -917,6 +917,45 @@ export interface AuditLogItem {
     createdAt: Date;
 }
 
+// ── CSV-hjelpere (samme tilnærming som reportActions) ───────
+
+/**
+ * Escape ett CSV-felt.
+ * 1) Nøytraliser CSV-/formel-injection: felter som starter med =, +, -, @, tab
+ *    eller CR kan tolkes som formler av Excel/Sheets. Prefiks med ' for å
+ *    tvinge tekst-tolkning.
+ * 2) Pakk i anførselstegn hvis feltet inneholder , " eller linjeskift (RFC 4180).
+ */
+function csvField(value: unknown): string {
+    if (value === null || value === undefined) return '';
+    let str = String(value);
+    if (/^[=+\-@\t\r]/.test(str)) {
+        str = `'${str}`;
+    }
+    if (/[",\n\r]/.test(str)) {
+        return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+}
+
+/** Bygg en CSV-streng fra header-rad + datarader (RFC 4180, med UTF-8 BOM). */
+function toCsv(header: string[], rows: (string | number | null | undefined)[][]): string {
+    const lines = [header.map(csvField).join(',')];
+    for (const row of rows) {
+        lines.push(row.map(csvField).join(','));
+    }
+    // BOM for korrekt UTF-8-visning i Excel
+    return '﻿' + lines.join('\r\n');
+}
+
+/** Lokal yyyy-mm-dd uten tidssone-drift (til filnavn). */
+function toIsoDay(d: Date): string {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 export async function listAuditLogs(filter?: {
     action?: string;
     search?: string;
@@ -960,6 +999,213 @@ export async function listAuditLogs(filter?: {
         });
 
         return { logs: rows };
+    } catch {
+        return { error: 'Ukjent feil' };
+    }
+}
+
+// ── Oppbevaring (retention) ─────────────────────────────────
+
+/** Maks antall rader i én CSV-eksport. Forhindrer minne-/responseksplosjon. */
+const AUDIT_CSV_MAX_ROWS = 5000;
+
+export async function getAuditRetention(): Promise<
+    { retentionDays: number | null } | { error: string }
+> {
+    try {
+        const { tenantId } = await requireTenantAdmin();
+        const g = await gate(tenantId, 'audit-logging');
+        if (!g.ok) return { error: g.error };
+
+        const tenant = await prisma.tenant.findUnique({
+            where: { id: tenantId },
+            select: { auditRetentionDays: true },
+        });
+        if (!tenant) return { error: 'Organisasjon ikke funnet' };
+
+        return { retentionDays: tenant.auditRetentionDays ?? null };
+    } catch {
+        return { error: 'Ukjent feil' };
+    }
+}
+
+export async function setAuditRetention(
+    days: number | null
+): Promise<{ success: true } | { error: string }> {
+    try {
+        const { tenantId, userId, email } = await requireTenantAdmin();
+        const g = await gate(tenantId, 'audit-logging');
+        if (!g.ok) return { error: g.error };
+
+        let value: number | null = null;
+        if (days !== null && days !== undefined) {
+            if (!Number.isFinite(days)) {
+                return { error: 'Antall dager må være et heltall mellom 1 og 3650' };
+            }
+            const intDays = Math.trunc(days);
+            if (intDays < 1 || intDays > 3650) {
+                return { error: 'Antall dager må være et heltall mellom 1 og 3650' };
+            }
+            value = intDays;
+        }
+
+        await prisma.tenant.update({
+            where: { id: tenantId },
+            data: { auditRetentionDays: value },
+        });
+
+        await logAudit({
+            tenantId,
+            actorUserId: userId,
+            actorEmail: email,
+            action: 'audit.retention_set',
+            targetType: 'tenant',
+            targetId: tenantId,
+            metadata: { retentionDays: value },
+        });
+
+        return { success: true };
+    } catch {
+        return { error: 'Ukjent feil' };
+    }
+}
+
+export async function runAuditRetention(): Promise<
+    { deleted: number } | { error: string }
+> {
+    try {
+        const { tenantId, userId, email } = await requireTenantAdmin();
+        const g = await gate(tenantId, 'audit-logging');
+        if (!g.ok) return { error: g.error };
+
+        const tenant = await prisma.tenant.findUnique({
+            where: { id: tenantId },
+            select: { auditRetentionDays: true },
+        });
+        if (!tenant) return { error: 'Organisasjon ikke funnet' };
+
+        // Ingen oppbevaringsgrense satt → behold for alltid, ingenting å rydde.
+        if (tenant.auditRetentionDays == null) {
+            return { deleted: 0 };
+        }
+
+        const cutoff = new Date(
+            Date.now() - tenant.auditRetentionDays * 24 * 60 * 60 * 1000
+        );
+
+        const result = await prisma.auditLog.deleteMany({
+            where: { tenantId, createdAt: { lt: cutoff } },
+        });
+
+        await logAudit({
+            tenantId,
+            actorUserId: userId,
+            actorEmail: email,
+            action: 'audit.retention_run',
+            targetType: 'tenant',
+            targetId: tenantId,
+            metadata: {
+                retentionDays: tenant.auditRetentionDays,
+                deleted: result.count,
+            },
+        });
+
+        return { deleted: result.count };
+    } catch {
+        return { error: 'Ukjent feil' };
+    }
+}
+
+// ── CSV-eksport av audit-logg ───────────────────────────────
+
+export async function exportAuditCsv(filter?: {
+    action?: string;
+    search?: string;
+    fromDate?: string;
+    toDate?: string;
+}): Promise<{ csv: string; filename: string; capped: boolean } | { error: string }> {
+    try {
+        const { tenantId } = await requireTenantAdmin();
+        const g = await gate(tenantId, 'audit-logging');
+        if (!g.ok) return { error: g.error };
+
+        const where: Record<string, unknown> = { tenantId };
+
+        if (filter?.action && filter.action.trim()) {
+            where.action = filter.action.trim();
+        }
+        if (filter?.search && filter.search.trim()) {
+            const term = filter.search.trim();
+            where.OR = [
+                { actorEmail: { contains: term, mode: 'insensitive' } },
+                { action: { contains: term, mode: 'insensitive' } },
+                { targetType: { contains: term, mode: 'insensitive' } },
+                { targetId: { contains: term, mode: 'insensitive' } },
+            ];
+        }
+
+        // Dato-filter (valgfritt). Ugyldige datoer ignoreres stille.
+        const createdAt: { gte?: Date; lte?: Date } = {};
+        if (filter?.fromDate && filter.fromDate.trim()) {
+            const from = new Date(filter.fromDate.trim());
+            if (!Number.isNaN(from.getTime())) createdAt.gte = from;
+        }
+        if (filter?.toDate && filter.toDate.trim()) {
+            const to = new Date(filter.toDate.trim());
+            if (!Number.isNaN(to.getTime())) {
+                // Inkluder hele to-datoen (til slutten av dagen).
+                to.setHours(23, 59, 59, 999);
+                createdAt.lte = to;
+            }
+        }
+        if (createdAt.gte || createdAt.lte) {
+            where.createdAt = createdAt;
+        }
+
+        // Hent én ekstra rad for å oppdage om resultatet er kappet.
+        const rows = await prisma.auditLog.findMany({
+            where,
+            select: {
+                createdAt: true,
+                actorEmail: true,
+                action: true,
+                targetType: true,
+                targetId: true,
+                ip: true,
+            },
+            orderBy: { createdAt: 'desc' },
+            take: AUDIT_CSV_MAX_ROWS + 1,
+        });
+
+        const capped = rows.length > AUDIT_CSV_MAX_ROWS;
+        const exportRows = capped ? rows.slice(0, AUDIT_CSV_MAX_ROWS) : rows;
+
+        const header = ['tid', 'aktør', 'handling', 'måltype', 'mål-id', 'ip'];
+        const dataRows = exportRows.map((r) => [
+            r.createdAt.toISOString(),
+            r.actorEmail ?? '',
+            r.action,
+            r.targetType ?? '',
+            r.targetId ?? '',
+            r.ip ?? '',
+        ]);
+
+        if (capped) {
+            dataRows.push([
+                `Merk: eksporten er begrenset til ${AUDIT_CSV_MAX_ROWS} rader. Bruk filter for et smalere utvalg.`,
+                '',
+                '',
+                '',
+                '',
+                '',
+            ]);
+        }
+
+        return {
+            csv: toCsv(header, dataRows),
+            filename: `audit-logg-${toIsoDay(new Date())}.csv`,
+            capped,
+        };
     } catch {
         return { error: 'Ukjent feil' };
     }

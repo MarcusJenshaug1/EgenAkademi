@@ -5,6 +5,7 @@ import {
     KeyRound, Shield, Webhook, Plug, ScrollText, Lock,
     Plus, Trash2, Copy, Check, Send, RefreshCw, X,
     AlertTriangle, CheckCircle, ArrowUpCircle, Power, Edit3,
+    Download, Save, Eraser, Clock, Info,
 } from 'lucide-react';
 import styles from './integrations.module.css';
 import {
@@ -13,7 +14,7 @@ import {
     listWebhooks, createWebhook, setWebhookEnabled, deleteWebhook,
     listRecentDeliveries, sendTestWebhook, updateWebhook,
     listLtiPlatforms, createLtiPlatform, updateLtiPlatform, setLtiEnabled, deleteLtiPlatform,
-    listAuditLogs,
+    listAuditLogs, getAuditRetention, setAuditRetention, runAuditRetention, exportAuditCsv,
     type ScimTokenListItem, type WebhookListItem, type WebhookDeliveryItem,
     type LtiPlatformItem, type AuditLogItem,
 } from '@/app/actions/integrationActions';
@@ -209,7 +210,7 @@ export default function IntegrationsClient({ data }: { data: IntegrationsData })
                     )}
                     {tab === 'audit' && (
                         data.access.audit.allowed
-                            ? <AuditTab initial={data.auditLogs} onErr={notifyErr} />
+                            ? <AuditTab initial={data.auditLogs} onOk={notifyOk} onErr={notifyErr} />
                             : <UpgradeCard title="Audit-logg" reason={data.access.audit.reason} />
                     )}
                 </div>
@@ -953,14 +954,23 @@ function LtiTab({
 // ════════════════════════════════════════════════════════════
 
 function AuditTab({
-    initial, onErr,
+    initial, onOk, onErr,
 }: {
     initial: AuditLogItem[];
+    onOk: (m: string) => void;
     onErr: (m: string) => void;
 }) {
     const [logs, setLogs] = useState<AuditLogItem[]>(initial);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(false);
+
+    // Retention-kontroll
+    const [retentionLoaded, setRetentionLoaded] = useState(false);
+    const [keepForever, setKeepForever] = useState(true);
+    const [retentionDays, setRetentionDays] = useState<string>('365');
+    const [savingRetention, setSavingRetention] = useState(false);
+    const [cleaning, setCleaning] = useState(false);
+    const [exporting, setExporting] = useState(false);
 
     const refresh = useCallback(async (q: string) => {
         setLoading(true);
@@ -971,13 +981,96 @@ function AuditTab({
     }, [onErr]);
 
     useEffect(() => {
+        // Debounce søk. Kjører også ved montering for å holde listen i synk med
+        // serverens filtrering (initial-data er kun et førstevisnings-øyeblikksbilde).
         const t = setTimeout(() => {
-            // Skip the very first run (initial data already loaded) only when search is empty.
             refresh(search);
         }, 300);
         return () => clearTimeout(t);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [search]);
+
+    // Hent gjeldende oppbevaringsinnstilling én gang.
+    useEffect(() => {
+        let active = true;
+        (async () => {
+            const result = await getAuditRetention();
+            if (!active) return;
+            if ('retentionDays' in result) {
+                if (result.retentionDays == null) {
+                    setKeepForever(true);
+                } else {
+                    setKeepForever(false);
+                    setRetentionDays(String(result.retentionDays));
+                }
+            }
+            setRetentionLoaded(true);
+        })();
+        return () => {
+            active = false;
+        };
+    }, []);
+
+    async function handleSaveRetention(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault();
+        let days: number | null = null;
+        if (!keepForever) {
+            const parsed = parseInt(retentionDays, 10);
+            if (!Number.isFinite(parsed) || parsed < 1 || parsed > 3650) {
+                onErr('Antall dager må være et heltall mellom 1 og 3650');
+                return;
+            }
+            days = parsed;
+        }
+        setSavingRetention(true);
+        const result = await setAuditRetention(days);
+        setSavingRetention(false);
+        if ('success' in result) {
+            onOk('Oppbevaringsinnstilling lagret');
+        } else {
+            onErr(result.error);
+        }
+    }
+
+    async function handleExport() {
+        setExporting(true);
+        const result = await exportAuditCsv({ search: search || undefined });
+        setExporting(false);
+        if ('csv' in result) {
+            const blob = new Blob([result.csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = result.filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+            onOk(
+                result.capped
+                    ? 'CSV eksportert (begrenset til 5000 rader)'
+                    : 'CSV eksportert'
+            );
+        } else {
+            onErr(result.error);
+        }
+    }
+
+    async function handleRunRetention() {
+        setCleaning(true);
+        const result = await runAuditRetention();
+        setCleaning(false);
+        if ('deleted' in result) {
+            onOk(
+                result.deleted > 0
+                    ? `Opprydding fullført – ${result.deleted} hendelser slettet`
+                    : 'Opprydding fullført – ingen hendelser eldre enn grensen'
+            );
+            await refresh(search);
+        } else {
+            onErr(result.error);
+        }
+    }
 
     return (
         <div className={styles.tabContent}>
@@ -988,7 +1081,106 @@ function AuditTab({
                         Sikkerhetshendelser i organisasjonen, nyeste først.
                     </p>
                 </div>
+                <button
+                    type="button"
+                    className={styles.btnGhost}
+                    onClick={handleExport}
+                    disabled={exporting}
+                >
+                    <span className={styles.btnIconLabel}>
+                        <Download size={15} />
+                        {exporting ? 'Eksporterer…' : 'Eksporter CSV'}
+                    </span>
+                </button>
             </div>
+
+            {/* Oppbevaring (retention) */}
+            <form onSubmit={handleSaveRetention} className={styles.inlineForm}>
+                <div className={styles.formGroup}>
+                    <span className={styles.subLabel}>Oppbevaring av audit-logg</span>
+                    <p className={styles.retentionHint}>
+                        Bestem hvor lenge hendelser skal lagres. Eldre hendelser kan
+                        ryddes bort manuelt nedenfor.
+                    </p>
+                </div>
+
+                <div className={styles.retentionControls}>
+                    <label className={styles.checkItem}>
+                        <input
+                            type="radio"
+                            name="retentionMode"
+                            checked={keepForever}
+                            onChange={() => setKeepForever(true)}
+                        />
+                        <span>Behold for alltid</span>
+                    </label>
+                    <label className={styles.checkItem}>
+                        <input
+                            type="radio"
+                            name="retentionMode"
+                            checked={!keepForever}
+                            onChange={() => setKeepForever(false)}
+                        />
+                        <span>Behold i</span>
+                    </label>
+                    <input
+                        className={styles.daysInput}
+                        type="number"
+                        min={1}
+                        max={3650}
+                        value={retentionDays}
+                        onChange={(e) => setRetentionDays(e.target.value)}
+                        onFocus={() => setKeepForever(false)}
+                        disabled={keepForever}
+                        aria-label="Antall dager"
+                    />
+                    <span className={styles.muted}>dager</span>
+                </div>
+
+                <div className={styles.formActions}>
+                    <button
+                        type="submit"
+                        className={styles.btnPrimary}
+                        disabled={savingRetention || !retentionLoaded}
+                    >
+                        <Save size={15} />
+                        {savingRetention ? 'Lagrer…' : 'Lagre oppbevaring'}
+                    </button>
+                </div>
+            </form>
+
+            {/* Manuell opprydding */}
+            <div className={styles.retentionNote}>
+                <Info size={15} />
+                <div>
+                    <span>
+                        Planlagt håndheving av oppbevaring (cron) er ennå ikke satt opp
+                        (TODO). Inntil videre kan du kjøre oppryddingen manuelt.
+                    </span>
+                    <div className={styles.retentionNoteAction}>
+                        <button
+                            type="button"
+                            className={styles.btnGhost}
+                            onClick={handleRunRetention}
+                            disabled={cleaning}
+                        >
+                            <span className={styles.btnIconLabel}>
+                                <Eraser size={15} />
+                                {cleaning ? 'Rydder opp…' : 'Kjør opprydding nå'}
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div className={styles.divider} />
+
+            <span className={styles.subLabel}>
+                <span className={styles.btnIconLabel}>
+                    <Clock size={14} />
+                    Hendelser
+                </span>
+            </span>
 
             <input
                 className={styles.input}
