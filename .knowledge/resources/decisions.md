@@ -57,6 +57,18 @@
 - **Alternatives:** Attempt full SAML/LTI runtime now (high risk, incomplete); leave the nav items as 404 (poor UX).
 - **Consequence:** Manifest marks these `[~]` partial with explicit runtime TODOs. Real SSO login needs an ACS route + Auth.js SAML wiring before use.
 
+### ADR-009: Autonom topp-ned utbygging via stacked PR-er + infra-TODO-policy
+- **Date:** 2026-06-09
+- **Decision:** Bygg hele gjenværende veikart (Fase 1→3 + marked + LTI) autonomt som 12 stacked feature-branches med én PR per område. Bygg alt som er fullt byggbart + verifiserbart lokalt; scaffold infra-avhengige deler (auto-TLS, host-ruting, object-storage, persisterte nonce-cacher, login-tids 2FA, cron, live-IdP) og merk dem eksplisitt som TODO i PR/manifest.
+- **Rationale:** Delt Neon-DB med additivt skjema → stacking holder `schema.prisma` kumulativt slik at `db push` aldri vil droppe tidligere tabeller; én PR per område holder review-bar. Infra-deler kan ikke gjøres produksjonsriktig uten deploy-plattform, så ærlig scaffolding + TODO er bedre enn å late som.
+- **Consequence:** Hvert område fikk skjema sentralt (av meg) før parallelle agenter bygde UI/actions, etterfulgt av adversariell hardening og sentral `tsc`+`build`. PR-ene må merges i rekkefølge.
+
+### ADR-010: Sikkerhetskritiske integrasjoner bruker vettede biblioteker, ikke håndrullet krypto
+- **Date:** 2026-06-09
+- **Decision:** SAML (@node-saml/node-saml), LTI/JWT (jose), TOTP (otplib), SCIM token-hashing (node:crypto). Ingen egen XML-signatur-/JWT-validering.
+- **Rationale:** Auth-/krypto-kode gjort feil er et sikkerhetshull; bibliotekene håndterer signatur, conditions, replay (validateInResponseTo) og alg-pinning korrekt.
+- **Consequence:** Adversariell hardening-pass per område verifiserte trust-grensene (HMAC-broer mot AUTH_SECRET, JWKS-validering, RS256-pinning, InResponseTo).
+
 ---
 
 ## Decision Template

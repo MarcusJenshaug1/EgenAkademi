@@ -1,0 +1,200 @@
+/* ============================================================
+   Bestill demo – skjema (client). Kun var(--color-*) / color-mix().
+   ============================================================ */
+
+.formCard {
+    background: linear-gradient(180deg,
+            color-mix(in srgb, var(--color-text-primary) 4%, transparent) 0%,
+            color-mix(in srgb, var(--color-text-primary) 1%, transparent) 100%);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 36px;
+    box-shadow: 0 30px 60px -34px color-mix(in srgb, var(--color-accent-blue) 50%, transparent);
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.label {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.required {
+    color: var(--color-accent-blue);
+    margin-left: 2px;
+}
+
+.input,
+.textarea {
+    width: 100%;
+    background: color-mix(in srgb, var(--color-text-primary) 4%, transparent);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-family: inherit;
+    font-size: 0.95rem;
+    padding: 12px 14px;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.input::placeholder,
+.textarea::placeholder {
+    color: color-mix(in srgb, var(--color-text-secondary) 80%, transparent);
+}
+
+.input:focus,
+.textarea:focus {
+    outline: none;
+    border-color: var(--color-accent-blue);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent-blue) 22%, transparent);
+}
+
+.textarea {
+    resize: vertical;
+    min-height: 120px;
+    line-height: 1.55;
+}
+
+.inputError {
+    border-color: var(--color-danger);
+}
+
+.inputError:focus {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-danger) 25%, transparent);
+}
+
+.fieldError {
+    font-size: 0.82rem;
+    color: var(--color-danger);
+}
+
+.submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 48px;
+    margin-top: 4px;
+    padding: 0 24px;
+    border: none;
+    border-radius: var(--radius-lg);
+    background: var(--gradient-primary);
+    color: var(--color-button-text);
+    font-size: 0.98rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 0 18px var(--color-accent-glow);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast), opacity var(--transition-fast);
+}
+
+.submit:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px var(--color-accent-glow);
+}
+
+.submit:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.spin {
+    animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+
+.alertError {
+    background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-danger) 35%, transparent);
+    color: var(--color-text-primary);
+}
+
+.alertIconError {
+    color: var(--color-danger);
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+/* Suksess-tilstand */
+.success {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+    padding: 28px 12px;
+}
+
+.successIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--color-success) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-success) 40%, transparent);
+    color: var(--color-success);
+}
+
+.successTitle {
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--color-text-primary);
+}
+
+.successText {
+    color: var(--color-text-secondary);
+    font-size: 0.98rem;
+    line-height: 1.6;
+    max-width: 420px;
+}
+
+.formNote {
+    color: var(--color-text-secondary);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    margin-top: 2px;
+}
+
+@media (max-width: 540px) {
+    .row {
+        grid-template-columns: 1fr;
+    }
+
+    .formCard {
+        padding: 24px;
+    }
+}

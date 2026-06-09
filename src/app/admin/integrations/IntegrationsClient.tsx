@@ -207,7 +207,7 @@ export default function IntegrationsClient({ data }: { data: IntegrationsData })
                     )}
                     {tab === 'lti' && (
                         data.access.lti.allowed
-                            ? <LtiTab initial={data.ltiPlatforms} onOk={notifyOk} onErr={notifyErr} />
+                            ? <LtiTab initial={data.ltiPlatforms} baseUrl={data.baseUrl} onOk={notifyOk} onErr={notifyErr} />
                             : <UpgradeCard title="LTI" reason={data.access.lti.reason} />
                     )}
                     {tab === 'audit' && (
@@ -794,12 +794,20 @@ function WebhooksTab({
 // ════════════════════════════════════════════════════════════
 
 function LtiTab({
-    initial, onOk, onErr,
+    initial, baseUrl, onOk, onErr,
 }: {
     initial: LtiPlatformItem[];
+    baseUrl: string;
     onOk: (m: string) => void;
     onErr: (m: string) => void;
 }) {
+    // Verktøy-endepunkter (tool side). Disse er felles for tjenesten – ikke
+    // per-tenant i denne scaffolden – og er de URL-ene admin registrerer i sin
+    // LMS-plattform (Canvas/Moodle/Blackboard). Speiler src/lib/lti.ts.
+    const ltiBase = `${baseUrl}/api/lti`;
+    const loginUrl = `${ltiBase}/login`;
+    const launchUrl = `${ltiBase}/launch`;
+    const jwksUrl = `${ltiBase}/jwks`;
     const [platforms, setPlatforms] = useState<LtiPlatformItem[]>(initial);
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState<LtiPlatformItem | null>(null);
@@ -882,6 +890,25 @@ function LtiTab({
                     <Plus size={16} />
                     Ny plattform
                 </button>
+            </div>
+
+            {/* Verktøy-URLer – registrer disse i din LMS-plattform */}
+            <div className={styles.infoCard}>
+                <span className={styles.infoCardLabel}>
+                    Våre verktøy-URLer – registrer disse i din LMS-plattform
+                </span>
+                <div className={styles.kvRow}>
+                    <span className={styles.kvKey}>OIDC login-URL (initiering)</span>
+                    <CopyBox value={loginUrl} />
+                </div>
+                <div className={styles.kvRow}>
+                    <span className={styles.kvKey}>Launch / redirect-URI</span>
+                    <CopyBox value={launchUrl} />
+                </div>
+                <div className={styles.kvRow}>
+                    <span className={styles.kvKey}>JWKS / offentlig nøkkel-URL</span>
+                    <CopyBox value={jwksUrl} />
+                </div>
             </div>
 
             {showForm && (

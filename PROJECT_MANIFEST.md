@@ -2,7 +2,16 @@
 
 > **For AI-agenter og utviklere:** Dette dokumentet er kilden til sannhet for teknisk arkitektur, designregler, fullstendig kravstatus og veikart. Les dette FØR du gjør endringer.
 
-> **Statusnotat 2026-06-09:** Kurssystemet (admin + learner) ble gjenopprettet til `main` fra PR #6 (var resatt bort 2026-06-05). I tillegg er fire nye admin-seksjoner bygget: **Sesjoner**, **Innhold**, **Rapporter** og **Integrasjoner**. Statuslegende: `[x]` ferdig · `[~]` delvis (config/admin bygget, runtime gjenstår) · `[ ]` ikke startet.
+> **Statusnotat 2026-06-09:** Kurssystemet (admin + learner) ble gjenopprettet til `main` fra PR #6 (var resatt bort 2026-06-05). Deretter ble fire admin-seksjoner bygget (**Sesjoner, Innhold, Rapporter, Integrasjoner**) og branding-siden overhalt. Statuslegende: `[x]` ferdig · `[~]` delvis (config/admin bygget, runtime/infra gjenstår) · `[ ]` ikke startet.
+
+> **Autonom utbygging 2026-06-09 (PR #8–#19, stacked branches):** Hele resten av veikartet bygget topp-ned. Alt verifisert med `tsc --noEmit` + `next build` (47 ruter) og en adversariell sikkerhets-/konvensjonsgjennomgang per område.
+> - **Fase 1:** Frister/resertifisering/eskalering + sesjonsvarsler (PR #8) · Ferdigheter & kompetanse m/ gap-analyse (PR #9) · `[~]` SCORM import + runtime-player (PR #10; full 2004-konformans + object-storage = TODO) · `[~]` Custom domener m/ ekte DNS TXT-verifisering (PR #11; auto-TLS + host-ruting = TODO) · Onboarding-programmer + dynamiske grupper (PR #8).
+> - **Plattform:** System-admin-panel (plan/addons per tenant) + plan-basert nav-gating (PR #12).
+> - **Fase 2:** `[~]` Full SCIM 2.0 (Users CRUD/Groups/discovery) + audit-retention/CSV + rate-limiting (PR #13) · Webhook-event-wiring + GDPR eksport/anonymisering (PR #14) · 2FA/TOTP self-service (PR #15; login-håndhevelse = TODO) · `[~]` SAML 2.0 SP-runtime m/ bibliotek-validering + Auth.js-bro (PR #16; persistert InResponseTo-cache + live-IdP = TODO).
+> - **Fase 3:** Gamification (poeng/badges/nivåer/topplister, PR #17) · Wiki/kunnskapsbase (hierarki/versjoner/godkjenning/tilgang, PR #18).
+> - **Marked + LTI:** Markedsnettsted (forside/priser/sikkerhet/bestill demo, PR #19) · `[~]` LTI 1.3 launch-scaffold m/ JWKS-validert id_token (Deep Linking/AGS/NRPS + sesjon = TODO).
+>
+> **Gjenværende TODO-er er infra-/deploy-avhengige** (auto-TLS, host-basert tenant-ruting, object-storage for SCORM, persistert SAML/LTI nonce-cache, login-tids 2FA-håndhevelse, daglig cron for frist-sweep/audit-retention, live-IdP-verifisering) eller produktbeslutninger — dokumentert per PR.
 
 ---
 

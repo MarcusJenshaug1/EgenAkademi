@@ -1024,6 +1024,23 @@ model RateLimit {
 }
 
 // ══════════════════════════════════════════════════════════════
+// MARKEDSNETTSTED – demo-forespørsler (leads)
+// ══════════════════════════════════════════════════════════════
+
+model DemoRequest {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  company   String?
+  phone     String?
+  message   String?  @db.Text
+  status    String   @default("new") // new | contacted | closed
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// ══════════════════════════════════════════════════════════════
 // WIKI / KUNNSKAPSBASE
 // ══════════════════════════════════════════════════════════════
 
