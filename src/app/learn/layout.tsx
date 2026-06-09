@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import {
-    Home, BookOpen, Award, Bell, LogOut, GraduationCap, Shield, Compass, Calendar,
+    Home, BookOpen, Award, Bell, LogOut, GraduationCap, Shield, Compass, Calendar, Target,
 } from 'lucide-react';
 import styles from './layout.module.css';
 import { auth, signOut } from '@/auth';
@@ -110,6 +110,9 @@ export default async function LearnLayout({
                     </LearnNavLink>
                     <LearnNavLink href="/learn/courses">
                         <Compass size={18} /> Kurskatalog
+                    </LearnNavLink>
+                    <LearnNavLink href="/learn/skills">
+                        <Target size={18} /> Kompetanse
                     </LearnNavLink>
                     {sessionsEnabled && (
                         <LearnNavLink href="/learn/sessions">

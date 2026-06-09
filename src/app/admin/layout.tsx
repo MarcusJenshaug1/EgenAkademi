@@ -2,7 +2,7 @@ import Link from 'next/link';
 import {
     LayoutDashboard, Users, UsersRound, Shield, BookOpen,
     Calendar, Files, Palette, Plug, BarChart3, HelpCircle, LogOut, UserCircle,
-    Rocket, AlarmClock
+    Rocket, AlarmClock, Target
 } from 'lucide-react';
 import styles from './layout.module.css';
 import { auth, signOut } from '@/auth';
@@ -90,6 +90,9 @@ export default async function AdminLayout({
                     </NavLink>
                     <NavLink href="/admin/roles">
                         <Shield size={18} /> Roller og tilgang
+                    </NavLink>
+                    <NavLink href="/admin/skills">
+                        <Target size={18} /> Kompetanse
                     </NavLink>
 
                     <div className={styles.navSection}>Læring</div>

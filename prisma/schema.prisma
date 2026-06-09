@@ -132,6 +132,7 @@ model User {
   sessionsTaught     TrainingSession[]   @relation("SessionInstructor")
   sessionEnrollments SessionEnrollment[] @relation("SessionAttendee")
   onboardingEnrollments OnboardingEnrollment[]
+  skills             UserSkill[]
 
   @@index([tenantId])
 }
@@ -351,6 +352,7 @@ model Course {
   enrollments               CourseEnrollment[]
   certificates              Certificate[]
   sessions                  TrainingSession[]
+  skills                    CourseSkill[]
 
   createdAt                 DateTime         @default(now())
   updatedAt                 DateTime         @updatedAt
@@ -918,4 +920,60 @@ model OnboardingEnrollment {
 
   @@unique([programId, userId])
   @@index([tenantId, userId])
+}
+
+// ══════════════════════════════════════════════════════════════
+// FERDIGHETER & KOMPETANSE
+// ══════════════════════════════════════════════════════════════
+
+model Skill {
+  id            String   @id @default(uuid())
+  tenantId      String
+  name          String
+  description   String?  @db.Text
+  category      String?
+  parentSkillId String?  // Underferdighet av en annen ferdighet
+  parentSkill   Skill?   @relation("SkillTree", fields: [parentSkillId], references: [id])
+  childSkills   Skill[]  @relation("SkillTree")
+  maxLevel      Int      @default(5) // Skala 1..maxLevel
+  sortOrder     Int      @default(0)
+
+  courses       CourseSkill[]
+  userSkills    UserSkill[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, parentSkillId])
+}
+
+model CourseSkill {
+  id        String  @id @default(uuid())
+  tenantId  String
+  courseId  String
+  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  skillId   String
+  skill     Skill   @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  level     Int     @default(1) // Nivået kurset gir i ferdigheten
+
+  createdAt DateTime @default(now())
+
+  @@unique([courseId, skillId])
+  @@index([tenantId, skillId])
+}
+
+model UserSkill {
+  id         String   @id @default(uuid())
+  tenantId   String
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skillId    String
+  skill      Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  level      Int      @default(1)
+  source     String   @default("manual") // "manual" | "course" | "assessment"
+  acquiredAt DateTime @default(now())
+
+  @@unique([userId, skillId])
+  @@index([tenantId, skillId])
 }
