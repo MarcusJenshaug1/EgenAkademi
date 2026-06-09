@@ -38,8 +38,7 @@ export async function createTenantAndAssign(formData: FormData) {
 
         // La klient-siden ta seg av redirecten og session refresh
         return { success: true, tenantId: newTenant.id };
-    } catch (e: any) {
-        console.error("Feil ved opprettelse av tenant:", e);
-        return { error: e.message || 'En uventet systemfeil oppstod.' };
+    } catch {
+        return { error: 'En uventet systemfeil oppstod.' };
     }
 }

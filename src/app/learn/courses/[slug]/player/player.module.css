@@ -1,0 +1,1407 @@
+/* ── Course Player ──────────────────────────────── */
+
+.player {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+    /* Player occupies full viewport within the learn layout */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+    background: var(--color-bg-primary);
+}
+
+/* ── Sidebar TOC ────────────────────────────────── */
+
+.sidebar {
+    width: 0;
+    overflow: hidden;
+    background: var(--color-sidebar-bg);
+    border-right: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    transition: width 0.25s ease;
+    flex-shrink: 0;
+}
+
+.sidebarOpen {
+    width: 300px;
+}
+
+.sidebarHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--color-border);
+    min-height: 48px;
+}
+
+.backBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: var(--color-sidebar-text);
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    transition: background var(--transition-fast);
+}
+
+.backBtn:hover {
+    background: color-mix(in srgb, var(--color-sidebar-text) 10%, transparent);
+}
+
+.backLabel {
+    font-weight: 500;
+}
+
+.closeSidebarBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: none;
+    border: none;
+    color: var(--color-sidebar-text);
+    opacity: 0.6;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.closeSidebarBtn:hover {
+    opacity: 1;
+    background: color-mix(in srgb, var(--color-sidebar-text) 10%, transparent);
+}
+
+.sidebarTitle {
+    padding: 16px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.courseTitle {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-sidebar-text);
+    line-height: 1.4;
+    margin-bottom: 10px;
+}
+
+.sidebarProgress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.progressBar {
+    flex: 1;
+    height: 4px;
+    background: color-mix(in srgb, var(--color-sidebar-text) 15%, transparent);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.progressFill {
+    height: 100%;
+    background: var(--gradient-primary);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+
+.progressText {
+    font-size: 0.7rem;
+    color: var(--color-sidebar-text);
+    opacity: 0.7;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+/* ── TOC Navigation ─────────────────────────────── */
+
+.tocNav {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+}
+
+.tocModule {
+    /* each module group */
+}
+
+.tocModuleBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 16px;
+    background: none;
+    border: none;
+    color: var(--color-sidebar-text);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    transition: background var(--transition-fast);
+}
+
+.tocModuleBtn:hover {
+    background: color-mix(in srgb, var(--color-sidebar-text) 5%, transparent);
+}
+
+.tocChevron {
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+    transform: rotate(-90deg);
+}
+
+.tocChevronOpen {
+    transform: rotate(0deg);
+}
+
+.tocModuleTitle {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tocLessons {
+    padding: 0 0 4px 0;
+}
+
+.tocLesson {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 16px 8px 40px;
+    background: none;
+    border: none;
+    color: var(--color-sidebar-text);
+    font-size: 0.76rem;
+    cursor: pointer;
+    text-align: left;
+    transition: all var(--transition-fast);
+    opacity: 0.8;
+}
+
+.tocLesson:hover:not(:disabled) {
+    opacity: 1;
+    background: color-mix(in srgb, var(--color-sidebar-text) 5%, transparent);
+}
+
+.tocLessonActive {
+    opacity: 1;
+    background: color-mix(in srgb, var(--color-accent-blue) 12%, transparent);
+    color: var(--color-accent-blue);
+    border-left: 2px solid var(--color-accent-blue);
+    padding-left: 38px;
+}
+
+.tocLessonLocked {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.tocLessonTitle {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Status Icons ───────────────────────────────── */
+
+.iconCompleted {
+    color: var(--color-success);
+    flex-shrink: 0;
+}
+
+.iconStarted {
+    color: var(--color-accent-blue);
+    flex-shrink: 0;
+}
+
+.iconAvailable {
+    color: var(--color-sidebar-text);
+    opacity: 0.4;
+    flex-shrink: 0;
+}
+
+.iconLocked {
+    color: var(--color-sidebar-text);
+    opacity: 0.3;
+    flex-shrink: 0;
+}
+
+/* ── Main Content ───────────────────────────────── */
+
+.mainContent {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* ── Top Bar ────────────────────────────────────── */
+
+.topBar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 24px;
+    border-bottom: 1px solid var(--color-border);
+    min-height: 48px;
+    background: color-mix(in srgb, var(--color-bg-primary) 90%, transparent);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.menuBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: none;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.menuBtn:hover {
+    background: var(--color-bg-surface);
+    border-color: var(--color-accent-blue);
+}
+
+.topBarTitle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    min-width: 0;
+}
+
+.topBarModule {
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.topBarSep {
+    color: var(--color-text-secondary);
+    opacity: 0.4;
+    flex-shrink: 0;
+}
+
+.topBarLesson {
+    color: var(--color-text-primary);
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Content Area ───────────────────────────────── */
+
+.contentArea {
+    flex: 1;
+    overflow-y: auto;
+    padding: 40px;
+}
+
+.lessonContent {
+    max-width: 780px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.noContent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 12px;
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+}
+
+/* ── Block Styles ───────────────────────────────── */
+
+.blockText {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--color-text-primary);
+}
+
+.blockText h1,
+.blockText h2,
+.blockText h3,
+.blockText h4 {
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+}
+
+.blockText h1 { font-size: 1.5rem; }
+.blockText h2 { font-size: 1.25rem; }
+.blockText h3 { font-size: 1.1rem; }
+
+.blockText p {
+    margin-bottom: 1em;
+}
+
+.blockText ul,
+.blockText ol {
+    padding-left: 1.5em;
+    margin-bottom: 1em;
+}
+
+.blockText li {
+    margin-bottom: 0.4em;
+}
+
+.blockText a {
+    color: var(--color-accent-blue);
+    text-decoration: underline;
+}
+
+.blockText code {
+    background: color-mix(in srgb, var(--color-border) 40%, transparent);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.85em;
+}
+
+.blockText pre {
+    background: color-mix(in srgb, var(--color-bg-surface) 80%, transparent);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    overflow-x: auto;
+    margin-bottom: 1em;
+}
+
+.blockText pre code {
+    background: none;
+    padding: 0;
+}
+
+.blockText blockquote {
+    border-left: 3px solid var(--color-accent-blue);
+    padding-left: 16px;
+    color: var(--color-text-secondary);
+    margin: 1em 0;
+}
+
+.blockVideo {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%; /* 16:9 */
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: color-mix(in srgb, var(--color-border) 20%, transparent);
+}
+
+.videoIframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.blockImage {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.imageEl {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+.blockFile,
+.blockUnknown {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 24px;
+}
+
+.blockEmbed {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.blockEmbed iframe {
+    max-width: 100%;
+    border: none;
+}
+
+.blockPlaceholder {
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.fileLink {
+    color: var(--color-accent-blue);
+    font-weight: 500;
+    text-decoration: underline;
+}
+
+.imageCaption {
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--color-text-secondary);
+    margin-top: 8px;
+    font-style: italic;
+}
+
+/* ── Quiz Block ─────────────────────────────────── */
+
+.quizContainer {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.quizHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-accent-blue);
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.quizQuestion {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    line-height: 1.5;
+}
+
+.quizQuestion p {
+    margin: 0;
+}
+
+.quizOptions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.quizOption {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 16px;
+    background: color-mix(in srgb, var(--color-bg-secondary) 60%, transparent);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-align: left;
+    transition: all var(--transition-fast);
+}
+
+.quizOption:hover:not(:disabled) {
+    border-color: var(--color-accent-blue);
+    background: color-mix(in srgb, var(--color-accent-blue) 8%, transparent);
+}
+
+.quizOptionSelected {
+    border-color: var(--color-accent-blue);
+    background: color-mix(in srgb, var(--color-accent-blue) 12%, transparent);
+}
+
+.quizOptionCorrect {
+    border-color: var(--color-success);
+    background: color-mix(in srgb, var(--color-success) 10%, transparent);
+}
+
+.quizOptionWrong {
+    border-color: var(--color-danger);
+    background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+}
+
+.quizOptionLetter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--color-text-secondary) 12%, transparent);
+    font-weight: 700;
+    font-size: 0.78rem;
+    flex-shrink: 0;
+    color: var(--color-text-secondary);
+}
+
+.quizOptionText {
+    flex: 1;
+}
+
+.quizIconCorrect {
+    color: var(--color-success);
+    flex-shrink: 0;
+}
+
+.quizIconWrong {
+    color: var(--color-danger);
+    flex-shrink: 0;
+}
+
+.quizSubmitBtn {
+    align-self: flex-start;
+    padding: 10px 24px;
+    background: var(--color-button-primary);
+    color: var(--color-button-text);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.quizSubmitBtn:hover:not(:disabled) {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.quizSubmitBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.quizResult {
+    padding: 16px;
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.quizResultCorrect {
+    background: color-mix(in srgb, var(--color-success) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-success) 30%, transparent);
+}
+
+.quizResultWrong {
+    background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-danger) 30%, transparent);
+}
+
+.quizResultText {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--color-text-primary);
+}
+
+.quizExplanation {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+}
+
+.quizExplanation p {
+    margin: 0;
+}
+
+.quizRetryBtn {
+    align-self: flex-start;
+    padding: 6px 16px;
+    background: none;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-secondary);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.quizRetryBtn:hover {
+    border-color: var(--color-accent-blue);
+    color: var(--color-accent-blue);
+}
+
+/* ── Multi-step Quiz extras ─────────────────────── */
+
+.quizStepIndicator {
+    margin-left: auto;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    background: color-mix(in srgb, var(--color-text-secondary) 10%, transparent);
+    padding: 2px 10px;
+    border-radius: 999px;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.quizProgressBar {
+    width: 100%;
+    height: 4px;
+    background: color-mix(in srgb, var(--color-border) 60%, transparent);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.quizProgressFill {
+    height: 100%;
+    background: var(--color-accent-blue);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+}
+
+.quizResultActions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.quizNextBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    background: var(--color-button-primary);
+    color: var(--color-button-text);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.quizNextBtn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.quizCompleted {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: color-mix(in srgb, var(--color-success) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-success) 25%, transparent);
+    border-radius: var(--radius-md);
+    color: var(--color-success);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* ── Quiz gate hint in bottom bar ───────────────── */
+
+.quizGateHint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    opacity: 0.8;
+}
+
+/* ── Finish course button variant ───────────────── */
+
+.navBtnFinish {
+    background: var(--color-button-primary);
+    color: var(--color-button-text);
+    border-color: var(--color-button-primary);
+    font-weight: 600;
+}
+
+.navBtnFinish:hover:not(:disabled) {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+/* ── Bottom Bar ─────────────────────────────────── */
+
+.bottomBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    border-top: 1px solid var(--color-border);
+    background: color-mix(in srgb, var(--color-bg-primary) 90%, transparent);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.navBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.navBtn:hover:not(:disabled) {
+    border-color: var(--color-accent-blue);
+    color: var(--color-accent-blue);
+}
+
+.navBtn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.completeBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 20px;
+    background: var(--color-success);
+    border: none;
+    border-radius: var(--radius-md);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.completeBtn:hover:not(:disabled) {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.completeBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.completedTag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-success);
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+/* ── Course Completed Overlay ───────────────────── */
+
+.completionOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0);
+    backdrop-filter: blur(0px);
+    transition: background 0.6s ease, backdrop-filter 0.6s ease;
+    overflow: hidden;
+}
+
+.completionVisible {
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+}
+
+.completionCard {
+    text-align: center;
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-lg);
+    padding: 48px 56px;
+    max-width: 460px;
+    width: 90%;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
+    transform: scale(0.6) translateY(40px);
+    opacity: 0;
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
+    position: relative;
+    z-index: 2;
+}
+
+.completionCardVisible {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+}
+
+.completionTrophy {
+    width: 88px;
+    height: 88px;
+    margin: 0 auto 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--color-warning) 15%, transparent);
+    color: var(--color-warning);
+    animation: trophyPulse 2s ease-in-out infinite;
+}
+
+@keyframes trophyPulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-warning) 30%, transparent); }
+    50% { transform: scale(1.05); box-shadow: 0 0 0 12px color-mix(in srgb, var(--color-warning) 0%, transparent); }
+}
+
+.completionTitle {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin-bottom: 4px;
+    letter-spacing: -0.02em;
+}
+
+.completionSubtitle {
+    font-size: 1rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 8px;
+}
+
+.completionCourse {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-accent-blue);
+    margin-bottom: 32px;
+}
+
+.completionActions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+
+.completionPrimary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    background: var(--color-button-primary);
+    color: var(--color-button-text);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    width: 100%;
+    justify-content: center;
+}
+
+.completionPrimary:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.completionSecondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 24px;
+    background: none;
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    width: 100%;
+    justify-content: center;
+}
+
+.completionSecondary:hover {
+    background: color-mix(in srgb, var(--color-text-primary) 5%, transparent);
+    color: var(--color-text-primary);
+}
+
+/* ── Confetti ──────────────────────────────────── */
+
+.confettiContainer {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.confetti {
+    position: absolute;
+    top: -20px;
+    left: var(--x);
+    width: var(--size);
+    height: var(--size);
+    background: var(--color);
+    border-radius: 2px;
+    animation: confettiFall var(--duration) ease-in var(--delay) forwards;
+    opacity: 0;
+}
+
+.confetti:nth-child(3n) {
+    border-radius: 50%;
+}
+
+.confetti:nth-child(5n) {
+    width: calc(var(--size) * 0.5);
+    height: calc(var(--size) * 1.5);
+}
+
+@keyframes confettiFall {
+    0% {
+        opacity: 1;
+        transform: translateY(0) rotate(0deg);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(100vh) rotate(var(--rotation));
+    }
+}
+
+/* ── Audio Block ─────────────────────────────────── */
+
+.audioContainer {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.audioHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-accent-blue);
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.audioPlayer {
+    width: 100%;
+    height: 42px;
+    border-radius: var(--radius-sm);
+}
+
+.transcriptToggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--color-accent-blue);
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.transcriptToggle:hover {
+    text-decoration: underline;
+}
+
+.transcriptContent {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    font-size: 0.85rem;
+    line-height: 1.7;
+    color: var(--color-text-secondary);
+    white-space: pre-wrap;
+}
+
+/* ── Code Block ──────────────────────────────────── */
+
+.codeContainer {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.codeHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    background: color-mix(in srgb, var(--color-bg-secondary) 60%, var(--color-bg-primary));
+    border-bottom: 1px solid var(--color-border);
+}
+
+.codeLanguage {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-accent-blue);
+}
+
+.codeCopyBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--color-accent-blue) 12%, transparent);
+    color: var(--color-accent-blue);
+    font-size: 0.72rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.codeCopyBtn:hover {
+    background: color-mix(in srgb, var(--color-accent-blue) 20%, transparent);
+}
+
+.codeBlock {
+    margin: 0;
+    padding: 16px;
+    background: var(--color-bg-primary);
+    font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    overflow-x: auto;
+    color: var(--color-text-primary);
+}
+
+.codeTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.codeLineNum {
+    width: 40px;
+    padding-right: 14px;
+    text-align: right;
+    color: var(--color-text-secondary);
+    opacity: 0.4;
+    user-select: none;
+    font-size: 0.75rem;
+    vertical-align: top;
+}
+
+.codeLineContent {
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.codeCaption {
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--color-text-secondary);
+    margin: 8px 0 0;
+    font-style: italic;
+}
+
+/* ── Callout Block ───────────────────────────────── */
+
+.calloutContainer {
+    border-radius: var(--radius-md);
+    padding: 20px 24px;
+    border-left: 4px solid var(--color-accent-blue);
+    background: color-mix(in srgb, var(--color-accent-blue) 6%, transparent);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.callout_info {
+    border-left-color: var(--color-accent-blue);
+    background: color-mix(in srgb, var(--color-accent-blue) 6%, transparent);
+}
+
+.callout_tip {
+    border-left-color: var(--color-success);
+    background: color-mix(in srgb, var(--color-success) 6%, transparent);
+}
+
+.callout_warning {
+    border-left-color: var(--color-warning);
+    background: color-mix(in srgb, var(--color-warning) 6%, transparent);
+}
+
+.callout_danger {
+    border-left-color: var(--color-danger);
+    background: color-mix(in srgb, var(--color-danger) 6%, transparent);
+}
+
+.calloutHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: var(--color-text-primary);
+}
+
+.callout_info .calloutHeader { color: var(--color-accent-blue); }
+.callout_tip .calloutHeader { color: var(--color-success); }
+.callout_warning .calloutHeader { color: var(--color-warning); }
+.callout_danger .calloutHeader { color: var(--color-danger); }
+
+.calloutBody {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--color-text-primary);
+}
+
+.calloutBody p {
+    margin: 0;
+}
+
+/* ── Checklist Block ─────────────────────────────── */
+
+.checklistContainer {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.checklistHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-accent-blue);
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.checklistProgress {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.checklistProgressBar {
+    flex: 1;
+    height: 6px;
+    background: color-mix(in srgb, var(--color-border) 40%, transparent);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.checklistProgressFill {
+    height: 100%;
+    background: var(--color-success);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.checklistProgressText {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+
+.checklistItems {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.checklistItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.checklistItem:hover {
+    background: color-mix(in srgb, var(--color-accent-blue) 5%, transparent);
+}
+
+.checklistItemChecked {
+    background: color-mix(in srgb, var(--color-success) 6%, transparent);
+}
+
+.checklistItemChecked .checklistItemText {
+    text-decoration: line-through;
+    opacity: 0.6;
+}
+
+.checklistCheckbox {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--color-success);
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.checklistItemText {
+    font-size: 0.9rem;
+    color: var(--color-text-primary);
+    line-height: 1.4;
+    transition: opacity 0.2s ease;
+}
+
+.checklistRequired {
+    color: var(--color-danger);
+    font-weight: 700;
+    margin-left: 2px;
+}
+
+/* ── Open Response Block ─────────────────────────── */
+
+.openResponseContainer {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.openResponseHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-accent-blue);
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.openResponsePrompt {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    line-height: 1.6;
+}
+
+.openResponsePrompt p {
+    margin: 0;
+}
+
+.openResponseTextarea {
+    width: 100%;
+    padding: 14px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-primary);
+    font-size: 0.9rem;
+    font-family: inherit;
+    line-height: 1.6;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.15s ease;
+    min-height: 120px;
+}
+
+.openResponseTextarea:focus {
+    border-color: var(--color-accent-blue);
+}
+
+.openResponseFooter {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.openResponseCount {
+    font-size: 0.72rem;
+    color: var(--color-text-secondary);
+    opacity: 0.7;
+}
+
+/* ── Divider Block ───────────────────────────────── */
+
+.dividerLine {
+    border: none;
+    border-top: 1px solid var(--color-border);
+    margin: 16px 0;
+}
+
+.dividerDots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px 0;
+}
+
+.dividerDots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-text-secondary);
+    opacity: 0.3;
+}
+
+.dividerSpace {
+    height: 40px;
+}
+
+/* ── Responsive ─────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .sidebarOpen {
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 280px;
+        z-index: 60;
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .contentArea {
+        padding: 24px 16px;
+    }
+
+    .bottomBar {
+        padding: 10px 16px;
+    }
+}

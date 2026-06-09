@@ -1,0 +1,422 @@
+/* ── Learner Course Detail ──────────────────────── */
+
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+/* ── Back Button ────────────────────────────────── */
+
+.backBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 4px 0;
+    transition: color var(--transition-fast);
+    align-self: flex-start;
+}
+
+.backBtn:hover {
+    color: var(--color-accent-blue);
+}
+
+/* ── Hero ────────────────────────────────────────── */
+
+.hero {
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient-primary);
+    opacity: 0.6;
+}
+
+.heroContent {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+}
+
+.heroTitle {
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--color-text-primary);
+    line-height: 1.3;
+}
+
+.heroDescription {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    max-width: 600px;
+}
+
+.heroMeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.metaItem {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+}
+
+.heroTags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.categoryBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--color-accent-blue);
+    background: color-mix(in srgb, var(--color-accent-blue) 10%, transparent);
+    padding: 3px 10px;
+    border-radius: 999px;
+}
+
+.tagBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    background: color-mix(in srgb, var(--color-border) 40%, transparent);
+    padding: 3px 10px;
+    border-radius: 999px;
+}
+
+/* ── Hero Thumbnail ─────────────────────────────── */
+
+.heroThumb {
+    width: 240px;
+    height: 160px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    flex-shrink: 0;
+    background: color-mix(in srgb, var(--color-border) 30%, transparent);
+}
+
+.heroThumbImg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* ── Action Bar ─────────────────────────────────── */
+
+.actionBar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 20px;
+    padding-top: 8px;
+}
+
+.startBtn,
+.continueBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.startBtn {
+    background: var(--gradient-primary);
+    color: var(--color-button-text);
+    box-shadow: 0 4px 16px color-mix(in srgb, var(--color-accent-blue) 30%, transparent);
+}
+
+.startBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px color-mix(in srgb, var(--color-accent-blue) 40%, transparent);
+}
+
+.startBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.continueBtn {
+    background: var(--color-button-primary);
+    color: var(--color-button-text);
+}
+
+.continueBtn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.completedState {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-success);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.awardIcon {
+    color: var(--color-success);
+}
+
+.reviewBtn {
+    margin-left: 8px;
+    padding: 6px 14px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.reviewBtn:hover {
+    border-color: var(--color-accent-blue);
+    color: var(--color-accent-blue);
+}
+
+.enrollmentProgress {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 200px;
+}
+
+.progressText {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+}
+
+.dueText {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    color: var(--color-warning);
+    font-weight: 500;
+}
+
+/* ── Progress Bar ───────────────────────────────── */
+
+.progressBar {
+    width: 100%;
+    height: 6px;
+    background: color-mix(in srgb, var(--color-border) 60%, transparent);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.progressFill {
+    height: 100%;
+    background: var(--gradient-primary);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+
+/* ── Curriculum ─────────────────────────────────── */
+
+.curriculum {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.curriculumTitle {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.moduleList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.moduleItem {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.moduleHeader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 16px 20px;
+    background: none;
+    border: none;
+    color: var(--color-text-primary);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    transition: background var(--transition-fast);
+}
+
+.moduleHeader:hover {
+    background: color-mix(in srgb, var(--color-border) 20%, transparent);
+}
+
+.moduleTitle {
+    flex: 1;
+}
+
+.moduleStats {
+    font-size: 0.72rem;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+/* ── Lessons ────────────────────────────────────── */
+
+.lessonList {
+    border-top: 1px solid var(--color-border);
+}
+
+.lessonItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 20px 12px 44px;
+    background: none;
+    border: none;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-border) 40%, transparent);
+    color: var(--color-text-primary);
+    font-size: 0.84rem;
+    text-align: left;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.lessonItem:last-child {
+    border-bottom: none;
+}
+
+.lessonItem:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-accent-blue) 5%, transparent);
+}
+
+.lessonLocked {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.lessonTitle {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lessonMeta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.72rem;
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+}
+
+.optionalTag {
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    background: color-mix(in srgb, var(--color-border) 40%, transparent);
+    padding: 1px 6px;
+    border-radius: 999px;
+}
+
+/* ── Lesson Status Icons ────────────────────────── */
+
+.lessonIconCompleted {
+    color: var(--color-success);
+    flex-shrink: 0;
+}
+
+.lessonIconStarted {
+    color: var(--color-accent-blue);
+    flex-shrink: 0;
+}
+
+.lessonIconAvailable {
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+}
+
+.lessonIconLocked {
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+    opacity: 0.5;
+}
+
+/* ── Responsive ─────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .hero {
+        flex-direction: column-reverse;
+    }
+
+    .heroThumb {
+        width: 100%;
+        height: 180px;
+    }
+
+    .actionBar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .startBtn,
+    .continueBtn {
+        justify-content: center;
+    }
+}

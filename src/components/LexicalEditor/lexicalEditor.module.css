@@ -1,0 +1,173 @@
+/* ── Editor container ─────────────────────────────────────── */
+
+.editorContainer {
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-bg-primary);
+    overflow: hidden;
+    transition: border-color 0.2s;
+}
+
+.editorContainer:focus-within {
+    border-color: var(--color-accent-blue);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent-blue) 20%, transparent);
+}
+
+.editorReadOnly {
+    opacity: 0.85;
+    pointer-events: none;
+}
+
+/* ── Toolbar ─────────────────────────────────────────────── */
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg-secondary);
+    flex-wrap: wrap;
+}
+
+.toolbarBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.toolbarBtn:hover {
+    background: color-mix(in srgb, var(--color-accent-blue) 12%, transparent);
+    color: var(--color-text-primary);
+}
+
+.toolbarBtnActive {
+    background: color-mix(in srgb, var(--color-accent-blue) 18%, transparent);
+    color: var(--color-accent-blue);
+}
+
+.toolbarDivider {
+    width: 1px;
+    height: 20px;
+    background: var(--color-border);
+    margin: 0 4px;
+}
+
+/* ── Content area ────────────────────────────────────────── */
+
+.editorInner {
+    position: relative;
+}
+
+.editorContent {
+    padding: 12px 14px;
+    outline: none;
+    color: var(--color-text-primary);
+    font-size: 0.92rem;
+    line-height: 1.65;
+}
+
+.editorPlaceholder {
+    position: absolute;
+    top: 12px;
+    left: 14px;
+    color: var(--color-text-secondary);
+    opacity: 0.5;
+    font-size: 0.92rem;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* ── Lexical theme classes ───────────────────────────────── */
+
+:global(.lexical-paragraph) {
+    margin: 0 0 0.5em 0;
+}
+
+:global(.lexical-paragraph:last-child) {
+    margin-bottom: 0;
+}
+
+:global(.lexical-h1) {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin: 0.8em 0 0.4em;
+    color: var(--color-text-primary);
+}
+
+:global(.lexical-h2) {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0.7em 0 0.35em;
+    color: var(--color-text-primary);
+}
+
+:global(.lexical-h3) {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0.6em 0 0.3em;
+    color: var(--color-text-primary);
+}
+
+:global(.lexical-bold) {
+    font-weight: 700;
+}
+
+:global(.lexical-italic) {
+    font-style: italic;
+}
+
+:global(.lexical-underline) {
+    text-decoration: underline;
+}
+
+:global(.lexical-strikethrough) {
+    text-decoration: line-through;
+}
+
+:global(.lexical-code-inline) {
+    background: color-mix(in srgb, var(--color-text-primary) 8%, transparent);
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-family: 'Fira Code', 'Consolas', monospace;
+    font-size: 0.88em;
+}
+
+:global(.lexical-ul) {
+    list-style-type: disc;
+    padding-left: 1.5em;
+    margin: 0.4em 0;
+}
+
+:global(.lexical-ol) {
+    list-style-type: decimal;
+    padding-left: 1.5em;
+    margin: 0.4em 0;
+}
+
+:global(.lexical-li) {
+    margin: 0.15em 0;
+}
+
+:global(.lexical-link) {
+    color: var(--color-accent-blue);
+    text-decoration: underline;
+}
+
+:global(.lexical-code-block) {
+    background: color-mix(in srgb, var(--color-text-primary) 6%, transparent);
+    padding: 12px 14px;
+    border-radius: 6px;
+    font-family: 'Fira Code', 'Consolas', monospace;
+    font-size: 0.88em;
+    margin: 0.5em 0;
+    overflow-x: auto;
+}

@@ -88,7 +88,7 @@ export async function getRolesOverview(): Promise<{ roles: RoleInfo[] } | { erro
 
         return { roles };
     } catch (e: unknown) {
-        return { error: e instanceof Error ? e.message : 'Ukjent feil' };
+        return { error: 'Ukjent feil' };
     }
 }
 
@@ -131,7 +131,7 @@ export async function updateUserRole(
 
         return { success: true };
     } catch (e: unknown) {
-        return { error: e instanceof Error ? e.message : 'Ukjent feil' };
+        return { error: 'Ukjent feil' };
     }
 }
 
@@ -174,6 +174,6 @@ export async function listUsersByRole(
 
         return { users };
     } catch (e: unknown) {
-        return { error: e instanceof Error ? e.message : 'Ukjent feil' };
+        return { error: 'Ukjent feil' };
     }
 }

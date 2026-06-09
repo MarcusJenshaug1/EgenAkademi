@@ -11,6 +11,11 @@ model Tenant {
   name      String
   domain    String?  @unique // Subdomene eller custom domene, f.eks "acme.lms.no"
   
+  // ── Plan & Feature Flags ─────────────────────────────
+  plan          TenantPlan @default(FREE)
+  addons        String[]   // Feature-flagg: ["brand-detector", "scorm", "custom-domain", ...]
+  trialEndsAt   DateTime?  // Utløpsdato for prøveperiode (null = ingen trial)
+  
   // ── Whitelabel Branding ──────────────────────────────
   // Bakgrunner
   colorBgPrimary    String?  // Hovedbakgrunn (default: #050505)
@@ -60,12 +65,20 @@ model Tenant {
   // Relasjoner
   users     User[]
   groups    Group[]
+  courses   Course[]
 }
 
 enum GlobalRole {
   USER
   TENANT_ADMIN
   SYSTEM_ADMIN
+}
+
+enum TenantPlan {
+  FREE       // Gratis prøveperiode / demo
+  STANDARD   // Kjerne-LMS
+  PLUS       // Avansert branding, SCORM, analytics
+  ENTERPRISE // SSO, SCIM, gamification, wiki, LTI
 }
 
 model User {
@@ -103,6 +116,9 @@ model User {
   accounts      Account[]
   sessions      Session[]
   groupMemberships GroupMembership[]
+  courseEnrollments CourseEnrollment[]
+  certificates     Certificate[]
+  notifications    Notification[]
 
   @@index([tenantId])
 }
@@ -175,4 +191,460 @@ model GroupMembership {
   @@unique([userId, groupId])
   @@index([userId])
   @@index([groupId])
+}
+
+// ══════════════════════════════════════════════════════════════
+// KURS & LÆRINGSADMINISTRASJON
+// ══════════════════════════════════════════════════════════════
+
+enum CourseVisibility {
+  DRAFT_ONLY  // Kun synlig for admin
+  INTERNAL    // Synlig for innloggede brukere i tenanten
+  PUBLIC      // Synlig for alle (SEO-indekserbar)
+}
+
+enum CourseStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum CourseDifficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum CourseVersionState {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum LessonType {
+  STANDARD
+  QUIZ
+  DOCUMENT
+  VIDEO
+  EMBED
+  SCORM_PACKAGE
+}
+
+enum CompletionRule {
+  MANUAL_MARK   // Brukeren markerer selv som fullført
+  VIEWED        // Automatisk ved visning
+  ALL_BLOCKS    // Alle blokker i leksjonen må fullføres
+  QUIZ_PASS     // Bestått quiz kreves
+}
+
+enum BlockType {
+  TEXT
+  IMAGE
+  VIDEO
+  QUIZ
+  DOCUMENT
+  EMBED
+  AUDIO
+  CODE
+  CALLOUT
+  CHECKLIST
+  OPEN_RESPONSE
+  DIVIDER
+}
+
+enum GatingPolicy {
+  NONE              // Ingen begrensning
+  LESSON_COMPLETION // Alle leksjoner må fullføres sekvensielt
+  QUIZ_SCORE        // Minimum quiz-poengsum kreves
+  MANUAL            // Administrator markerer manuelt
+}
+
+// ── Kurskategorier ──────────────────────────────────────
+
+model CourseCategory {
+  id                String   @id @default(uuid())
+  tenantId          String
+  slug              String   // URL-vennlig identifikator
+  name              String
+  description       String?
+  parentCategoryId  String?
+  parentCategory    CourseCategory?  @relation("CategoryHierarchy", fields: [parentCategoryId], references: [id])
+  childCategories   CourseCategory[] @relation("CategoryHierarchy")
+  sortOrder         Int      @default(0)
+  
+  courses           CourseCategoryLink[]
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+}
+
+// ── Tags ────────────────────────────────────────────────
+
+enum TagType {
+  TOPIC
+  AUDIENCE
+  SKILL
+  COMPLIANCE
+  CUSTOM
+}
+
+model Tag {
+  id        String   @id @default(uuid())
+  tenantId  String
+  slug      String
+  label     String
+  tagType   TagType  @default(CUSTOM)
+  
+  courses   CourseTagLink[]
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([tenantId, slug])
+  @@index([tenantId, tagType])
+}
+
+// ── Kurs (stabil identitet + katalogmetadata) ───────────
+
+model Course {
+  id                        String           @id @default(uuid())
+  tenantId                  String
+  slug                      String
+  title                     String
+  description               String?          @db.Text
+  visibility                CourseVisibility  @default(DRAFT_ONLY)
+  status                    CourseStatus      @default(ACTIVE)
+  thumbnailUrl              String?
+  estimatedMinutes          Int?
+  difficulty                CourseDifficulty?
+  defaultLocale             String           @default("nb-NO")
+  
+  currentPublishedVersionId String?          @unique
+  currentPublishedVersion   CourseVersion?   @relation("CurrentPublished", fields: [currentPublishedVersionId], references: [id])
+  
+  isSystemTemplate          Boolean          @default(false)  // Systemkurs – ikke redigerbart av tenant
+  
+  versions                  CourseVersion[]  @relation("CourseVersions")
+  categories                CourseCategoryLink[]
+  tags                      CourseTagLink[]
+  assignmentRules           CourseAssignmentRule[]
+  enrollments               CourseEnrollment[]
+  certificates              Certificate[]
+  
+  createdAt                 DateTime         @default(now())
+  updatedAt                 DateTime         @updatedAt
+  
+  @@unique([tenantId, slug])
+  @@index([tenantId, status, visibility])
+}
+
+// ── Kursversjon (immutable published snapshots) ─────────
+
+model CourseVersion {
+  id              String             @id @default(uuid())
+  courseId         String
+  course          Course             @relation("CourseVersions", fields: [courseId], references: [id], onDelete: Cascade)
+  versionNumber   Int
+  state           CourseVersionState  @default(DRAFT)
+  changeLog       String?            @db.Text
+  createdByUserId String?
+  
+  modules         Module[]
+  
+  currentForCourse Course?           @relation("CurrentPublished")
+  enrollments      CourseEnrollment[]
+  
+  createdAt       DateTime           @default(now())
+  publishedAt     DateTime?
+  
+  @@unique([courseId, versionNumber])
+  @@index([courseId, state])
+}
+
+// ── Moduler (gruppering av leksjoner) ───────────────────
+
+model Module {
+  id              String        @id @default(uuid())
+  courseVersionId  String
+  courseVersion   CourseVersion  @relation(fields: [courseVersionId], references: [id], onDelete: Cascade)
+  position        Int
+  title           String
+  summary         String?
+  gatingPolicy    GatingPolicy  @default(NONE)
+  minQuizScore    Int?          // Minimum poengsum ved QUIZ_SCORE gating
+  
+  lessons         Lesson[]
+  moduleProgress  ModuleProgress[]
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  @@index([courseVersionId, position])
+}
+
+// ── Leksjoner (enkeltenhet med innhold) ─────────────────
+
+model Lesson {
+  id              String         @id @default(uuid())
+  moduleId        String
+  module          Module         @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  position        Int
+  title           String
+  lessonType      LessonType     @default(STANDARD)
+  completionRule  CompletionRule @default(MANUAL_MARK)
+  estimatedMinutes Int?
+  isOptional      Boolean        @default(false)
+  
+  blocks          LessonBlock[]
+  lessonProgress  LessonProgress[]
+  
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  
+  @@index([moduleId, position])
+}
+
+// ── Innholdsblokker (typed content blocks) ──────────────
+
+model LessonBlock {
+  id                String    @id @default(uuid())
+  lessonId          String
+  lesson            Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  position          Int
+  type              BlockType
+  data              Json      // Typet av block type (TEXT: {format, doc}, IMAGE: {url, alt}, etc.)
+  accessibilityMeta Json?     // {alt, captions, transcript}
+  
+  blockResponses    BlockResponse[]
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@index([lessonId, position])
+}
+
+// ── Koblingstabeller (Many-to-Many) ─────────────────────
+
+model CourseCategoryLink {
+  courseId    String
+  course     Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   CourseCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  @@id([courseId, categoryId])
+}
+
+model CourseTagLink {
+  courseId String
+  course  Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  tagId   String
+  tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  
+  @@id([courseId, tagId])
+}
+
+// ── Kurstildeling & Innmelding ──────────────────────────
+
+enum AssignmentScope {
+  USER
+  GROUP
+  ROLE
+  ALL_USERS
+}
+
+enum AssignmentState {
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum EnrollmentStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  OVERDUE
+  EXEMPT
+}
+
+model CourseAssignmentRule {
+  id                 String          @id @default(uuid())
+  tenantId           String
+  courseId            String
+  course             Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  scopeType          AssignmentScope
+  scopeRefId         String?         // userId, groupId, eller rolle-streng avhengig av scopeType
+  assignedByUserId   String?
+  dueAt              DateTime?
+  isMandatory        Boolean         @default(false)
+  recertIntervalDays Int?            // Intervall for resertifisering
+  notificationPolicy Json?           // {remindersDaysBefore: [14, 7, 1]}
+  state              AssignmentState @default(ACTIVE)
+  
+  enrollments        CourseEnrollment[]
+  
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  
+  @@index([tenantId, courseId])
+}
+
+model CourseEnrollment {
+  id                     String           @id @default(uuid())
+  tenantId               String
+  courseId                String
+  course                 Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userId                 String
+  user                   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sourceRuleId           String?
+  sourceRule             CourseAssignmentRule? @relation(fields: [sourceRuleId], references: [id])
+  currentCourseVersionId String?
+  currentCourseVersion   CourseVersion?   @relation(fields: [currentCourseVersionId], references: [id])
+  status                 EnrollmentStatus @default(NOT_STARTED)
+  completionPercentCached Int             @default(0)
+  enrolledAt             DateTime         @default(now())
+  startedAt              DateTime?
+  completedAt            DateTime?
+  dueAt                  DateTime?
+  resumeLessonId         String?
+  lastActivityAt         DateTime?
+  
+  lessonProgress         LessonProgress[]
+  moduleProgress         ModuleProgress[]
+  progressEvents         ProgressEvent[]
+  blockResponses         BlockResponse[]
+  certificates           Certificate[]
+  
+  @@unique([tenantId, courseId, userId, currentCourseVersionId])
+  @@index([tenantId, userId])
+  @@index([tenantId, courseId])
+}
+
+// ── Progresjonssporing ──────────────────────────────────
+
+enum ProgressStatus {
+  LOCKED
+  AVAILABLE
+  STARTED
+  COMPLETED
+}
+
+model LessonProgress {
+  id                String         @id @default(uuid())
+  tenantId          String
+  courseEnrollmentId String
+  courseEnrollment  CourseEnrollment @relation(fields: [courseEnrollmentId], references: [id], onDelete: Cascade)
+  lessonId          String
+  lesson            Lesson         @relation(fields: [lessonId], references: [id])
+  status            ProgressStatus @default(AVAILABLE)
+  timeSpentSeconds  Int            @default(0)
+  startedAt         DateTime?
+  completedAt       DateTime?
+  
+  @@unique([courseEnrollmentId, lessonId])
+  @@index([tenantId])
+}
+
+model ModuleProgress {
+  id                String         @id @default(uuid())
+  tenantId          String
+  courseEnrollmentId String
+  courseEnrollment  CourseEnrollment @relation(fields: [courseEnrollmentId], references: [id], onDelete: Cascade)
+  moduleId          String
+  module            Module         @relation(fields: [moduleId], references: [id])
+  status            ProgressStatus @default(AVAILABLE)
+  completionPercent Int            @default(0)
+  startedAt         DateTime?
+  completedAt       DateTime?
+  
+  @@unique([courseEnrollmentId, moduleId])
+  @@index([tenantId])
+}
+
+model ProgressEvent {
+  id                String          @id @default(uuid())
+  tenantId          String
+  courseEnrollmentId String
+  courseEnrollment  CourseEnrollment @relation(fields: [courseEnrollmentId], references: [id], onDelete: Cascade)
+  eventType         String          // LESSON_VIEWED, BLOCK_COMPLETED, QUIZ_PASSED, COURSE_COMPLETED, etc.
+  entityType        String?         // lesson, module, block, course
+  entityId          String?
+  payload           Json?
+  
+  createdAt         DateTime        @default(now())
+  
+  @@index([tenantId, courseEnrollmentId])
+  @@index([tenantId, eventType])
+}
+
+// ── Blokk-svar (quiz, refleksjon, sjekkliste) ──────────
+
+model BlockResponse {
+  id                 String           @id @default(uuid())
+  tenantId           String
+  courseEnrollmentId  String
+  courseEnrollment    CourseEnrollment @relation(fields: [courseEnrollmentId], references: [id], onDelete: Cascade)
+  blockId            String
+  block              LessonBlock      @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  responseData       Json             // Quiz: { selectedIndices, submittedSteps, completed }  OpenResponse: { text }
+  
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  
+  @@unique([courseEnrollmentId, blockId])
+  @@index([courseEnrollmentId])
+}
+
+// ── Sertifikater ────────────────────────────────────────
+
+model Certificate {
+  id               String           @id @default(uuid())
+  tenantId         String
+  userId           String
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId          String
+  course           Course           @relation(fields: [courseId], references: [id])
+  enrollmentId     String?
+  enrollment       CourseEnrollment? @relation(fields: [enrollmentId], references: [id])
+  title            String           // Sertifikattittel
+  description      String?          @db.Text
+  issuedAt         DateTime         @default(now())
+  expiresAt        DateTime?
+  certificateNumber String?         @unique
+  templateData     Json?            // Ekstra data for sertifikatmal
+  
+  createdAt        DateTime         @default(now())
+  
+  @@index([tenantId, userId])
+  @@index([userId])
+  @@index([courseId])
+}
+
+// ── Varsler / Notifikasjoner ────────────────────────────
+
+enum NotificationType {
+  COURSE_ASSIGNED
+  COURSE_COMPLETED
+  CERTIFICATE_ISSUED
+  DEADLINE_REMINDER
+  GENERAL
+  SYSTEM
+}
+
+model Notification {
+  id          String           @id @default(uuid())
+  tenantId    String
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        NotificationType @default(GENERAL)
+  title       String
+  message     String           @db.Text
+  isRead      Boolean          @default(false)
+  entityType  String?          // "course", "certificate", "enrollment", etc.
+  entityId    String?          // Referanse til relevant entitet
+  
+  createdAt   DateTime         @default(now())
+  
+  @@index([tenantId, userId])
+  @@index([userId, isRead])
 }

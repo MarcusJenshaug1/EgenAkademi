@@ -1,0 +1,392 @@
+/* ── Course Catalog ──────────────────────────────── */
+
+.catalog {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 0;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+}
+
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.headerIcon {
+    color: var(--color-accent-blue);
+    flex-shrink: 0;
+}
+
+.title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0;
+    letter-spacing: -0.02em;
+}
+
+.subtitle {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    margin: 2px 0 0;
+}
+
+/* ── Toolbar ────────────────────────────────────── */
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.searchBox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 8px 14px;
+    flex: 1;
+    min-width: 200px;
+    max-width: 360px;
+    transition: border-color var(--transition-fast);
+}
+
+.searchBox:focus-within {
+    border-color: var(--color-accent-blue);
+}
+
+.searchIcon {
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+}
+
+.searchInput {
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--color-text-primary);
+    font-size: 0.85rem;
+    width: 100%;
+}
+
+.searchInput::placeholder {
+    color: var(--color-text-secondary);
+    opacity: 0.7;
+}
+
+.filterTabs {
+    display: flex;
+    gap: 4px;
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-md);
+    padding: 3px;
+    border: 1px solid var(--color-border);
+}
+
+.filterTab {
+    padding: 6px 14px;
+    border: none;
+    background: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+}
+
+.filterTab:hover {
+    color: var(--color-text-primary);
+}
+
+.filterTabActive {
+    background: var(--color-accent-blue);
+    color: var(--color-button-text);
+}
+
+/* ── Course Grid ────────────────────────────────── */
+
+.courseGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+/* ── Course Card ────────────────────────────────── */
+
+.courseCard {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: all var(--transition-fast);
+}
+
+.courseCard:hover {
+    border-color: color-mix(in srgb, var(--color-accent-blue) 40%, var(--color-border));
+    box-shadow: 0 4px 24px color-mix(in srgb, var(--color-accent-blue) 8%, transparent);
+    transform: translateY(-2px);
+}
+
+.cardThumb {
+    width: 100%;
+    height: 160px;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--color-text-primary) 5%, transparent);
+}
+
+.cardThumbImg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.cardBody {
+    padding: 18px 20px 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.cardTop {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.cardTitle {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0;
+    line-height: 1.35;
+}
+
+.difficultyBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    background: color-mix(in srgb, var(--color-text-primary) 6%, transparent);
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.cardDescription {
+    font-size: 0.82rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+    margin: 0;
+}
+
+.cardMeta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.metaItem {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+.cardTags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.categoryChip,
+.tagChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.68rem;
+    padding: 2px 8px;
+    border-radius: 100px;
+    white-space: nowrap;
+}
+
+.categoryChip {
+    background: color-mix(in srgb, var(--color-accent-blue) 10%, transparent);
+    color: var(--color-accent-blue);
+}
+
+.tagChip {
+    background: color-mix(in srgb, var(--color-text-primary) 6%, transparent);
+    color: var(--color-text-secondary);
+}
+
+.cardProgress {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.progressBar {
+    flex: 1;
+    height: 4px;
+    background: color-mix(in srgb, var(--color-text-primary) 10%, transparent);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progressFill {
+    height: 100%;
+    background: var(--color-accent-blue);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+.cardProgressText {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+
+/* ── Card Footer ────────────────────────────────── */
+
+.cardFooter {
+    padding: 12px 20px 16px;
+    border-top: 1px solid var(--color-border);
+}
+
+.enrollBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 16px;
+    background: var(--color-button-primary);
+    color: var(--color-button-text);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.enrollBtn:hover:not(:disabled) {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.enrollBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.continueBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 10px 16px;
+    background: color-mix(in srgb, var(--color-accent-blue) 12%, transparent);
+    color: var(--color-accent-blue);
+    border: 1px solid color-mix(in srgb, var(--color-accent-blue) 25%, transparent);
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.continueBtn:hover {
+    background: color-mix(in srgb, var(--color-accent-blue) 20%, transparent);
+}
+
+.completedBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 10px 16px;
+    background: color-mix(in srgb, var(--color-success) 10%, transparent);
+    color: var(--color-success);
+    border: 1px solid color-mix(in srgb, var(--color-success) 20%, transparent);
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.completedBtn:hover {
+    background: color-mix(in srgb, var(--color-success) 18%, transparent);
+}
+
+/* ── Empty State ────────────────────────────────── */
+
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 60px 20px;
+    color: var(--color-text-secondary);
+    text-align: center;
+}
+
+.emptyState p {
+    font-size: 0.9rem;
+}
+
+/* ── Responsive ─────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .catalog {
+        padding: 20px 0;
+    }
+
+    .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .searchBox {
+        max-width: none;
+    }
+
+    .filterTabs {
+        justify-content: center;
+    }
+
+    .courseGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+}

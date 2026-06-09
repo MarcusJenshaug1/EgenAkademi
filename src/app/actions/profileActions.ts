@@ -79,7 +79,7 @@ export async function getMyProfile(): Promise<{
             },
         };
     } catch (e: unknown) {
-        return { error: e instanceof Error ? e.message : 'Ukjent feil' };
+        return { error: 'Ukjent feil' };
     }
 }
 
@@ -152,7 +152,7 @@ export async function updateMyProfile(data: {
 
         return { success: true };
     } catch (e: unknown) {
-        return { error: e instanceof Error ? e.message : 'Ukjent feil' };
+        return { error: 'Ukjent feil' };
     }
 }
 
@@ -190,7 +190,7 @@ export async function uploadAvatar(
 
         return { success: true, avatarUrl };
     } catch (e: unknown) {
-        return { error: e instanceof Error ? e.message : 'Ukjent feil' };
+        return { error: 'Ukjent feil' };
     }
 }
 
@@ -210,6 +210,6 @@ export async function removeAvatar(): Promise<{ success: true } | { error: strin
 
         return { success: true };
     } catch (e: unknown) {
-        return { error: e instanceof Error ? e.message : 'Ukjent feil' };
+        return { error: 'Ukjent feil' };
     }
 }
