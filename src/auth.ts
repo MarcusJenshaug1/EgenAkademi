@@ -1,9 +1,11 @@
 import NextAuth from "next-auth"
 import Nodemailer from "next-auth/providers/nodemailer"
+import Credentials from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { createTransport } from "nodemailer"
 import prisma from "@/lib/prisma"
 import { checkRateLimit } from "@/lib/rateLimit"
+import { verifyBridgeToken } from "@/lib/saml"
 import { authConfig } from "./auth.config"
 
 /**
@@ -118,6 +120,54 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
                 const failed = rejected.concat(pending).filter(Boolean)
                 if (failed.length) {
                     throw new Error("Verification email could not be sent")
+                }
+            },
+        }),
+        /**
+         * SAML-bro: etablerer en Auth.js-sesjon etter at vår egen ACS
+         * (/api/auth/saml/[tenantId]/acs) har validert SAML-svaret kryptografisk.
+         *
+         * TILLITSGRENSE: Denne provideren stoler UTELUKKENDE på et bridge-token
+         * signert med AUTH_SECRET-HMAC og mintet av vår egen ACS. Den utfører
+         * INGEN SAML-validering selv – den verifiserer kun HMAC-signatur + utløp
+         * (verifyBridgeToken) og laster brukeren by id+tenant. Tokenet eksponeres
+         * aldri for IdP/nettleser utover den korte /acs → /complete-redirecten,
+         * og kan ikke forfalskes uten AUTH_SECRET. Ved ethvert ugyldig/utløpt
+         * token returneres null (ingen sesjon opprettes).
+         */
+        Credentials({
+            id: "saml-bridge",
+            name: "SAML",
+            credentials: {
+                token: { type: "text" },
+            },
+            async authorize(credentials) {
+                const token = typeof credentials?.token === "string" ? credentials.token : null
+                const payload = verifyBridgeToken(token)
+                if (!payload) return null
+
+                // Last brukeren STRENGT på id + tenant fra tokenet. Avvis om
+                // bruker ikke finnes, er deaktivert, eller tenant ikke matcher.
+                const user = await prisma.user.findFirst({
+                    where: { id: payload.userId, tenantId: payload.tenantId, active: true },
+                    select: {
+                        id: true,
+                        tenantId: true,
+                        globalRole: true,
+                        email: true,
+                        name: true,
+                    },
+                })
+                if (!user) return null
+
+                // Returneres til jwt/session-callbackene (auth.config.ts) som
+                // populerer token.id/tenantId/globalRole.
+                return {
+                    id: user.id,
+                    tenantId: user.tenantId,
+                    globalRole: user.globalRole,
+                    email: user.email,
+                    name: user.name,
                 }
             },
         }),

@@ -41,6 +41,8 @@ interface SsoData {
 }
 
 export interface IntegrationsData {
+    tenantId: string;
+    baseUrl: string;
     access: {
         sso: AccessFlag;
         scim: AccessFlag;
@@ -190,7 +192,7 @@ export default function IntegrationsClient({ data }: { data: IntegrationsData })
                 <div className={styles.panel}>
                     {tab === 'sso' && (
                         data.access.sso.allowed
-                            ? <SsoTab initial={data.sso} onOk={notifyOk} onErr={notifyErr} />
+                            ? <SsoTab initial={data.sso} tenantId={data.tenantId} baseUrl={data.baseUrl} onOk={notifyOk} onErr={notifyErr} />
                             : <UpgradeCard title="SSO (SAML)" reason={data.access.sso.reason} />
                     )}
                     {tab === 'scim' && (
@@ -231,9 +233,11 @@ export default function IntegrationsClient({ data }: { data: IntegrationsData })
 // ════════════════════════════════════════════════════════════
 
 function SsoTab({
-    initial, onOk, onErr,
+    initial, tenantId, baseUrl, onOk, onErr,
 }: {
     initial: SsoData | null;
+    tenantId: string;
+    baseUrl: string;
     onOk: (m: string) => void;
     onErr: (m: string) => void;
 }) {
@@ -242,9 +246,14 @@ function SsoTab({
     const [toggling, setToggling] = useState(false);
     const mapping = initial?.attributeMapping ?? {};
 
-    // SP-metadata (ACS URL er en placeholder – live SAML-handshake er ikke implementert).
-    const spEntityId = initial?.spEntityId || 'urn:egenakademi:sp';
-    const acsPlaceholder = '<din-tenant>.egenakademi.no/api/auth/saml/acs';
+    // Per-tenant SP-endepunkter (speiler src/lib/saml.ts). Disse er de faktiske
+    // URL-ene admin registrerer i sin IdP (Okta/Entra/Google).
+    const samlBase = `${baseUrl}/api/auth/saml/${encodeURIComponent(tenantId)}`;
+    const loginUrl = `${samlBase}/login`;
+    const acsUrl = `${samlBase}/acs`;
+    const metadataUrl = `${samlBase}/metadata`;
+    // SP entityId: tenant-satt verdi, ellers avledet (= metadata-URL).
+    const spEntityId = (initial?.spEntityId && initial.spEntityId.trim()) || metadataUrl;
 
     async function handleSave(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -299,16 +308,26 @@ function SsoTab({
                 </button>
             </div>
 
-            {/* SP-metadata */}
+            {/* SP-endepunkter – registrer disse i din IdP */}
             <div className={styles.infoCard}>
-                <span className={styles.infoCardLabel}>Vår tjenesteleverandør (SP)</span>
+                <span className={styles.infoCardLabel}>
+                    Vår tjenesteleverandør (SP) – registrer disse i din IdP
+                </span>
                 <div className={styles.kvRow}>
                     <span className={styles.kvKey}>SP Entity ID</span>
-                    <code className={styles.kvValue}>{spEntityId}</code>
+                    <CopyBox value={spEntityId} />
                 </div>
                 <div className={styles.kvRow}>
-                    <span className={styles.kvKey}>ACS URL (placeholder)</span>
-                    <code className={styles.kvValue}>{acsPlaceholder}</code>
+                    <span className={styles.kvKey}>ACS / Callback-URL</span>
+                    <CopyBox value={acsUrl} />
+                </div>
+                <div className={styles.kvRow}>
+                    <span className={styles.kvKey}>Login-URL (SP-initiert)</span>
+                    <CopyBox value={loginUrl} />
+                </div>
+                <div className={styles.kvRow}>
+                    <span className={styles.kvKey}>SP-metadata-URL</span>
+                    <CopyBox value={metadataUrl} />
                 </div>
             </div>
 

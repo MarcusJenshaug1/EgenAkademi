@@ -93,7 +93,17 @@ export default async function IntegrationsPage() {
             : Promise.resolve([]),
     ]);
 
+    // Base-URL for per-tenant SP-endepunkter (login/ACS/metadata). Samme kilde
+    // som src/lib/saml.ts slik at admin ser nøyaktig URL-ene IdP skal bruke.
+    const baseUrl = (
+        process.env.AUTH_URL ||
+        process.env.NEXTAUTH_URL ||
+        'http://localhost:3000'
+    ).replace(/\/+$/, '');
+
     const data: IntegrationsData = {
+        tenantId,
+        baseUrl,
         access: {
             sso: { allowed: ssoAccess.allowed, reason: ssoAccess.reason ?? null },
             scim: { allowed: scimAccess.allowed, reason: scimAccess.reason ?? null },
