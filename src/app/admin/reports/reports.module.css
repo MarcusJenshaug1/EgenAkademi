@@ -1,0 +1,477 @@
+.reportsPage {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+/* ── Header ────────────────────────────────────── */
+
+.header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.headerLeft {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.title {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--color-text-primary);
+}
+
+.subtitle {
+    color: var(--color-text-secondary);
+    font-size: 1rem;
+}
+
+.exportGroup {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.exportButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 16px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+}
+
+.exportButton:hover {
+    border-color: var(--color-accent-blue);
+    color: var(--color-accent-blue);
+    background: color-mix(in srgb, var(--color-accent-blue) 8%, transparent);
+    transform: translateY(-1px);
+}
+
+.exportButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ── Banners ───────────────────────────────────── */
+
+.errorBanner,
+.upgradeBanner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+}
+
+.errorBanner {
+    background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-danger) 30%, transparent);
+    color: var(--color-danger);
+}
+
+.upgradeBanner {
+    background: color-mix(in srgb, var(--color-accent-blue) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-accent-blue) 30%, transparent);
+    color: var(--color-accent-blue);
+}
+
+.bannerClose {
+    margin-left: auto;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    color: inherit;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity var(--transition-fast);
+}
+
+.bannerClose:hover {
+    opacity: 1;
+}
+
+/* ── KPI cards ─────────────────────────────────── */
+
+.kpiRow {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+}
+
+.kpiCard {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 18px 20px;
+    transition: all var(--transition-fast);
+}
+
+.kpiCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.3);
+    filter: brightness(1.05);
+}
+
+.kpiIcon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: color-mix(in srgb, var(--color-accent-blue) 14%, transparent);
+    color: var(--color-accent-blue);
+}
+
+.kpiBody {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.kpiLabel {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.kpiValue {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    line-height: 1.1;
+}
+
+/* ── Sections ──────────────────────────────────── */
+
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.sectionTitle {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    letter-spacing: -0.01em;
+}
+
+.sectionMeta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+}
+
+/* ── Status distribution ───────────────────────── */
+
+.statusGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+}
+
+.statusItem {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.statusTop {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.statusName {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.statusCount {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--color-text-secondary);
+}
+
+/* ── Progress bars (shared) ────────────────────── */
+
+.progressTrack {
+    flex: 1;
+    height: 8px;
+    border-radius: 100px;
+    background: color-mix(in srgb, var(--color-text-secondary) 14%, transparent);
+    overflow: hidden;
+    min-width: 60px;
+}
+
+.progressFill {
+    height: 100%;
+    border-radius: 100px;
+    transition: width var(--transition-fast);
+}
+
+.barRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.barValue {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    min-width: 42px;
+    text-align: right;
+}
+
+.barCol {
+    width: 200px;
+}
+
+/* ── Activity chart ────────────────────────────── */
+
+.chart {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+}
+
+.chartBars {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 160px;
+}
+
+.chartCol {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+    min-width: 0;
+}
+
+.chartBarWrap {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.chartBar {
+    width: 100%;
+    max-width: 24px;
+    min-height: 2px;
+    border-radius: 4px 4px 0 0;
+    transition: height var(--transition-fast), filter var(--transition-fast);
+}
+
+.chartBar:hover {
+    filter: brightness(1.2);
+}
+
+.chartAxis {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    border-top: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent);
+    padding-top: 10px;
+}
+
+/* ── Tables ────────────────────────────────────── */
+
+.tableWrapper {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table thead {
+    background: color-mix(in srgb, var(--color-bg-secondary) 80%, transparent);
+}
+
+.table th {
+    padding: 14px 20px;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-secondary);
+    border-bottom: 1px solid var(--color-border);
+    white-space: nowrap;
+}
+
+.table td {
+    padding: 14px 20px;
+    font-size: 0.875rem;
+    color: var(--color-text-primary);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-border) 50%, transparent);
+    vertical-align: middle;
+}
+
+.table tbody tr {
+    transition: background-color var(--transition-fast);
+}
+
+.table tbody tr:hover {
+    background: color-mix(in srgb, var(--color-accent-blue) 4%, transparent);
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.courseTitle {
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.overdue {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--color-danger) 15%, transparent);
+    color: var(--color-danger);
+}
+
+.muted {
+    color: var(--color-text-secondary);
+    opacity: 0.6;
+}
+
+.groupCell,
+.deptCell {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+}
+
+.groupDot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* ── Breakdown grid ────────────────────────────── */
+
+.breakdownGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+@media (max-width: 900px) {
+    .breakdownGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .barCol {
+        width: auto;
+    }
+}
+
+/* ── Loading & empty ───────────────────────────── */
+
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 32px;
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    gap: 12px;
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--color-border);
+    border-top-color: var(--color-accent-blue);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.emptyState {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 32px;
+}
+
+.emptyText {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    text-align: center;
+}

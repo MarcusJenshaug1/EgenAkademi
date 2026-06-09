@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import {
-    Home, BookOpen, Award, Bell, LogOut, GraduationCap, Shield, Compass,
+    Home, BookOpen, Award, Bell, LogOut, GraduationCap, Shield, Compass, Calendar,
 } from 'lucide-react';
 import styles from './layout.module.css';
 import { auth, signOut } from '@/auth';
 import { redirect } from 'next/navigation';
 import prisma from '@/lib/prisma';
+import { checkAccess } from '@/lib/features';
 import LearnNavLink from './LearnNavLink';
 
 export default async function LearnLayout({
@@ -33,7 +34,15 @@ export default async function LearnLayout({
     const [tenant, currentUser] = await Promise.all([
         prisma.tenant.findUnique({
             where: { id: session.user.tenantId },
-            select: { name: true, logoUrl: true, logoSvgModified: true, logoSvgContent: true },
+            select: {
+                name: true,
+                logoUrl: true,
+                logoSvgModified: true,
+                logoSvgContent: true,
+                plan: true,
+                addons: true,
+                trialEndsAt: true,
+            },
         }),
         prisma.user.findUnique({
             where: { id: session.user.id },
@@ -66,6 +75,13 @@ export default async function LearnLayout({
 
     const isAdmin = session.user.globalRole === 'TENANT_ADMIN' || session.user.globalRole === 'SYSTEM_ADMIN';
 
+    const sessionsEnabled = tenant
+        ? checkAccess(
+              { plan: tenant.plan, addons: tenant.addons, trialEndsAt: tenant.trialEndsAt },
+              'session-events'
+          ).allowed
+        : false;
+
     return (
         <div className={styles.learnContainer}>
             {/* Sidebar */}
@@ -95,6 +111,11 @@ export default async function LearnLayout({
                     <LearnNavLink href="/learn/courses">
                         <Compass size={18} /> Kurskatalog
                     </LearnNavLink>
+                    {sessionsEnabled && (
+                        <LearnNavLink href="/learn/sessions">
+                            <Calendar size={18} /> Sesjoner
+                        </LearnNavLink>
+                    )}
                     <LearnNavLink href="/learn/certificates">
                         <Award size={18} /> Sertifikater
                     </LearnNavLink>

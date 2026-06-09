@@ -118,6 +118,8 @@ model User {
   courseEnrollments CourseEnrollment[]
   certificates     Certificate[]
   notifications    Notification[]
+  sessionsTaught     TrainingSession[]   @relation("SessionInstructor")
+  sessionEnrollments SessionEnrollment[] @relation("SessionAttendee")
 
   @@index([tenantId])
 }
@@ -330,7 +332,8 @@ model Course {
   assignmentRules           CourseAssignmentRule[]
   enrollments               CourseEnrollment[]
   certificates              Certificate[]
-  
+  sessions                  TrainingSession[]
+
   createdAt                 DateTime         @default(now())
   updatedAt                 DateTime         @updatedAt
   
@@ -646,4 +649,203 @@ model Notification {
   
   @@index([tenantId, userId])
   @@index([userId, isRead])
+}
+
+// ══════════════════════════════════════════════════════════════
+// SESJONER & ARRANGEMENTER (instruktørledet opplæring)
+// ══════════════════════════════════════════════════════════════
+
+enum SessionFormat {
+  IN_PERSON   // Fysisk oppmøte
+  ONLINE      // Nettbasert (lenke)
+  HYBRID      // Begge deler
+}
+
+enum SessionStatus {
+  DRAFT       // Kladd – ikke synlig for deltakere
+  SCHEDULED   // Planlagt og publisert
+  CANCELLED   // Avlyst
+  COMPLETED   // Gjennomført
+}
+
+enum SessionEnrollmentStatus {
+  REGISTERED  // Påmeldt
+  WAITLISTED  // På venteliste
+  CANCELLED   // Avmeldt
+  ATTENDED    // Møtte opp
+  NO_SHOW     // Møtte ikke
+}
+
+model TrainingSession {
+  id               String        @id @default(uuid())
+  tenantId         String
+  title            String
+  description      String?       @db.Text
+  format           SessionFormat @default(IN_PERSON)
+  status           SessionStatus @default(SCHEDULED)
+  location         String?       // Fysisk sted (for IN_PERSON/HYBRID)
+  meetingUrl       String?       // Online lenke (for ONLINE/HYBRID)
+  startsAt         DateTime
+  endsAt           DateTime
+  capacity         Int?          // null = ubegrenset
+  instructorUserId String?
+  instructor       User?         @relation("SessionInstructor", fields: [instructorUserId], references: [id])
+  courseId         String?       // Valgfri kobling til et kurs
+  course           Course?       @relation(fields: [courseId], references: [id])
+
+  enrollments      SessionEnrollment[]
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([tenantId, startsAt])
+  @@index([tenantId, status])
+}
+
+model SessionEnrollment {
+  id           String                  @id @default(uuid())
+  tenantId     String
+  sessionId    String
+  session      TrainingSession         @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User                    @relation("SessionAttendee", fields: [userId], references: [id], onDelete: Cascade)
+  status       SessionEnrollmentStatus @default(REGISTERED)
+  registeredAt DateTime                @default(now())
+  attendedAt   DateTime?
+
+  @@unique([sessionId, userId])
+  @@index([tenantId, sessionId])
+  @@index([tenantId, userId])
+}
+
+// ══════════════════════════════════════════════════════════════
+// INNHOLD / MEDIA-BIBLIOTEK
+// ══════════════════════════════════════════════════════════════
+
+enum MediaKind {
+  IMAGE
+  VIDEO
+  AUDIO
+  DOCUMENT
+  OTHER
+}
+
+model MediaAsset {
+  id               String    @id @default(uuid())
+  tenantId         String
+  url              String    @db.Text  // URL eller data-URI
+  filename         String
+  mimeType         String?
+  sizeBytes        Int?
+  kind             MediaKind @default(OTHER)
+  uploadedByUserId String?
+  createdAt        DateTime  @default(now())
+
+  @@index([tenantId, kind])
+  @@index([tenantId, createdAt])
+}
+
+// ══════════════════════════════════════════════════════════════
+// INTEGRASJONER (SSO, SCIM, Webhooks, LTI)
+// ══════════════════════════════════════════════════════════════
+
+enum SsoProtocol {
+  SAML
+}
+
+model SsoConnection {
+  id               String      @id @default(uuid())
+  tenantId         String      @unique // Én SSO-konfig per tenant (MVP)
+  protocol         SsoProtocol @default(SAML)
+  enabled          Boolean     @default(false)
+  idpEntityId      String?     // IdP Entity ID / Issuer
+  idpSsoUrl        String?     // IdP Single Sign-On URL
+  idpCertificate   String?     @db.Text // IdP X.509-sertifikat (PEM)
+  spEntityId       String?     // Vår SP Entity ID
+  attributeMapping Json?       // {email: "...", firstName: "...", ...}
+
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
+model ScimToken {
+  id          String    @id @default(uuid())
+  tenantId    String
+  name        String
+  tokenHash   String    @unique // KUN hash lagres, aldri klartekst
+  tokenPrefix String    // Første tegn for visning, f.eks. "scim_ab12…"
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([tenantId])
+}
+
+model Webhook {
+  id          String   @id @default(uuid())
+  tenantId    String
+  url         String
+  secret      String   // For HMAC-signering av payloads
+  events      String[] // ["user.created", "course.completed", ...]
+  enabled     Boolean  @default(true)
+
+  deliveries  WebhookDelivery[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId])
+}
+
+model WebhookDelivery {
+  id          String   @id @default(uuid())
+  tenantId    String
+  webhookId   String
+  webhook     Webhook  @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+  event       String
+  payload     Json
+  statusCode  Int?
+  success     Boolean  @default(false)
+  error       String?
+  createdAt   DateTime @default(now())
+
+  @@index([tenantId, webhookId])
+  @@index([tenantId, createdAt])
+}
+
+model LtiPlatform {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  issuer      String   // Platform issuer (iss)
+  clientId    String
+  authUrl     String?  // OIDC auth endpoint
+  jwksUrl     String?  // Public JWKS endpoint
+  enabled     Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId])
+}
+
+// ══════════════════════════════════════════════════════════════
+// AUDIT-LOGGING (sikkerhetshendelser)
+// ══════════════════════════════════════════════════════════════
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  tenantId    String
+  actorUserId String?  // Hvem utførte handlingen
+  actorEmail  String?  // Denormalisert for visning selv om bruker slettes
+  action      String   // "user.role_changed", "sso.enabled", "session.created", ...
+  targetType  String?  // "user", "session", "webhook", ...
+  targetId    String?
+  metadata    Json?    // Ekstra kontekst
+  ip          String?
+  createdAt   DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, action])
 }

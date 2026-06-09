@@ -1,15 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
+import prisma from '@/lib/prisma';
+import { kindFromMimeType } from '@/lib/mediaKind';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 
 // Max filstørrelse: 2MB for images/fonts, 10MB for audio
 const MAX_SIZE = 2 * 1024 * 1024;
 const MAX_AUDIO_SIZE = 10 * 1024 * 1024;
+// Mediebibliotek: tillat større filer (video/dokumenter), men med et fast tak.
+const MAX_MEDIA_SIZE = 50 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp', 'image/x-icon', 'image/vnd.microsoft.icon'];
 const ALLOWED_FONT_TYPES = ['font/woff2', 'font/woff', 'font/ttf', 'font/otf', 'application/font-woff', 'application/font-woff2', 'application/x-font-ttf', 'application/x-font-opentype', 'application/octet-stream'];
 const ALLOWED_AUDIO_TYPES = ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/aac', 'audio/mp4', 'audio/webm'];
 const FONT_EXTENSIONS = ['.woff2', '.woff', '.ttf', '.otf'];
+
+// Mediebibliotek-allowlist: bilder, PDF, vanlige dokumenter, lyd og video.
+const ALLOWED_MEDIA_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/svg+xml'];
+const ALLOWED_MEDIA_DOC_TYPES = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'text/plain',
+    'text/csv',
+];
+const ALLOWED_MEDIA_AUDIO_TYPES = ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/aac', 'audio/mp4', 'audio/webm'];
+const ALLOWED_MEDIA_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
+const ALLOWED_MEDIA_TYPES = [
+    ...ALLOWED_MEDIA_IMAGE_TYPES,
+    ...ALLOWED_MEDIA_DOC_TYPES,
+    ...ALLOWED_MEDIA_AUDIO_TYPES,
+    ...ALLOWED_MEDIA_VIDEO_TYPES,
+];
 
 export async function POST(request: NextRequest) {
     try {
@@ -28,7 +54,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Validate type parameter against allowlist to prevent directory traversal
-        const ALLOWED_TYPES = ['logo', 'favicon', 'font', 'avatar', 'image', 'audio'];
+        const ALLOWED_TYPES = ['logo', 'favicon', 'font', 'avatar', 'image', 'audio', 'media'];
         if (!type || !ALLOWED_TYPES.includes(type)) {
             return NextResponse.json({ error: 'Ugyldig opplastingstype' }, { status: 400 });
         }
@@ -42,11 +68,18 @@ export async function POST(request: NextRequest) {
 
         const isFont = type === 'font';
         const isAudio = type === 'audio';
+        const isMedia = type === 'media';
 
-        const sizeLimit = isAudio ? MAX_AUDIO_SIZE : MAX_SIZE;
+        const sizeLimit = isMedia ? MAX_MEDIA_SIZE : isAudio ? MAX_AUDIO_SIZE : MAX_SIZE;
         if (file.size > sizeLimit) {
             return NextResponse.json(
-                { error: isAudio ? 'Filen er for stor. Maks 10MB for lyd.' : 'Filen er for stor. Maks 2MB.' },
+                {
+                    error: isMedia
+                        ? 'Filen er for stor. Maks 50MB for mediefiler.'
+                        : isAudio
+                            ? 'Filen er for stor. Maks 10MB for lyd.'
+                            : 'Filen er for stor. Maks 2MB.',
+                },
                 { status: 400 }
             );
         }
@@ -67,6 +100,13 @@ export async function POST(request: NextRequest) {
                     { status: 400 }
                 );
             }
+        } else if (isMedia) {
+            if (!ALLOWED_MEDIA_TYPES.includes(file.type)) {
+                return NextResponse.json(
+                    { error: `Ugyldig filtype: ${file.type}. Tillatte typer: bilder, PDF, dokumenter, lyd og video.` },
+                    { status: 400 }
+                );
+            }
         } else {
             if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
                 return NextResponse.json(
@@ -83,7 +123,17 @@ export async function POST(request: NextRequest) {
         const filename = `${type}-${tenantId}-${Date.now()}.${fileExt}`;
 
         // Opprett mappe
-        const uploadSubdir = isFont ? 'fonts' : isAudio ? 'audio' : type === 'avatar' ? 'avatars' : type === 'image' ? 'images' : 'logos';
+        const uploadSubdir = isFont
+            ? 'fonts'
+            : isAudio
+                ? 'audio'
+                : isMedia
+                    ? 'media'
+                    : type === 'avatar'
+                        ? 'avatars'
+                        : type === 'image'
+                            ? 'images'
+                            : 'logos';
         const uploadDir = path.join(process.cwd(), 'public', 'uploads', uploadSubdir);
         await mkdir(uploadDir, { recursive: true });
 
@@ -112,6 +162,39 @@ export async function POST(request: NextRequest) {
         await writeFile(filePath, buffer);
 
         const url = `/uploads/${uploadSubdir}/${filename}`;
+
+        // For mediebibliotek: registrer en tenant-scoped MediaAsset-rad.
+        if (isMedia) {
+            const asset = await prisma.mediaAsset.create({
+                data: {
+                    tenantId,
+                    uploadedByUserId: session.user.id,
+                    url,
+                    filename: file.name,
+                    mimeType: file.type || null,
+                    sizeBytes: file.size,
+                    kind: kindFromMimeType(file.type),
+                },
+                select: {
+                    id: true,
+                    filename: true,
+                    url: true,
+                    kind: true,
+                    mimeType: true,
+                    sizeBytes: true,
+                    createdAt: true,
+                },
+            });
+
+            return NextResponse.json({
+                success: true,
+                url,
+                filename,
+                isSvg: file.type === 'image/svg+xml',
+                svgContent,
+                asset,
+            });
+        }
 
         return NextResponse.json({
             success: true,
