@@ -6,7 +6,7 @@ import { updateBranding, resetBranding } from '@/app/actions/brandingActions';
 import {
     RotateCcw, Check, AlertTriangle, Eye, Save, Tag, Wand2, Maximize2, X,
     LayoutDashboard, Users, UsersRound, Shield, BookOpen, Calendar, Files,
-    Palette, Plug, BarChart3, HelpCircle, CheckCircle2, LogIn,
+    Palette, Plug, BarChart3, HelpCircle, CheckCircle2, LogIn, Undo2, Redo2,
 } from 'lucide-react';
 import { HexColorPicker } from 'react-colorful';
 import styles from './branding.module.css';
@@ -725,6 +725,25 @@ interface BrandingFormProps {
     initial: BrandingData;
 }
 
+// -- Undo/redo: øyeblikksbilde av ALL redigerbar tilstand --
+interface Snapshot {
+    colors: Record<string, string>;
+    tenantName: string;
+    logoUrl: string;
+    logoSvgContent: string;
+    logoSvgModified: string;
+    faviconUrl: string;
+    faviconSvgContent: string;
+    faviconSvgModified: string;
+    fontFamily: string;
+    fontHeading: string;
+    fontSource: string;
+    customFontUrl: string;
+}
+
+const HISTORY_CAP = 100;
+const HISTORY_DEBOUNCE_MS = 350;
+
 // -- Hovedkomponent --
 export default function BrandingForm({ initial }: BrandingFormProps) {
     const router = useRouter();
@@ -773,6 +792,137 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
     // ── Fullskjerm-preview ──────────────────────────────────────
     const [fullscreen, setFullscreen] = useState(false);
     const [selectedField, setSelectedField] = useState<string | null>(null);
+
+    // ── Angre/Gjør om (snapshot-historikk) ─────────────────────
+    // Historikk og peker holdes i refs for å unngå ekstra rerendere; kun
+    // canUndo/canRedo er state (driver verktøylinjeknappene).
+    const historyRef = useRef<Snapshot[]>([]);
+    const pointerRef = useRef(-1);
+    const isRestoringRef = useRef(false);
+    const commitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [canUndo, setCanUndo] = useState(false);
+    const [canRedo, setCanRedo] = useState(false);
+
+    // Bygg et øyeblikksbilde av gjeldende redigerbar tilstand (dyp-kopi av colors).
+    const buildSnapshot = useCallback((): Snapshot => ({
+        colors: { ...colors },
+        tenantName,
+        logoUrl,
+        logoSvgContent,
+        logoSvgModified,
+        faviconUrl,
+        faviconSvgContent,
+        faviconSvgModified,
+        fontFamily,
+        fontHeading,
+        fontSource,
+        customFontUrl,
+    }), [
+        colors, tenantName, logoUrl, logoSvgContent, logoSvgModified,
+        faviconUrl, faviconSvgContent, faviconSvgModified,
+        fontFamily, fontHeading, fontSource, customFontUrl,
+    ]);
+
+    // Sett ALL redigerbar tilstand fra et øyeblikksbilde.
+    const applySnapshot = useCallback((s: Snapshot) => {
+        setColors({ ...s.colors });
+        setTenantName(s.tenantName);
+        setLogoUrl(s.logoUrl);
+        setLogoSvgContent(s.logoSvgContent);
+        setLogoSvgModified(s.logoSvgModified);
+        setFaviconUrl(s.faviconUrl);
+        setFaviconSvgContent(s.faviconSvgContent);
+        setFaviconSvgModified(s.faviconSvgModified);
+        setFontFamily(s.fontFamily);
+        setFontHeading(s.fontHeading);
+        setFontSource(s.fontSource);
+        setCustomFontUrl(s.customFontUrl);
+    }, []);
+
+    // Oppdater knappetilstand ut fra pekerposisjonen.
+    const syncCanFlags = useCallback(() => {
+        setCanUndo(pointerRef.current > 0);
+        setCanRedo(pointerRef.current < historyRef.current.length - 1);
+    }, []);
+
+    // Forplikt gjeldende øyeblikksbilde til historikken hvis det avviker fra toppen.
+    const commitSnapshot = useCallback(() => {
+        const snap = buildSnapshot();
+        const current = historyRef.current[pointerRef.current];
+        if (current && JSON.stringify(current) === JSON.stringify(snap)) return;
+        // Kutt eventuell «redo-hale» etter pekeren før vi legger til en ny gren.
+        historyRef.current = historyRef.current.slice(0, pointerRef.current + 1);
+        historyRef.current.push(snap);
+        // Begrens til HISTORY_CAP — slipp eldste og hold pekeren gyldig.
+        if (historyRef.current.length > HISTORY_CAP) {
+            historyRef.current = historyRef.current.slice(historyRef.current.length - HISTORY_CAP);
+        }
+        pointerRef.current = historyRef.current.length - 1;
+        syncCanFlags();
+    }, [buildSnapshot, syncCanFlags]);
+
+    // Initialiser historikken med startøyeblikksbildet (kun ved mount).
+    useEffect(() => {
+        historyRef.current = [buildSnapshot()];
+        pointerRef.current = 0;
+        syncCanFlags();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Ta opp endringer (debounced + tilbakemeldingssikker). Avhenger av ALL
+    // redigerbar tilstand. Hvis endringen kom fra applySnapshot (isRestoringRef),
+    // nullstilles flagget og vi returnerer FØR vi planlegger en commit — slik
+    // unngås en tilbakekoblingsløkke.
+    useEffect(() => {
+        if (isRestoringRef.current) {
+            isRestoringRef.current = false;
+            return;
+        }
+        // Ikke ta opp før historikken er initialisert (mount-effekten over).
+        if (pointerRef.current < 0) return;
+        if (commitTimeoutRef.current) clearTimeout(commitTimeoutRef.current);
+        commitTimeoutRef.current = setTimeout(() => {
+            commitTimeoutRef.current = null;
+            commitSnapshot();
+        }, HISTORY_DEBOUNCE_MS);
+    }, [
+        colors, tenantName, logoUrl, logoSvgContent, logoSvgModified,
+        faviconUrl, faviconSvgContent, faviconSvgModified,
+        fontFamily, fontHeading, fontSource, customFontUrl,
+        commitSnapshot,
+    ]);
+
+    // Rydd opp ventende debounce-timeout ved unmount.
+    useEffect(() => {
+        return () => {
+            if (commitTimeoutRef.current) clearTimeout(commitTimeoutRef.current);
+        };
+    }, []);
+
+    const undo = useCallback(() => {
+        // Hvis en commit venter (debounce), flush den NÅ slik at den pågående
+        // endringen blir redo-mål før vi går ett steg tilbake.
+        if (commitTimeoutRef.current) {
+            clearTimeout(commitTimeoutRef.current);
+            commitTimeoutRef.current = null;
+            commitSnapshot();
+        }
+        if (pointerRef.current > 0) {
+            pointerRef.current -= 1;
+            isRestoringRef.current = true;
+            applySnapshot(historyRef.current[pointerRef.current]);
+            syncCanFlags();
+        }
+    }, [applySnapshot, commitSnapshot, syncCanFlags]);
+
+    const redo = useCallback(() => {
+        if (pointerRef.current < historyRef.current.length - 1) {
+            pointerRef.current += 1;
+            isRestoringRef.current = true;
+            applySnapshot(historyRef.current[pointerRef.current]);
+            syncCanFlags();
+        }
+    }, [applySnapshot, syncCanFlags]);
 
     // ── Tip-system state ──────────────────────────────────────
     const [manualSuggestions, setManualSuggestions] = useState<GeneratorResult | null>(null);
@@ -1027,6 +1177,29 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [hasUnsavedChanges, loading]);
+
+    // Angre/Gjør om-tastatursnarveier (aktive mens komponenten er montert =
+    // kun på /admin/branding). Ctrl/Cmd+Z = angre, Ctrl/Cmd+Shift+Z eller
+    // Ctrl/Cmd+Y = gjør om. Snarveiene gjelder hele skjemaet (også tekstfelt).
+    useEffect(() => {
+        function handleKeyDown(e: KeyboardEvent) {
+            const mod = e.ctrlKey || e.metaKey;
+            if (!mod) return;
+            const key = e.key;
+            if ((key === 'z' || key === 'Z') && !e.shiftKey) {
+                e.preventDefault();
+                undo();
+            } else if ((key === 'z' || key === 'Z') && e.shiftKey) {
+                e.preventDefault();
+                redo();
+            } else if (key === 'y' || key === 'Y') {
+                e.preventDefault();
+                redo();
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [undo, redo]);
 
     // Fullskjerm: lukk på Escape og lås body-scroll mens overlayet er åpent.
     useEffect(() => {
@@ -1386,7 +1559,7 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
                                     onClick={handleRevert}
                                 >
                                     <RotateCcw size={14} />
-                                    Angre
+                                    Forkast alle endringer
                                 </button>
                                 <button
                                     type="submit"
@@ -1428,6 +1601,26 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
                     <Eye size={16} />
                     <span>Live forhåndsvisning</span>
                     <div className={styles.previewHeaderActions}>
+                        <button
+                            type="button"
+                            className={styles.undoRedoButton}
+                            onClick={undo}
+                            disabled={!canUndo}
+                            title="Angre (Ctrl+Z)"
+                            aria-label="Angre"
+                        >
+                            <Undo2 size={14} />
+                        </button>
+                        <button
+                            type="button"
+                            className={styles.undoRedoButton}
+                            onClick={redo}
+                            disabled={!canRedo}
+                            title="Gjør om (Ctrl+Shift+Z)"
+                            aria-label="Gjør om"
+                        >
+                            <Redo2 size={14} />
+                        </button>
                         <button
                             type="button"
                             className={`${styles.previewLabelToggle} ${showLabels ? styles.previewLabelToggleActive : ''}`}
@@ -1481,6 +1674,26 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
                         <Eye size={18} />
                         <span className={styles.fsTitle}>Forhåndsvisning</span>
                         <div className={styles.fsHeaderActions}>
+                            <button
+                                type="button"
+                                className={styles.undoRedoButton}
+                                onClick={undo}
+                                disabled={!canUndo}
+                                title="Angre (Ctrl+Z)"
+                                aria-label="Angre"
+                            >
+                                <Undo2 size={14} />
+                            </button>
+                            <button
+                                type="button"
+                                className={styles.undoRedoButton}
+                                onClick={redo}
+                                disabled={!canRedo}
+                                title="Gjør om (Ctrl+Shift+Z)"
+                                aria-label="Gjør om"
+                            >
+                                <Redo2 size={14} />
+                            </button>
                             <button
                                 type="button"
                                 className={`${styles.previewLabelToggle} ${showLabels ? styles.previewLabelToggleActive : ''}`}

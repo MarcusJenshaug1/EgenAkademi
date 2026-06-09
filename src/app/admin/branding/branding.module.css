@@ -470,6 +470,31 @@
     color: var(--color-accent-blue);
 }
 
+/* ── Angre/Gjør om-ikonknapper (preview- og fullskjerm-header) ── */
+.undoRedoButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: none;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+    border-radius: 99px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.undoRedoButton:hover:not(:disabled) {
+    border-color: var(--color-accent-blue);
+    color: var(--color-accent-blue);
+}
+
+.undoRedoButton:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
 /* ── Preview root: bærer de resolverte CSS-variablene (samme som produksjon) ── */
 .previewRoot {
     max-height: 620px;
