@@ -24,6 +24,12 @@ export interface BrandingColorInput {
   colorSuccess?: string | null;
   colorWarning?: string | null;
   colorDanger?: string | null;
+  // Optional overrides for otherwise-derived state/effect vars.
+  // When null/empty, the value is auto-derived (original behaviour).
+  colorSidebarHoverBg?: string | null;
+  colorSidebarHoverText?: string | null;
+  colorTopbarBg?: string | null;
+  colorTopbarText?: string | null;
   fontFamily?: string | null;
 }
 
@@ -98,17 +104,23 @@ export function buildBrandingVars(
       `linear-gradient(135deg, ${input.colorAccent} 0%, ${input.colorAccent}cc 100%)`;
   }
 
-  // Topbar derived from bg-primary (semi-transparent with backdrop-filter).
-  if (input.colorBgPrimary) {
+  // Topbar — explicit override wins, else derived from bg-primary (semi-transparent).
+  if (input.colorTopbarBg) {
+    vars['--color-topbar-bg'] = input.colorTopbarBg;
+  } else if (input.colorBgPrimary) {
     vars['--color-topbar-bg'] = `${input.colorBgPrimary}cc`;
   }
-  // Topbar text follows text-primary.
-  if (input.colorTextPrimary) {
+  // Topbar text — explicit override wins, else follows text-primary.
+  if (input.colorTopbarText) {
+    vars['--color-topbar-text'] = input.colorTopbarText;
+  } else if (input.colorTextPrimary) {
     vars['--color-topbar-text'] = input.colorTextPrimary;
   }
 
-  // Sidebar hover derived from sidebar bg — use text-primary for hover text.
-  if (input.colorSidebarBg) {
+  // Sidebar hover bg — explicit override wins, else derived overlay from sidebar bg.
+  if (input.colorSidebarHoverBg) {
+    vars['--color-sidebar-hover-bg'] = input.colorSidebarHoverBg;
+  } else if (input.colorSidebarBg) {
     // Detect if sidebar is light or dark to pick appropriate hover overlay.
     const lum = perceivedBrightness(input.colorSidebarBg);
     if (lum > 0.5) {
@@ -119,7 +131,10 @@ export function buildBrandingVars(
       vars['--color-sidebar-hover-bg'] = 'rgba(255, 255, 255, 0.08)';
     }
   }
-  if (input.colorTextPrimary) {
+  // Sidebar hover text — explicit override wins, else follows text-primary.
+  if (input.colorSidebarHoverText) {
+    vars['--color-sidebar-hover-text'] = input.colorSidebarHoverText;
+  } else if (input.colorTextPrimary) {
     vars['--color-sidebar-hover-text'] = input.colorTextPrimary;
   }
 

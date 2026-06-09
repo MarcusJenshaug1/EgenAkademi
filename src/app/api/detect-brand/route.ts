@@ -1035,20 +1035,30 @@ export async function POST(request: NextRequest) {
             suggestions.colorButtonText = bestTextOnBg(suggestions.colorAccent);
         }
 
-        /* ── Status colours ─────────────────────────────────── */
+        /* ── Status colours — ONLY from explicit CSS-variable NAME evidence ──
+           Status hues (red/green/amber) are very often BRAND colours: a coral
+           or gold brand accent has the hue of "danger"/"warning" and was being
+           hijacked into the status slots, producing off-brand palettes
+           (e.g. wakandi's coral becoming the error colour). We now only adopt
+           a detected colour as success/warning/danger when a CSS custom-property
+           name explicitly says so (e.g. --danger, --error, --success); otherwise
+           the safe brand-independent defaults below are kept. */
+        const STATUS_NAME_RE: Record<string, RegExp> = {
+            success: /(success|positive|valid|green)/i,
+            warning: /(warning|warn|amber|caution|yellow)/i,
+            danger: /(danger|error|destructive|critical|alert|red)/i,
+        };
+        function hasStatusNameEvidence(c: DetectedColor, kind: string): boolean {
+            const re = STATUS_NAME_RE[kind];
+            return c.sources.some((s) => s.startsWith('css-var:') && re.test(s));
+        }
         const statusMap: Record<string, string> = { success: '', warning: '', danger: '' };
         for (const c of topColors) {
-            if (c.category === 'success' && !statusMap.success) {
-                const [, s, l] = hexToHsl(c.hex);
-                if (s > 20 && l > 15 && l < 80) statusMap.success = c.hex;
-            }
-            if (c.category === 'warning' && !statusMap.warning) {
-                const [, s, l] = hexToHsl(c.hex);
-                if (s > 20 && l > 15 && l < 80) statusMap.warning = c.hex;
-            }
-            if (c.category === 'danger' && !statusMap.danger) {
-                const [, s, l] = hexToHsl(c.hex);
-                if (s > 20 && l > 15 && l < 80) statusMap.danger = c.hex;
+            for (const kind of ['success', 'warning', 'danger'] as const) {
+                if (c.category === kind && !statusMap[kind] && hasStatusNameEvidence(c, kind)) {
+                    const [, s, l] = hexToHsl(c.hex);
+                    if (s > 20 && l > 15 && l < 80) statusMap[kind] = c.hex;
+                }
             }
         }
         if (statusMap.success) suggestions.colorSuccess = statusMap.success;

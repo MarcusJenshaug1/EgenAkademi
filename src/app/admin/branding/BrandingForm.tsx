@@ -3,7 +3,11 @@
 import { useState, useMemo, useRef, useEffect, useCallback, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { updateBranding, resetBranding } from '@/app/actions/brandingActions';
-import { RotateCcw, Check, AlertTriangle, Eye, Save, Tag, Wand2 } from 'lucide-react';
+import {
+    RotateCcw, Check, AlertTriangle, Eye, Save, Tag, Wand2, Maximize2, X,
+    LayoutDashboard, Users, UsersRound, Shield, BookOpen, Calendar, Files,
+    Palette, Plug, BarChart3, HelpCircle, CheckCircle2, LogIn, Undo2, Redo2,
+} from 'lucide-react';
 import { HexColorPicker } from 'react-colorful';
 import styles from './branding.module.css';
 import LogoUploader from './LogoUploader';
@@ -42,7 +46,23 @@ const DEFAULTS: Record<string, string> = {
     colorSuccess: '#22c55e',
     colorWarning: '#f97316',
     colorDanger: '#ef4444',
+    // Valgfrie overstyringer — disse standardverdiene brukes KUN som
+    // fargevelgerens plassholder/prøve når feltet er tomt. I previewVars
+    // sendes de IKKE som default (tom = auto-avled, matcher produksjon).
+    colorSidebarHoverBg: '#1f1f23',
+    colorSidebarHoverText: '#ffffff',
+    colorTopbarBg: '#0a0a0a',
+    colorTopbarText: '#ffffff',
 };
+
+// Valgfrie overstyringsfelt: tom verdi betyr «auto-avled» (matcher produksjon),
+// så disse skal IKKE få standardverdi i previewVars — kun som plassholder/prøve.
+const OVERRIDE_KEYS = [
+    'colorSidebarHoverBg',
+    'colorSidebarHoverText',
+    'colorTopbarBg',
+    'colorTopbarText',
+];
 
 interface FieldDef {
     key: string;
@@ -112,6 +132,16 @@ const SECTIONS: SectionDef[] = [
             { key: 'colorSuccess', label: 'Suksess', hint: 'Bekreftelser og vellykkede handlinger.' },
             { key: 'colorWarning', label: 'Advarsel', hint: 'Advarsler, påminnelser og ting som nærmer seg en frist.' },
             { key: 'colorDanger', label: 'Feil', hint: 'Feilmeldinger og destruktive handlinger som sletting.' },
+        ],
+    },
+    {
+        title: 'Tilstander (hover & topbar)',
+        description: 'Valgfrie overstyringer for tilstands- og topbar-farger. La stå tomme for automatisk avledning fra de andre fargene.',
+        fields: [
+            { key: 'colorSidebarHoverBg', label: 'Sidebar hover-bakgrunn', hint: 'Bakgrunn når du holder over et menypunkt. Tom = auto.' },
+            { key: 'colorSidebarHoverText', label: 'Sidebar hover-tekst', hint: 'Tekstfarge ved hover i sidebaren. Tom = auto.', contrastAgainst: 'colorSidebarHoverBg' },
+            { key: 'colorTopbarBg', label: 'Topbar-bakgrunn', hint: 'Bakgrunn for topplinjen. Tom = auto (avledet fra hovedbakgrunn).' },
+            { key: 'colorTopbarText', label: 'Topbar-tekst', hint: 'Tekst/ikoner i topplinjen. Tom = auto.', contrastAgainst: 'colorTopbarBg' },
         ],
     },
 ];
@@ -277,28 +307,383 @@ function ColorField({
 
 // -- Preview-region: rammer inn en del av previewen og kobler den til feltet(ene) som styrer den --
 function PreviewRegion({
-    fields, label, highlight, showLabels, onHover, children, className,
+    fields, label, highlight, showLabels, onHover, onRegionClick, children, className,
 }: {
     fields: string[];
     label: string;
     highlight: string[] | null;
     showLabels: boolean;
     onHover: (fields: string[] | null) => void;
+    onRegionClick?: (field: string) => void;
     children: ReactNode;
     className?: string;
 }) {
     const isHighlighted =
         !!highlight && highlight.some((h) => fields.includes(h));
     const showLabel = isHighlighted || showLabels;
+    const clickable = !!onRegionClick;
 
+    // onMouseOver BOBLER (i motsetning til onMouseEnter), så stopPropagation lar
+    // den innerste regionen under markøren «vinne» — ingen flimring mellom nestede
+    // regioner. Root-containeren nullstiller highlight når markøren forlater hele
+    // previewen (onMouseLeave på root).
     return (
         <div
-            className={`${styles.previewRegion} ${isHighlighted ? styles.previewRegionActive : ''} ${showLabels ? styles.previewRegionShowLabel : ''} ${className || ''}`}
-            onMouseEnter={() => onHover(fields)}
-            onMouseLeave={() => onHover(null)}
+            className={`${styles.previewRegion} ${isHighlighted ? styles.previewRegionActive : ''} ${showLabels ? styles.previewRegionShowLabel : ''} ${clickable ? styles.previewRegionClickable : ''} ${className || ''}`}
+            onMouseOver={(e) => { e.stopPropagation(); onHover(fields); }}
+            role={clickable ? 'button' : undefined}
+            tabIndex={clickable ? 0 : undefined}
+            onClick={clickable ? (e) => { e.stopPropagation(); onRegionClick(fields[0]); } : undefined}
+            onKeyDown={
+                clickable
+                    ? (e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              onRegionClick(fields[0]);
+                          }
+                      }
+                    : undefined
+            }
         >
             {showLabel && <span className={styles.previewRegionLabel}>{label}</span>}
             {children}
+        </div>
+    );
+}
+
+// -- Gjenbrukbar preview-mini-app: én sannhetskilde for både sidepanelet og fullskjerm --
+function BrandingPreview({
+    previewVars, resolve, logoUrl, logoSvgContent, logoSvgModified,
+    fontFamily, fontHeading, highlight, showLabels, onHover, onRegionClick, large,
+    tenantName,
+}: {
+    previewVars: React.CSSProperties;
+    resolve: (key: string) => string;
+    logoUrl: string;
+    logoSvgContent: string;
+    logoSvgModified: string;
+    fontFamily: string;
+    fontHeading: string;
+    highlight: string[] | null;
+    showLabels: boolean;
+    onHover: (f: string[] | null) => void;
+    onRegionClick?: (field: string) => void;
+    large?: boolean;
+    tenantName: string;
+}) {
+    // resolve/fontFamily/fontHeading er en del av kontrakten (sikrer at kallere alltid
+    // sender resolverte verdier); previewVars bærer de faktiske CSS-variablene.
+    void resolve;
+    void fontFamily;
+    void fontHeading;
+
+    const logoSrc = logoSvgModified
+        ? `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(logoSvgModified)))}`
+        : logoSvgContent
+            ? `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(logoSvgContent)))}`
+            : logoUrl;
+    const hasLogo = !!(logoUrl || logoSvgContent);
+    const displayName = tenantName || 'Din organisasjon';
+    const initials = displayName
+        .split(/\s+/)
+        .map((w) => w[0])
+        .filter(Boolean)
+        .slice(0, 2)
+        .join('')
+        .toUpperCase() || 'EA';
+
+    return (
+        <div
+            className={`${styles.previewRoot} ${large ? styles.previewRootLarge : ''}`}
+            style={{ ...previewVars }}
+            onMouseLeave={() => onHover(null)}
+        >
+            <div className={styles.previewApp}>
+                {/* ── Sidemeny (speiler den ekte admin-sidebaren) ── */}
+                <PreviewRegion
+                    fields={['colorSidebarBg']}
+                    label="Sidebar"
+                    highlight={highlight}
+                    showLabels={showLabels}
+                    onHover={onHover}
+                    onRegionClick={onRegionClick}
+                    className={styles.previewSidebar}
+                >
+                    <div className={styles.previewSidebarHeader}>
+                        {hasLogo ? (
+                            <img src={logoSrc} alt="Logo" className={styles.previewLogo} />
+                        ) : (
+                            <span className={styles.previewSidebarBrand}>{displayName}</span>
+                        )}
+                    </div>
+
+                    <nav className={styles.previewNav}>
+                        {/* Aktivt menypunkt: Dashboard */}
+                        <PreviewRegion
+                            fields={['colorSidebarActive']}
+                            label="Aktivt menypunkt"
+                            highlight={highlight}
+                            showLabels={showLabels}
+                            onHover={onHover}
+                            onRegionClick={onRegionClick}
+                        >
+                            <div className={`${styles.previewNavItem} ${styles.previewNavItemActive}`}>
+                                <LayoutDashboard className={styles.previewNavIcon} aria-hidden="true" />
+                                <span>Dashboard</span>
+                            </div>
+                        </PreviewRegion>
+
+                        <div className={styles.previewNavSection}>Brukere &amp; Tilgang</div>
+
+                        {/* Normale menypunkter (sidebar-tekst) */}
+                        <PreviewRegion
+                            fields={['colorSidebarText']}
+                            label="Sidebar-tekst"
+                            highlight={highlight}
+                            showLabels={showLabels}
+                            onHover={onHover}
+                            onRegionClick={onRegionClick}
+                        >
+                            <div className={styles.previewNavItem}>
+                                <Users className={styles.previewNavIcon} aria-hidden="true" />
+                                <span>Brukere</span>
+                            </div>
+                        </PreviewRegion>
+
+                        {/* Permanent hover-tilstand: Grupper */}
+                        <PreviewRegion
+                            fields={['colorSidebarHoverBg', 'colorSidebarHoverText']}
+                            label="Sidebar hover"
+                            highlight={highlight}
+                            showLabels={showLabels}
+                            onHover={onHover}
+                            onRegionClick={onRegionClick}
+                        >
+                            <div className={`${styles.previewNavItem} ${styles.previewNavItemHover}`}>
+                                <UsersRound className={styles.previewNavIcon} aria-hidden="true" />
+                                <span>Grupper</span>
+                                <span className={styles.previewStateTag}>hover</span>
+                            </div>
+                        </PreviewRegion>
+
+                        <div className={styles.previewNavItem}>
+                            <Shield className={styles.previewNavIcon} aria-hidden="true" />
+                            <span>Roller</span>
+                        </div>
+
+                        <div className={styles.previewNavSection}>Læring</div>
+                        <div className={styles.previewNavItem}>
+                            <BookOpen className={styles.previewNavIcon} aria-hidden="true" />
+                            <span>Kurs</span>
+                        </div>
+                        <div className={styles.previewNavItem}>
+                            <Calendar className={styles.previewNavIcon} aria-hidden="true" />
+                            <span>Sesjoner</span>
+                        </div>
+                        <div className={styles.previewNavItem}>
+                            <Files className={styles.previewNavIcon} aria-hidden="true" />
+                            <span>Innhold</span>
+                        </div>
+
+                        <div className={styles.previewNavSection}>Plattform</div>
+                        <div className={styles.previewNavItem}>
+                            <Palette className={styles.previewNavIcon} aria-hidden="true" />
+                            <span>Branding</span>
+                        </div>
+                        <div className={styles.previewNavItem}>
+                            <Plug className={styles.previewNavIcon} aria-hidden="true" />
+                            <span>Integrasjoner</span>
+                        </div>
+                        <div className={styles.previewNavItem}>
+                            <BarChart3 className={styles.previewNavIcon} aria-hidden="true" />
+                            <span>Rapporter</span>
+                        </div>
+                    </nav>
+                </PreviewRegion>
+
+                {/* ── Hovedområde (topbar + dashboard) ── */}
+                <div className={styles.previewMainContent}>
+                    {/* Topbar */}
+                    <PreviewRegion
+                        fields={['colorTopbarBg', 'colorTopbarText']}
+                        label="Topbar"
+                        highlight={highlight}
+                        showLabels={showLabels}
+                        onHover={onHover}
+                        onRegionClick={onRegionClick}
+                        className={styles.previewTopbar}
+                    >
+                        <span className={styles.previewTopbarTitle}>Administrasjon</span>
+                        <div className={styles.previewTopbarRight}>
+                            <span className={styles.previewHelpPill}>
+                                <HelpCircle className={styles.previewTopbarIcon} aria-hidden="true" />
+                                <span>Hjelp</span>
+                            </span>
+                            <span className={styles.previewAvatar} aria-hidden="true">{initials}</span>
+                        </div>
+                    </PreviewRegion>
+
+                    {/* Dashboard-innhold */}
+                    <PreviewRegion
+                        fields={['colorBgPrimary']}
+                        label="Hovedbakgrunn"
+                        highlight={highlight}
+                        showLabels={showLabels}
+                        onHover={onHover}
+                        onRegionClick={onRegionClick}
+                        className={styles.previewMain}
+                    >
+                        <div className={styles.previewDashHeader}>
+                            <PreviewRegion
+                                fields={['colorTextPrimary']}
+                                label="Hovedtekst"
+                                highlight={highlight}
+                                showLabels={showLabels}
+                                onHover={onHover}
+                                onRegionClick={onRegionClick}
+                            >
+                                <h3 className={styles.previewHeading}>Oversikt</h3>
+                            </PreviewRegion>
+                            <PreviewRegion
+                                fields={['colorTextSecondary']}
+                                label="Sekundærtekst"
+                                highlight={highlight}
+                                showLabels={showLabels}
+                                onHover={onHover}
+                                onRegionClick={onRegionClick}
+                            >
+                                <p className={styles.previewLead}>
+                                    Sanntidsdata for {displayName}
+                                </p>
+                            </PreviewRegion>
+                        </div>
+
+                        {/* Advarselstripe */}
+                        <PreviewRegion
+                            fields={['colorWarning']}
+                            label="Advarsel"
+                            highlight={highlight}
+                            showLabels={showLabels}
+                            onHover={onHover}
+                            onRegionClick={onRegionClick}
+                            className={styles.previewWarningStrip}
+                        >
+                            <AlertTriangle className={styles.previewWarningIcon} aria-hidden="true" />
+                            <span>2 fristbrudd krever oppfølging</span>
+                        </PreviewRegion>
+
+                        {/* Statistikk-kort (2x2 / 4-kolonner) */}
+                        <PreviewRegion
+                            fields={['colorBgSecondary', 'colorBorder']}
+                            label="Kort og rammer"
+                            highlight={highlight}
+                            showLabels={showLabels}
+                            onHover={onHover}
+                            onRegionClick={onRegionClick}
+                            className={styles.previewStatsGrid}
+                        >
+                            <div className={styles.previewStatCard}>
+                                <span className={styles.previewStatLabel}>Aktive Brukere</span>
+                                <span className={styles.previewStatValue}>42</span>
+                            </div>
+                            <div className={styles.previewStatCard}>
+                                <span className={styles.previewStatLabel}>Pågående Tildelinger</span>
+                                <span className={styles.previewStatValue}>18</span>
+                            </div>
+                            <div className={styles.previewStatCard}>
+                                <span className={styles.previewStatLabel}>Fristbrudd</span>
+                                <PreviewRegion
+                                    fields={['colorDanger']}
+                                    label="Feil"
+                                    highlight={highlight}
+                                    showLabels={showLabels}
+                                    onHover={onHover}
+                                    onRegionClick={onRegionClick}
+                                >
+                                    <span className={styles.previewStatValueDanger}>2</span>
+                                </PreviewRegion>
+                            </div>
+                            <div className={styles.previewStatCard}>
+                                <span className={styles.previewStatLabel}>Fullføringsgrad</span>
+                                <PreviewRegion
+                                    fields={['colorSuccess']}
+                                    label="Suksess"
+                                    highlight={highlight}
+                                    showLabels={showLabels}
+                                    onHover={onHover}
+                                    onRegionClick={onRegionClick}
+                                >
+                                    <span className={styles.previewStatValueSuccess}>84%</span>
+                                </PreviewRegion>
+                            </div>
+                        </PreviewRegion>
+
+                        {/* Innholdsgrid: to paneler */}
+                        <div className={styles.previewContentGrid}>
+                            <div className={styles.previewDashPanel}>
+                                <h4 className={styles.previewDashPanelTitle}>Nylige hendelser</h4>
+                                <div className={styles.previewEventList}>
+                                    <div className={styles.previewEventRow}>
+                                        <span className={styles.previewEventIcon}>
+                                            <CheckCircle2 className={styles.previewEventIconSuccess} aria-hidden="true" />
+                                        </span>
+                                        <div className={styles.previewEventDetails}>
+                                            <span className={styles.previewEventTitle}>
+                                                Ola Nordmann fullførte &quot;Sikkerhet OHS&quot;
+                                            </span>
+                                            <span className={styles.previewEventMeta}>For 2 timer siden</span>
+                                        </div>
+                                    </div>
+                                    <div className={styles.previewEventRow}>
+                                        <span className={styles.previewEventIcon}>
+                                            <LogIn className={styles.previewEventIconMuted} aria-hidden="true" />
+                                        </span>
+                                        <div className={styles.previewEventDetails}>
+                                            <span className={styles.previewEventTitle}>
+                                                Kari Svendsen logget inn
+                                            </span>
+                                            <span className={styles.previewEventMeta}>For 4 timer siden</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className={styles.previewDashPanel}>
+                                <h4 className={styles.previewDashPanelTitle}>Hurtighandlinger</h4>
+                                <div className={styles.previewActionList}>
+                                    <PreviewRegion
+                                        fields={['colorButtonPrimary', 'colorButtonText']}
+                                        label="Primærknapp"
+                                        highlight={highlight}
+                                        showLabels={showLabels}
+                                        onHover={onHover}
+                                        onRegionClick={onRegionClick}
+                                    >
+                                        <button type="button" className={styles.previewBtnPrimary}>
+                                            <Users className={styles.previewBtnIcon} aria-hidden="true" />
+                                            Administrer brukere
+                                        </button>
+                                    </PreviewRegion>
+                                    <PreviewRegion
+                                        fields={['colorAccent']}
+                                        label="Merkevarefarge / lenke"
+                                        highlight={highlight}
+                                        showLabels={showLabels}
+                                        onHover={onHover}
+                                        onRegionClick={onRegionClick}
+                                    >
+                                        <button type="button" className={styles.previewBtnGhost}>
+                                            <BookOpen className={styles.previewBtnIcon} aria-hidden="true" />
+                                            Opprett kurs
+                                        </button>
+                                    </PreviewRegion>
+                                </div>
+                            </div>
+                        </div>
+                    </PreviewRegion>
+                </div>
+            </div>
         </div>
     );
 }
@@ -320,6 +705,10 @@ export interface BrandingData {
     colorSuccess: string;
     colorWarning: string;
     colorDanger: string;
+    colorSidebarHoverBg: string;
+    colorSidebarHoverText: string;
+    colorTopbarBg: string;
+    colorTopbarText: string;
     logoUrl: string;
     logoSvgContent: string;
     logoSvgModified: string;
@@ -335,6 +724,25 @@ export interface BrandingData {
 interface BrandingFormProps {
     initial: BrandingData;
 }
+
+// -- Undo/redo: øyeblikksbilde av ALL redigerbar tilstand --
+interface Snapshot {
+    colors: Record<string, string>;
+    tenantName: string;
+    logoUrl: string;
+    logoSvgContent: string;
+    logoSvgModified: string;
+    faviconUrl: string;
+    faviconSvgContent: string;
+    faviconSvgModified: string;
+    fontFamily: string;
+    fontHeading: string;
+    fontSource: string;
+    customFontUrl: string;
+}
+
+const HISTORY_CAP = 100;
+const HISTORY_DEBOUNCE_MS = 350;
 
 // -- Hovedkomponent --
 export default function BrandingForm({ initial }: BrandingFormProps) {
@@ -355,6 +763,10 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
         colorSuccess: initial.colorSuccess || '',
         colorWarning: initial.colorWarning || '',
         colorDanger: initial.colorDanger || '',
+        colorSidebarHoverBg: initial.colorSidebarHoverBg || '',
+        colorSidebarHoverText: initial.colorSidebarHoverText || '',
+        colorTopbarBg: initial.colorTopbarBg || '',
+        colorTopbarText: initial.colorTopbarText || '',
     });
     const [logoUrl, setLogoUrl] = useState(initial.logoUrl || '');
     const [logoSvgContent, setLogoSvgContent] = useState(initial.logoSvgContent || '');
@@ -376,6 +788,141 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
     const [highlight, setHighlight] = useState<string[] | null>(null);
     const [showLabels, setShowLabels] = useState(false);
     const formRef = useRef<HTMLFormElement>(null);
+
+    // ── Fullskjerm-preview ──────────────────────────────────────
+    const [fullscreen, setFullscreen] = useState(false);
+    const [selectedField, setSelectedField] = useState<string | null>(null);
+
+    // ── Angre/Gjør om (snapshot-historikk) ─────────────────────
+    // Historikk og peker holdes i refs for å unngå ekstra rerendere; kun
+    // canUndo/canRedo er state (driver verktøylinjeknappene).
+    const historyRef = useRef<Snapshot[]>([]);
+    const pointerRef = useRef(-1);
+    const isRestoringRef = useRef(false);
+    const commitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [canUndo, setCanUndo] = useState(false);
+    const [canRedo, setCanRedo] = useState(false);
+
+    // Bygg et øyeblikksbilde av gjeldende redigerbar tilstand (dyp-kopi av colors).
+    const buildSnapshot = useCallback((): Snapshot => ({
+        colors: { ...colors },
+        tenantName,
+        logoUrl,
+        logoSvgContent,
+        logoSvgModified,
+        faviconUrl,
+        faviconSvgContent,
+        faviconSvgModified,
+        fontFamily,
+        fontHeading,
+        fontSource,
+        customFontUrl,
+    }), [
+        colors, tenantName, logoUrl, logoSvgContent, logoSvgModified,
+        faviconUrl, faviconSvgContent, faviconSvgModified,
+        fontFamily, fontHeading, fontSource, customFontUrl,
+    ]);
+
+    // Sett ALL redigerbar tilstand fra et øyeblikksbilde.
+    const applySnapshot = useCallback((s: Snapshot) => {
+        setColors({ ...s.colors });
+        setTenantName(s.tenantName);
+        setLogoUrl(s.logoUrl);
+        setLogoSvgContent(s.logoSvgContent);
+        setLogoSvgModified(s.logoSvgModified);
+        setFaviconUrl(s.faviconUrl);
+        setFaviconSvgContent(s.faviconSvgContent);
+        setFaviconSvgModified(s.faviconSvgModified);
+        setFontFamily(s.fontFamily);
+        setFontHeading(s.fontHeading);
+        setFontSource(s.fontSource);
+        setCustomFontUrl(s.customFontUrl);
+    }, []);
+
+    // Oppdater knappetilstand ut fra pekerposisjonen.
+    const syncCanFlags = useCallback(() => {
+        setCanUndo(pointerRef.current > 0);
+        setCanRedo(pointerRef.current < historyRef.current.length - 1);
+    }, []);
+
+    // Forplikt gjeldende øyeblikksbilde til historikken hvis det avviker fra toppen.
+    const commitSnapshot = useCallback(() => {
+        const snap = buildSnapshot();
+        const current = historyRef.current[pointerRef.current];
+        if (current && JSON.stringify(current) === JSON.stringify(snap)) return;
+        // Kutt eventuell «redo-hale» etter pekeren før vi legger til en ny gren.
+        historyRef.current = historyRef.current.slice(0, pointerRef.current + 1);
+        historyRef.current.push(snap);
+        // Begrens til HISTORY_CAP — slipp eldste og hold pekeren gyldig.
+        if (historyRef.current.length > HISTORY_CAP) {
+            historyRef.current = historyRef.current.slice(historyRef.current.length - HISTORY_CAP);
+        }
+        pointerRef.current = historyRef.current.length - 1;
+        syncCanFlags();
+    }, [buildSnapshot, syncCanFlags]);
+
+    // Initialiser historikken med startøyeblikksbildet (kun ved mount).
+    useEffect(() => {
+        historyRef.current = [buildSnapshot()];
+        pointerRef.current = 0;
+        syncCanFlags();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Ta opp endringer (debounced + tilbakemeldingssikker). Avhenger av ALL
+    // redigerbar tilstand. Hvis endringen kom fra applySnapshot (isRestoringRef),
+    // nullstilles flagget og vi returnerer FØR vi planlegger en commit — slik
+    // unngås en tilbakekoblingsløkke.
+    useEffect(() => {
+        if (isRestoringRef.current) {
+            isRestoringRef.current = false;
+            return;
+        }
+        // Ikke ta opp før historikken er initialisert (mount-effekten over).
+        if (pointerRef.current < 0) return;
+        if (commitTimeoutRef.current) clearTimeout(commitTimeoutRef.current);
+        commitTimeoutRef.current = setTimeout(() => {
+            commitTimeoutRef.current = null;
+            commitSnapshot();
+        }, HISTORY_DEBOUNCE_MS);
+    }, [
+        colors, tenantName, logoUrl, logoSvgContent, logoSvgModified,
+        faviconUrl, faviconSvgContent, faviconSvgModified,
+        fontFamily, fontHeading, fontSource, customFontUrl,
+        commitSnapshot,
+    ]);
+
+    // Rydd opp ventende debounce-timeout ved unmount.
+    useEffect(() => {
+        return () => {
+            if (commitTimeoutRef.current) clearTimeout(commitTimeoutRef.current);
+        };
+    }, []);
+
+    const undo = useCallback(() => {
+        // Hvis en commit venter (debounce), flush den NÅ slik at den pågående
+        // endringen blir redo-mål før vi går ett steg tilbake.
+        if (commitTimeoutRef.current) {
+            clearTimeout(commitTimeoutRef.current);
+            commitTimeoutRef.current = null;
+            commitSnapshot();
+        }
+        if (pointerRef.current > 0) {
+            pointerRef.current -= 1;
+            isRestoringRef.current = true;
+            applySnapshot(historyRef.current[pointerRef.current]);
+            syncCanFlags();
+        }
+    }, [applySnapshot, commitSnapshot, syncCanFlags]);
+
+    const redo = useCallback(() => {
+        if (pointerRef.current < historyRef.current.length - 1) {
+            pointerRef.current += 1;
+            isRestoringRef.current = true;
+            applySnapshot(historyRef.current[pointerRef.current]);
+            syncCanFlags();
+        }
+    }, [applySnapshot, syncCanFlags]);
 
     // ── Tip-system state ──────────────────────────────────────
     const [manualSuggestions, setManualSuggestions] = useState<GeneratorResult | null>(null);
@@ -503,15 +1050,23 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
         });
     }, [colors]);
 
-    // Resolvert fargeobjekt (alle 14 + font) → bygg de samme CSS-variablene som produksjon bruker.
+    // Resolvert fargeobjekt → bygg de samme CSS-variablene som produksjon bruker.
     const previewVars = useMemo(() => {
+        // De 14 basisfargene: tom verdi faller tilbake på standardverdien.
         const resolved: Record<string, string> = {};
         for (const key of Object.keys(DEFAULTS)) {
+            if (OVERRIDE_KEYS.includes(key)) continue;
             resolved[key] = colors[key] || DEFAULTS[key];
         }
         const heading = fontHeading || fontFamily;
         return buildBrandingVars({
             ...resolved,
+            // Overstyringsfelt: tom = undefined → buildBrandingVars auto-avleder
+            // (preview matcher produksjon). Satt verdi → vises direkte.
+            colorSidebarHoverBg: colors.colorSidebarHoverBg || undefined,
+            colorSidebarHoverText: colors.colorSidebarHoverText || undefined,
+            colorTopbarBg: colors.colorTopbarBg || undefined,
+            colorTopbarText: colors.colorTopbarText || undefined,
             fontFamily: fontFamily || heading || undefined,
         });
     }, [colors, fontFamily, fontHeading]);
@@ -623,6 +1178,47 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [hasUnsavedChanges, loading]);
 
+    // Angre/Gjør om-tastatursnarveier (aktive mens komponenten er montert =
+    // kun på /admin/branding). Ctrl/Cmd+Z = angre, Ctrl/Cmd+Shift+Z eller
+    // Ctrl/Cmd+Y = gjør om. Snarveiene gjelder hele skjemaet (også tekstfelt).
+    useEffect(() => {
+        function handleKeyDown(e: KeyboardEvent) {
+            const mod = e.ctrlKey || e.metaKey;
+            if (!mod) return;
+            const key = e.key;
+            if ((key === 'z' || key === 'Z') && !e.shiftKey) {
+                e.preventDefault();
+                undo();
+            } else if ((key === 'z' || key === 'Z') && e.shiftKey) {
+                e.preventDefault();
+                redo();
+            } else if (key === 'y' || key === 'Y') {
+                e.preventDefault();
+                redo();
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [undo, redo]);
+
+    // Fullskjerm: lukk på Escape og lås body-scroll mens overlayet er åpent.
+    useEffect(() => {
+        if (!fullscreen) return;
+        function handleKeyDown(e: KeyboardEvent) {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                setFullscreen(false);
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown);
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            document.body.style.overflow = previousOverflow;
+        };
+    }, [fullscreen]);
+
     function handleRevert() {
         setTenantName(initial.tenantName || '');
         setColors({
@@ -640,6 +1236,10 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
             colorSuccess: initial.colorSuccess || '',
             colorWarning: initial.colorWarning || '',
             colorDanger: initial.colorDanger || '',
+            colorSidebarHoverBg: initial.colorSidebarHoverBg || '',
+            colorSidebarHoverText: initial.colorSidebarHoverText || '',
+            colorTopbarBg: initial.colorTopbarBg || '',
+            colorTopbarText: initial.colorTopbarText || '',
         });
         setLogoUrl(initial.logoUrl || '');
         setLogoSvgContent(initial.logoSvgContent || '');
@@ -662,6 +1262,50 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
             }
         }
         setColors(prev => ({ ...prev, ...colorUpdates }));
+    }
+
+    // Bygg de 5 rollefargene fra gjeldende skjematilstand (med standardverdier som fallback).
+    function rolesFromForm(): BrandingRoles {
+        const resolve = (key: string) => colors[key] || DEFAULTS[key] || '#000000';
+        return {
+            brand: resolve('colorAccent'),
+            bgPrimary: resolve('colorBgPrimary'),
+            bgSecondary: resolve('colorBgSecondary'),
+            textPrimary: resolve('colorTextPrimary'),
+            sidebarBg: resolve('colorSidebarBg'),
+        };
+    }
+
+    // Velg en oppdaget farge som aksent: avled en full, kontrastsikker palett
+    // rundt den valgte fargen og legg den inn i skjemaet via den vanlige flyten.
+    function handlePickAccent(hex: string) {
+        const roles: BrandingRoles = { ...rolesFromForm(), brand: hex };
+        const result = deriveBrandingSuggestionsFromRoles(roles, 'standard');
+        handleBrandSuggestAll(result.suggestions);
+    }
+
+    // Bytt lys/mørk modus: behold valgt aksent, men bruk nøytrale bakgrunner/tekst
+    // for modusen, og avled resten av paletten kontrastsikkert.
+    function handleSetMode(mode: 'light' | 'dark') {
+        const accent = colors.colorAccent || DEFAULTS.colorAccent || '#000000';
+        const roles: BrandingRoles =
+            mode === 'light'
+                ? {
+                      brand: accent,
+                      bgPrimary: '#ffffff',
+                      bgSecondary: '#f4f4f5',
+                      textPrimary: '#111111',
+                      sidebarBg: '#111111',
+                  }
+                : {
+                      brand: accent,
+                      bgPrimary: '#0a0a0a',
+                      bgSecondary: '#15151a',
+                      textPrimary: '#f5f5f5',
+                      sidebarBg: '#0a0a0a',
+                  };
+        const result = deriveBrandingSuggestionsFromRoles(roles, 'standard');
+        handleBrandSuggestAll(result.suggestions);
     }
 
     function handleBrandFavicon(url: string) {
@@ -698,6 +1342,8 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
                         onApplyLogo={handleBrandLogo}
                         onApplyFont={handleBrandFont}
                         onDetectionComplete={handleDetectionComplete}
+                        onPickAccent={handlePickAccent}
+                        onSetMode={handleSetMode}
                     />
                 </div>
 
@@ -913,7 +1559,7 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
                                     onClick={handleRevert}
                                 >
                                     <RotateCcw size={14} />
-                                    Angre
+                                    Forkast alle endringer
                                 </button>
                                 <button
                                     type="submit"
@@ -957,6 +1603,26 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
                     <div className={styles.previewHeaderActions}>
                         <button
                             type="button"
+                            className={styles.undoRedoButton}
+                            onClick={undo}
+                            disabled={!canUndo}
+                            title="Angre (Ctrl+Z)"
+                            aria-label="Angre"
+                        >
+                            <Undo2 size={14} />
+                        </button>
+                        <button
+                            type="button"
+                            className={styles.undoRedoButton}
+                            onClick={redo}
+                            disabled={!canRedo}
+                            title="Gjør om (Ctrl+Shift+Z)"
+                            aria-label="Gjør om"
+                        >
+                            <Redo2 size={14} />
+                        </button>
+                        <button
+                            type="button"
                             className={`${styles.previewLabelToggle} ${showLabels ? styles.previewLabelToggleActive : ''}`}
                             onClick={() => setShowLabels((v) => !v)}
                             aria-pressed={showLabels}
@@ -964,6 +1630,15 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
                         >
                             <Tag size={12} />
                             Vis etiketter
+                        </button>
+                        <button
+                            type="button"
+                            className={styles.previewLabelToggle}
+                            onClick={() => setFullscreen(true)}
+                            title="Åpne forhåndsvisning i fullskjerm og rediger farger direkte"
+                        >
+                            <Maximize2 size={12} />
+                            Fullskjerm
                         </button>
                         <button
                             type="button"
@@ -976,267 +1651,180 @@ export default function BrandingForm({ initial }: BrandingFormProps) {
                 </div>
 
                 {showPreview && (
-                    <div
-                        className={styles.previewRoot}
-                        style={{ ...(previewVars as React.CSSProperties) }}
-                        onMouseLeave={() => setHighlight(null)}
-                    >
-                        <div className={styles.previewApp}>
-                            {/* Topbar */}
-                            <PreviewRegion
-                                fields={['colorBgPrimary', 'colorTextPrimary', 'colorAccent']}
-                                label="Topplinje"
+                    <BrandingPreview
+                        previewVars={previewVars as React.CSSProperties}
+                        resolve={resolveColor}
+                        logoUrl={logoUrl}
+                        logoSvgContent={logoSvgContent}
+                        logoSvgModified={logoSvgModified}
+                        fontFamily={fontFamily}
+                        fontHeading={fontHeading}
+                        highlight={highlight}
+                        showLabels={showLabels}
+                        onHover={setHighlight}
+                        tenantName={tenantName}
+                    />
+                )}
+            </div>
+
+            {/* Fullskjerm-preview med direkte fargeredigering */}
+            {fullscreen && (
+                <div className={styles.fullscreenOverlay} role="dialog" aria-modal="true" aria-label="Forhåndsvisning i fullskjerm">
+                    <div className={styles.fsHeader}>
+                        <Eye size={18} />
+                        <span className={styles.fsTitle}>Forhåndsvisning</span>
+                        <div className={styles.fsHeaderActions}>
+                            <button
+                                type="button"
+                                className={styles.undoRedoButton}
+                                onClick={undo}
+                                disabled={!canUndo}
+                                title="Angre (Ctrl+Z)"
+                                aria-label="Angre"
+                            >
+                                <Undo2 size={14} />
+                            </button>
+                            <button
+                                type="button"
+                                className={styles.undoRedoButton}
+                                onClick={redo}
+                                disabled={!canRedo}
+                                title="Gjør om (Ctrl+Shift+Z)"
+                                aria-label="Gjør om"
+                            >
+                                <Redo2 size={14} />
+                            </button>
+                            <button
+                                type="button"
+                                className={`${styles.previewLabelToggle} ${showLabels ? styles.previewLabelToggleActive : ''}`}
+                                onClick={() => setShowLabels((v) => !v)}
+                                aria-pressed={showLabels}
+                                title="Vis hvilke felt som styrer hver region"
+                            >
+                                <Tag size={12} />
+                                Vis etiketter
+                            </button>
+                            <button
+                                type="button"
+                                className={styles.fsCloseButton}
+                                onClick={() => setFullscreen(false)}
+                                aria-label="Lukk fullskjerm"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+                    </div>
+                    <div className={styles.fsBody}>
+                        <div className={styles.fsPreviewArea}>
+                            <BrandingPreview
+                                previewVars={previewVars as React.CSSProperties}
+                                resolve={resolveColor}
+                                logoUrl={logoUrl}
+                                logoSvgContent={logoSvgContent}
+                                logoSvgModified={logoSvgModified}
+                                fontFamily={fontFamily}
+                                fontHeading={fontHeading}
                                 highlight={highlight}
                                 showLabels={showLabels}
                                 onHover={setHighlight}
-                                className={styles.previewTopbar}
-                            >
-                                <span className={styles.previewTopbarTitle}>
-                                    {tenantName || 'Din organisasjon'}
-                                </span>
-                                <span className={styles.previewAvatar} aria-hidden="true" />
-                            </PreviewRegion>
-
-                            <div className={styles.previewBody}>
-                                {/* Sidemeny */}
-                                <PreviewRegion
-                                    fields={['colorSidebarBg']}
-                                    label="Sidemeny"
-                                    highlight={highlight}
-                                    showLabels={showLabels}
-                                    onHover={setHighlight}
-                                    className={styles.previewSidebar}
-                                >
-                                    {(logoUrl || logoSvgContent) && (
-                                        <img
-                                            src={
-                                                logoSvgModified
-                                                    ? `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(logoSvgModified)))}`
-                                                    : logoSvgContent
-                                                        ? `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(logoSvgContent)))}`
-                                                        : logoUrl
+                                onRegionClick={(field) => setSelectedField(field)}
+                                large
+                                tenantName={tenantName}
+                            />
+                        </div>
+                        <div className={styles.fsEditor}>
+                            <p className={styles.fsEditorHint}>
+                                Klikk et område i forhåndsvisningen eller en fargeprøve under for å redigere fargen direkte.
+                            </p>
+                            {SECTIONS.map((section) => (
+                                <div key={section.title} className={styles.fsEditorSection}>
+                                    <h3 className={styles.fsEditorSectionTitle}>{section.title}</h3>
+                                    <div className={styles.fsSwatchList}>
+                                        {section.fields.map((field) => {
+                                            const isSelected = selectedField === field.key;
+                                            const resolved = resolveColor(field.key);
+                                            const swatchColor = isValidHex6(resolved)
+                                                ? resolved
+                                                : DEFAULTS[field.key] || '#000000';
+                                            let contrast: ReturnType<typeof getContrastLevel> | null = null;
+                                            if (field.contrastAgainst) {
+                                                try {
+                                                    contrast = getContrastLevel(
+                                                        contrastRatio(swatchColor, resolveColor(field.contrastAgainst)),
+                                                    );
+                                                } catch {
+                                                    contrast = null;
+                                                }
                                             }
-                                            alt="Logo"
-                                            className={styles.previewLogo}
-                                        />
-                                    )}
-                                    <PreviewRegion
-                                        fields={['colorSidebarActive', 'colorSidebarBg']}
-                                        label="Aktivt menypunkt"
-                                        highlight={highlight}
-                                        showLabels={showLabels}
-                                        onHover={setHighlight}
-                                    >
-                                        <div className={`${styles.previewNavItem} ${styles.previewNavItemActive}`}>
-                                            Oversikt
-                                        </div>
-                                    </PreviewRegion>
-                                    <PreviewRegion
-                                        fields={['colorSidebarText']}
-                                        label="Menytekst"
-                                        highlight={highlight}
-                                        showLabels={showLabels}
-                                        onHover={setHighlight}
-                                    >
-                                        <div className={styles.previewNavItem}>Brukere</div>
-                                    </PreviewRegion>
-                                    <PreviewRegion
-                                        fields={['colorSidebarText']}
-                                        label="Menypunkt (hover)"
-                                        highlight={highlight}
-                                        showLabels={showLabels}
-                                        onHover={setHighlight}
-                                    >
-                                        <div className={`${styles.previewNavItem} ${styles.previewNavItemHover}`}>
-                                            Kurs
-                                            <span className={styles.previewStateTag}>hover</span>
-                                        </div>
-                                    </PreviewRegion>
-                                </PreviewRegion>
-
-                                {/* Hovedinnhold */}
-                                <PreviewRegion
-                                    fields={['colorBgPrimary']}
-                                    label="Sidebakgrunn"
-                                    highlight={highlight}
-                                    showLabels={showLabels}
-                                    onHover={setHighlight}
-                                    className={styles.previewMain}
-                                >
-                                    <PreviewRegion
-                                        fields={['colorTextPrimary']}
-                                        label="Hovedtekst"
-                                        highlight={highlight}
-                                        showLabels={showLabels}
-                                        onHover={setHighlight}
-                                    >
-                                        <h3 className={styles.previewHeading}>Oversikt</h3>
-                                    </PreviewRegion>
-                                    <PreviewRegion
-                                        fields={['colorTextSecondary']}
-                                        label="Dempet tekst"
-                                        highlight={highlight}
-                                        showLabels={showLabels}
-                                        onHover={setHighlight}
-                                    >
-                                        <p className={styles.previewLead}>
-                                            Sanntidsdata for din organisasjon
-                                        </p>
-                                    </PreviewRegion>
-
-                                    {/* Merkevare-badge / hero */}
-                                    <PreviewRegion
-                                        fields={['colorAccent']}
-                                        label="Merkevarefarge"
-                                        highlight={highlight}
-                                        showLabels={showLabels}
-                                        onHover={setHighlight}
-                                    >
-                                        <div className={styles.previewHero}>Merkevare</div>
-                                    </PreviewRegion>
-
-                                    {/* Kort */}
-                                    <PreviewRegion
-                                        fields={['colorBgSecondary', 'colorBorder']}
-                                        label="Kort og paneler"
-                                        highlight={highlight}
-                                        showLabels={showLabels}
-                                        onHover={setHighlight}
-                                        className={styles.previewCard}
-                                    >
-                                        <PreviewRegion
-                                            fields={['colorBgPrimary']}
-                                            label="Flate"
-                                            highlight={highlight}
-                                            showLabels={showLabels}
-                                            onHover={setHighlight}
-                                            className={styles.previewSurface}
-                                        >
-                                            <span className={styles.previewSurfaceText}>Innebygd flate</span>
-                                        </PreviewRegion>
-
-                                        <p className={styles.previewBodyText}>
-                                            Brødtekst på kortet.{' '}
-                                            <span className={styles.previewMutedText}>Litt dempet metadata.</span>
-                                        </p>
-
-                                        {/* Input med fokusring */}
-                                        <PreviewRegion
-                                            fields={['colorBorder', 'colorAccent', 'colorTextPrimary']}
-                                            label="Inputfelt (fokus)"
-                                            highlight={highlight}
-                                            showLabels={showLabels}
-                                            onHover={setHighlight}
-                                        >
-                                            <div className={styles.previewInput}>
-                                                Søk …
-                                                <span className={styles.previewStateTag}>fokus</span>
-                                            </div>
-                                        </PreviewRegion>
-
-                                        {/* Knapper */}
-                                        <div className={styles.previewButtons}>
-                                            <PreviewRegion
-                                                fields={['colorButtonPrimary', 'colorButtonText']}
-                                                label="Knapp"
-                                                highlight={highlight}
-                                                showLabels={showLabels}
-                                                onHover={setHighlight}
-                                            >
-                                                <button type="button" className={styles.previewBtnPrimary}>
-                                                    Lagre
-                                                </button>
-                                            </PreviewRegion>
-                                            <PreviewRegion
-                                                fields={['colorBorder', 'colorAccent']}
-                                                label="Sekundærknapp"
-                                                highlight={highlight}
-                                                showLabels={showLabels}
-                                                onHover={setHighlight}
-                                            >
-                                                <button type="button" className={styles.previewBtnGhost}>
-                                                    Avbryt
-                                                </button>
-                                            </PreviewRegion>
-                                            <PreviewRegion
-                                                fields={['colorButtonPrimary', 'colorButtonText']}
-                                                label="Deaktivert"
-                                                highlight={highlight}
-                                                showLabels={showLabels}
-                                                onHover={setHighlight}
-                                            >
-                                                <button type="button" className={styles.previewBtnDisabled} disabled>
-                                                    Send
-                                                </button>
-                                            </PreviewRegion>
-                                        </div>
-
-                                        {/* Lenke */}
-                                        <PreviewRegion
-                                            fields={['colorAccent']}
-                                            label="Lenke"
-                                            highlight={highlight}
-                                            showLabels={showLabels}
-                                            onHover={setHighlight}
-                                        >
-                                            <a
-                                                href="#"
-                                                onClick={(e) => e.preventDefault()}
-                                                className={styles.previewLink}
-                                            >
-                                                Les mer
-                                            </a>
-                                        </PreviewRegion>
-                                    </PreviewRegion>
-
-                                    {/* Statusrader */}
-                                    <div className={styles.previewStatusList}>
-                                        <PreviewRegion
-                                            fields={['colorSuccess']}
-                                            label="Suksess"
-                                            highlight={highlight}
-                                            showLabels={showLabels}
-                                            onHover={setHighlight}
-                                            className={styles.previewStatusRow}
-                                        >
-                                            <span className={`${styles.previewChip} ${styles.previewChipSuccess}`}>OK</span>
-                                            <span className={`${styles.previewAlert} ${styles.previewAlertSuccess}`}>
-                                                Endringene ble lagret
-                                            </span>
-                                        </PreviewRegion>
-                                        <PreviewRegion
-                                            fields={['colorWarning']}
-                                            label="Advarsel"
-                                            highlight={highlight}
-                                            showLabels={showLabels}
-                                            onHover={setHighlight}
-                                            className={styles.previewStatusRow}
-                                        >
-                                            <span className={`${styles.previewChip} ${styles.previewChipWarning}`}>!</span>
-                                            <span className={`${styles.previewAlert} ${styles.previewAlertWarning}`}>
-                                                Fristen nærmer seg
-                                            </span>
-                                        </PreviewRegion>
-                                        <PreviewRegion
-                                            fields={['colorDanger']}
-                                            label="Feil"
-                                            highlight={highlight}
-                                            showLabels={showLabels}
-                                            onHover={setHighlight}
-                                            className={styles.previewStatusRow}
-                                        >
-                                            <span className={`${styles.previewChip} ${styles.previewChipDanger}`}>2</span>
-                                            <span className={`${styles.previewAlert} ${styles.previewAlertDanger}`}>
-                                                Fristbrudd oppdaget
-                                            </span>
-                                        </PreviewRegion>
+                                            return (
+                                                <div key={field.key} className={styles.fsSwatchRow}>
+                                                    <button
+                                                        type="button"
+                                                        className={`${styles.fsSwatchRowMain} ${isSelected ? styles.fsSwatchRowActive : ''}`}
+                                                        onClick={() =>
+                                                            setSelectedField((cur) => (cur === field.key ? null : field.key))
+                                                        }
+                                                        onMouseEnter={() => setHighlight([field.key])}
+                                                        onMouseLeave={() => setHighlight(null)}
+                                                        aria-expanded={isSelected}
+                                                    >
+                                                        <span
+                                                            className={styles.fsSwatch}
+                                                            style={{ backgroundColor: swatchColor }}
+                                                            aria-hidden="true"
+                                                        />
+                                                        <span className={styles.fsSwatchLabel}>{field.label}</span>
+                                                        {contrast && (
+                                                            <span
+                                                                className={`${styles.contrastBadge} ${styles[`contrast_${contrast.level}`]}`}
+                                                            >
+                                                                {contrast.level === 'pass' && <Check size={12} />}
+                                                                {contrast.level !== 'pass' && <AlertTriangle size={12} />}
+                                                                <span>{contrast.label}</span>
+                                                            </span>
+                                                        )}
+                                                        <span className={styles.fsSwatchHex}>{swatchColor}</span>
+                                                    </button>
+                                                    {isSelected && (
+                                                        <div className={styles.fsPickerWrap}>
+                                                            <HexColorPicker
+                                                                color={swatchColor}
+                                                                onChange={(c) => handleColorChange(field.key, c)}
+                                                            />
+                                                            <input
+                                                                type="text"
+                                                                value={colors[field.key] || ''}
+                                                                onChange={(e) => handleColorChange(field.key, e.target.value)}
+                                                                onBlur={(e) => {
+                                                                    const normalized = normalizeHexInput(e.target.value);
+                                                                    if (normalized && normalized !== colors[field.key]) {
+                                                                        handleColorChange(field.key, normalized);
+                                                                    }
+                                                                }}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter') {
+                                                                        e.preventDefault();
+                                                                        const normalized = normalizeHexInput(
+                                                                            (e.target as HTMLInputElement).value,
+                                                                        );
+                                                                        if (normalized) handleColorChange(field.key, normalized);
+                                                                    }
+                                                                }}
+                                                                className={`${styles.input} ${styles.colorHex} ${styles.fsHexInput}`}
+                                                                placeholder={DEFAULTS[field.key] || '#000000'}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
                                     </div>
-                                </PreviewRegion>
-                            </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
         </div>
     );
 }

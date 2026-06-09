@@ -10,8 +10,12 @@ import {
     AlertTriangle,
     Image,
     Type,
+    Palette,
+    Sun,
+    Moon,
 } from 'lucide-react';
 import styles from './brandDetector.module.css';
+import { ROLE_LABELS, type BrandingRoles } from '@/lib/brandingGenerator';
 
 /* ── Types ── */
 interface DetectedColor {
@@ -49,17 +53,24 @@ interface BrandDetectorProps {
     onApplyLogo?: (url: string, svgContent?: string) => void;
     onApplyFont?: (fontFamily: string, source: string, role: 'body' | 'heading') => void;
     onDetectionComplete?: (roles: DetectedRoles, suggestions: Record<string, string>) => void;
+    onPickAccent?: (hex: string) => void;
+    onSetMode?: (mode: 'light' | 'dark') => void;
 }
 
 /* ── Component ── */
-export default function BrandDetector({ onApplyAll, onApplyFavicon, onApplyLogo, onApplyFont, onDetectionComplete }: BrandDetectorProps) {
+export default function BrandDetector({ onApplyAll, onApplyFavicon, onApplyLogo, onApplyFont, onDetectionComplete, onPickAccent, onSetMode }: BrandDetectorProps) {
     const [url, setUrl] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [result, setResult] = useState<DetectionResult | null>(null);
     const [faviconApplied, setFaviconApplied] = useState(false);
     const [logoApplied, setLogoApplied] = useState(false);
+    const [allColorsApplied, setAllColorsApplied] = useState(false);
     const [fontAppliedRoles, setFontAppliedRoles] = useState<Record<string, Set<string>>>({});
+    // Aksentfargen brukeren har valgt fra paletten (markerer aktiv fargeprøve).
+    const [pickedAccent, setPickedAccent] = useState<string | null>(null);
+    // Lys/mørk-modus for den avledede paletten (initieres fra oppdaget tema).
+    const [mode, setMode] = useState<'light' | 'dark'>('light');
 
     async function handleDetect() {
         if (!url.trim()) return;
@@ -78,6 +89,8 @@ export default function BrandDetector({ onApplyAll, onApplyFavicon, onApplyLogo,
                 setError(data.error);
             } else {
                 setResult(data);
+                setMode(data.siteTheme === 'dark' ? 'dark' : 'light');
+                setPickedAccent(data.detectedRoles?.brand ?? null);
                 if (data.detectedRoles) {
                     onDetectionComplete?.(data.detectedRoles, data.suggestions || {});
                 }
@@ -110,8 +123,28 @@ export default function BrandDetector({ onApplyAll, onApplyFavicon, onApplyLogo,
         setResult(null);
         setFaviconApplied(false);
         setLogoApplied(false);
+        setAllColorsApplied(false);
         setFontAppliedRoles({});
+        setPickedAccent(null);
+        setMode('light');
         setError('');
+    }
+
+    /** Velg en oppdaget farge som aksent — avleder hele paletten på nytt i skjemaet. */
+    function handlePickAccent(hex: string) {
+        setPickedAccent(hex);
+        onPickAccent?.(hex);
+    }
+
+    /** Bytt lys/mørk modus — avleder paletten på nytt mens aksenten beholdes. */
+    function handleSetMode(next: 'light' | 'dark') {
+        setMode(next);
+        onSetMode?.(next);
+    }
+
+    // Normaliser hex for sammenligning (markering av aktiv fargeprøve).
+    function isActiveAccent(hex: string): boolean {
+        return !!pickedAccent && pickedAccent.toLowerCase() === hex.toLowerCase();
     }
 
     const hasAssets = result && (result.logoUrl || result.faviconUrl ||
@@ -129,7 +162,7 @@ export default function BrandDetector({ onApplyAll, onApplyFavicon, onApplyLogo,
                     <h3 className={styles.headerTitle}>Hent farger fra nettside</h3>
                     <p className={styles.headerDesc}>
                         {result
-                            ? <>Farger oppdaget fra <strong>{result.title || result.url}</strong> — sendt til Fargeassistenten nedenfor.</>
+                            ? <>Farger oppdaget fra <strong>{result.title || result.url}</strong> — se paletten under, eller bruk dem direkte.</>
                             : 'Lim inn en URL for å automatisk oppdage merkevarefarger, logo og fonter.'}
                     </p>
                 </div>
@@ -189,7 +222,113 @@ export default function BrandDetector({ onApplyAll, onApplyFavicon, onApplyLogo,
                     {result.detectedRoles && (
                         <div className={styles.detectionSuccess}>
                             <Check size={14} />
-                            <span>Farger oppdaget og sendt til Fargeassistenten</span>
+                            <span>Farger oppdaget — se paletten under, eller bruk dem direkte.</span>
+                        </div>
+                    )}
+
+                    {/* Detected colours palette */}
+                    {(result.detectedRoles || result.colors.length > 0) && (
+                        <div className={styles.paletteSection}>
+                            <span className={styles.sectionLabel}>Oppdagede farger</span>
+
+                            {/* Lys/Mørk modus-bryter — avleder paletten på nytt i valgt modus */}
+                            <div className={styles.modeRow}>
+                                <span className={styles.modeRowLabel}>Modus:</span>
+                                <div className={styles.modeToggle} role="group" aria-label="Velg modus">
+                                    <button
+                                        type="button"
+                                        className={`${styles.modeButton} ${mode === 'light' ? styles.modeButtonActive : ''}`}
+                                        onClick={() => handleSetMode('light')}
+                                        aria-pressed={mode === 'light'}
+                                    >
+                                        <Sun size={14} />
+                                        Lyst
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={`${styles.modeButton} ${mode === 'dark' ? styles.modeButtonActive : ''}`}
+                                        onClick={() => handleSetMode('dark')}
+                                        aria-pressed={mode === 'dark'}
+                                    >
+                                        <Moon size={14} />
+                                        Mørkt
+                                    </button>
+                                </div>
+                            </div>
+
+                            <span className={styles.pickHint}>Klikk en farge for å bruke den som aksent.</span>
+
+                            {/* Role mapping — the 5 fetched roles (clickable to set accent) */}
+                            {result.detectedRoles && (
+                                <div className={styles.roleGrid}>
+                                    {(Object.keys(result.detectedRoles) as Array<keyof BrandingRoles>).map((role) => {
+                                        const hex = result.detectedRoles![role];
+                                        const active = isActiveAccent(hex);
+                                        return (
+                                            <button
+                                                key={role}
+                                                type="button"
+                                                className={`${styles.roleItem} ${styles.roleItemButton} ${active ? styles.roleItemActive : ''}`}
+                                                onClick={() => handlePickAccent(hex)}
+                                                title="Sett som aksentfarge"
+                                            >
+                                                <span
+                                                    className={`${styles.roleSwatch} ${active ? styles.swatchActive : ''}`}
+                                                    style={{ backgroundColor: hex }}
+                                                    aria-hidden="true"
+                                                >
+                                                    {active && <Check size={14} className={styles.swatchCheck} />}
+                                                </span>
+                                                <span className={styles.roleInfo}>
+                                                    <span className={styles.roleLabel}>{ROLE_LABELS[role]}</span>
+                                                    <span className={styles.roleHex}>{hex}</span>
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
+
+                            {/* Compact strip of the top raw colours found (clickable to set accent) */}
+                            {result.colors.length > 0 && (
+                                <div className={styles.rawColors}>
+                                    {result.colors.slice(0, 8).map((c, i) => {
+                                        const active = isActiveAccent(c.hex);
+                                        return (
+                                            <button
+                                                key={`${c.hex}-${i}`}
+                                                type="button"
+                                                className={`${styles.rawSwatch} ${styles.rawSwatchButton} ${active ? styles.swatchActive : ''}`}
+                                                style={{ backgroundColor: c.hex }}
+                                                title="Sett som aksentfarge"
+                                                onClick={() => handlePickAccent(c.hex)}
+                                            >
+                                                {active && <Check size={12} className={styles.swatchCheck} />}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
+
+                            {/* Apply all detected colours directly to the form */}
+                            {allColorsApplied ? (
+                                <div className={styles.allColorsApplied}>
+                                    <Check size={16} />
+                                    <span>Alle farger er brukt i skjemaet</span>
+                                </div>
+                            ) : (
+                                <button
+                                    type="button"
+                                    className={styles.applyAllButton}
+                                    onClick={() => {
+                                        onApplyAll(result.suggestions);
+                                        setAllColorsApplied(true);
+                                    }}
+                                >
+                                    <Palette size={16} />
+                                    Bruk alle farger
+                                </button>
+                            )}
                         </div>
                     )}
 

@@ -44,7 +44,13 @@ model Tenant {
   colorSuccess       String?  // Suksessfarge (default: #22c55e)
   colorWarning       String?  // Advarselsfarge (default: #f59e0b)
   colorDanger        String?  // Feilfarge (default: #ef4444)
-  
+
+  // ── Tilstander / avledede overstyringer (valgfritt — auto-avledes hvis tom) ──
+  colorSidebarHoverBg   String?  // Sidebar hover-bakgrunn (default: avledet overlay)
+  colorSidebarHoverText String?  // Sidebar hover-tekst (default: hovedtekst)
+  colorTopbarBg         String?  // Topbar-bakgrunn (default: avledet fra hovedbakgrunn)
+  colorTopbarText       String?  // Topbar-tekst (default: hovedtekst)
+
   // Logo
   logoUrl            String?  // URL til logo (PNG/SVG) eller data-URI
   logoSvgContent     String?  @db.Text // Original SVG-innhold for fargeredigering

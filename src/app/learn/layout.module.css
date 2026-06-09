@@ -84,12 +84,15 @@
 }
 
 .navItemActive {
-    background-color: var(--color-sidebar-hover-bg);
+    /* Egen aktiv-bakgrunn (accent-tint) — IKKE hover-bakgrunnen, så en
+       egendefinert hover-farge ikke gjør det aktive punktet til en heldekkende boks. */
+    background-color: color-mix(in srgb, var(--color-sidebar-active) 14%, transparent);
     color: var(--color-sidebar-active);
     font-weight: 600;
 }
 
 .navItemActive:hover {
+    background-color: color-mix(in srgb, var(--color-sidebar-active) 22%, transparent);
     color: var(--color-sidebar-active);
 }
 
