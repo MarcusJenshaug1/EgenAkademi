@@ -2,6 +2,8 @@
 
 > **For AI-agenter og utviklere:** Dette dokumentet er kilden til sannhet for teknisk arkitektur, designregler, fullstendig kravstatus og veikart. Les dette FØR du gjør endringer.
 
+> **Statusnotat 2026-06-09:** Kurssystemet (admin + learner) ble gjenopprettet til `main` fra PR #6 (var resatt bort 2026-06-05). I tillegg er fire nye admin-seksjoner bygget: **Sesjoner**, **Innhold**, **Rapporter** og **Integrasjoner**. Statuslegende: `[x]` ferdig · `[~]` delvis (config/admin bygget, runtime gjenstår) · `[ ]` ikke startet.
+
 ---
 
 ## Teknisk Stack
@@ -191,10 +193,10 @@ export async function myAction(formData: FormData) {
 - [x] Profil-side (`/learn/profile`) med redigerbart skjema (navn, telefon, lokasjon, stilling, avdeling, bio)
 
 **Planlagte sesjoner & Events**
-- [ ] Opprette sesjoner (dato, tid, kapasitet, sted/lenke, instruktør)
-- [ ] Påmelding, venteliste, avmelding, fremmøteregistrering
-- [ ] Automatiske varsler (invitasjon, påminnelse, endring, "no show")
-- [ ] Intern arrangementskalender
+- [x] Opprette sesjoner (dato, tid, kapasitet, sted/lenke, instruktør) *(`/admin/sessions`, `sessionActions.ts`, gated av `session-events`)*
+- [x] Påmelding, venteliste (auto-promotering), avmelding, fremmøteregistrering *(admin-roster + learner `/learn/sessions`)*
+- [ ] Automatiske varsler (invitasjon, påminnelse, endring, "no show") *(Notification-modell finnes; ikke koblet til sesjoner ennå)*
+- [ ] Intern arrangementskalender *(listevisning gruppert per dag; full kalender-UI gjenstår)*
 
 **Brukeradministrasjon**
 - [x] CRUD for brukere i admin (`/admin/users`)
@@ -207,9 +209,9 @@ export async function myAction(formData: FormData) {
 **Progresjon & Analytics**
 - [x] Progresjonssporing per kurs per bruker *(completionPercentCached, LessonProgress, ModuleProgress, ProgressEvent)*
 - [x] Fullføringsstatus og -dato *(CourseEnrollment.completedAt, status: NOT_STARTED/IN_PROGRESS/COMPLETED)*
-- [ ] Sanntidsnær admin-dashboard (aktive læringsløp, fristbrudd)
-- [ ] Drill-down per avdeling/gruppe/rolle
-- [ ] CSV-eksport / API for BI-uttrekk (brukere, kurs, fullføringer, testresultater)
+- [x] Admin analytics-dashboard (KPI-er, innmeldingsstatus, 30-dagers aktivitet) *(`/admin/reports`, `reportActions.ts`)*
+- [x] Drill-down per avdeling/gruppe *(gruppe- og avdelingsfordeling med fullføringsrate)*
+- [x] CSV-eksport (fullføringer, brukere, kurs) *(gated av `csv-export`; med formelinjeksjons-beskyttelse)* — API for BI-uttrekk gjenstår
 
 **Onboarding-programmer**
 - [ ] Malbibliotek ("Nyansatt", "Ny leder", "Sikkerhet og IT", "Compliance")
@@ -218,14 +220,14 @@ export async function myAction(formData: FormData) {
 
 #### Fase 2 – Enterprise & Integrasjoner
 
-**Identitet & SSO**
-- [ ] SAML 2.0 Service Provider (IdP metadata-import, attributt-mapping)
-- [ ] SCIM 2.0 API (opprettelse, oppdatering, deaktivering av brukere og grupper)
-- [ ] Token-basert autentisering for SCIM-endepunkter
+**Identitet & SSO** *(`/admin/integrations`, `integrationActions.ts` — config/admin bygget, protokoll-runtime gjenstår)*
+- [~] SAML 2.0 Service Provider — **config/lagring bygget** (IdP entity/SSO-URL/sertifikat, attributt-mapping, enable). ACS-endepunkt + AuthnRequest + assertion-validering gjenstår.
+- [~] SCIM 2.0 API — **fungerende `/api/scim/v2/Users` (GET list + POST create)**. Mangler PATCH/PUT/DELETE, /Groups og discovery-endepunkter.
+- [x] Token-basert autentisering for SCIM-endepunkter *(Bearer-token, lagret kun som sha256-hash, vist én gang, revokerbart)*
 - [ ] "Sertifiserte oppsett" (playbooks) for Microsoft, Google, Okta
 
 **Sikkerhet & Logging**
-- [ ] Audit-logging (innlogging, rolleendringer, tildelinger, eksport, integrasjonsendringer)
+- [x] Audit-logging (`AuditLog`-modell, `lib/audit.ts`, viewer i `/admin/integrations`) — integrasjonsendringer + sesjonshendelser logges; flere hendelsestyper kan kobles på
 - [ ] Log retention og eksport til SIEM
 - [ ] Rate limiting og sperreregler for OTP/Magic Link
 - [ ] TOTP / Passkeys / WebAuthn (phishing-resistent 2FA)
@@ -258,9 +260,9 @@ export async function myAction(formData: FormData) {
 - [ ] Leaderboards (opt-in, per avdeling)
 - [ ] Synlighetsnivåer (offentlig, kun team, kun meg)
 
-**LMS-integrasjoner**
-- [ ] LTI 1.3 for tredjepartsverktøy
-- [ ] Webhooks / event stream (user.created, course.completed, etc.)
+**LMS-integrasjoner** *(`/admin/integrations`)*
+- [~] LTI 1.3 for tredjepartsverktøy — **plattform-registrering bygget** (issuer/clientId/authUrl/jwksUrl + enable). OIDC-launch/handshake + JWT-validering gjenstår.
+- [~] Webhooks / event stream — **CRUD + HMAC-signert levering + leveringslogg + test-ping bygget** (`lib/webhooks.ts`). Forretningshendelsene (user.created, course.completed …) må kobles inn i relevante actions.
 - [ ] Versjonerte eksportskjemaer for BI-pipeline
 
 ---

@@ -43,6 +43,20 @@
 - **Alternatives:** Flat structure (simpler but clutters folder as notes grow); `YYYY/MM/` numeric-only (less readable)
 - **Consequence:** All new daily notes must be created in `daily/YYYY/MM - MonthName/` subfolders; old flat notes migrated
 
+### ADR-007: Recover course system from PR #6 rather than rebuild
+- **Date:** 2026-06-09
+- **Decision:** The course + learner system was missing from `main` (reset out on 2026-06-05) but preserved on `feature/course-management` (PR #6). Merged that branch into `main` and fixed the one invalid-schema issue, instead of re-implementing ~20k lines.
+- **Rationale:** The work was already built, security-hardened, and code-reviewed; the Neon DB still held the data created by that exact schema (`db push` reported "already in sync" after recovery). Rebuilding would be slower and risk diverging from the live data.
+- **Alternatives:** Rebuild from scratch (slow, error-prone); `db pull` to introspect (would not bring back the UI/actions code).
+- **Consequence:** `main` now contains the full system. The orphan `Tenant.courses Course[]` relation was removed (course models use scalar `tenantId` only, matching all other course models).
+
+### ADR-008: Integrations are config/management surfaces, runtime handshakes deferred
+- **Date:** 2026-06-09
+- **Decision:** `/admin/integrations` ships SSO/SCIM/Webhooks/LTI **configuration + storage + admin UI + audit logging**, a **working authenticated SCIM `/Users` (GET/POST)** endpoint, and **working HMAC-signed webhook delivery** — but NOT the SAML ACS/assertion-validation flow or the LTI 1.3 OIDC launch handshake.
+- **Rationale:** Protocol runtimes are security-critical and large; doing them poorly is worse than not yet. Building honest, gated management surfaces unblocks configuration and avoids repeating the 2026-02 doc/code drift where docs overclaimed completeness.
+- **Alternatives:** Attempt full SAML/LTI runtime now (high risk, incomplete); leave the nav items as 404 (poor UX).
+- **Consequence:** Manifest marks these `[~]` partial with explicit runtime TODOs. Real SSO login needs an ACS route + Auth.js SAML wiring before use.
+
 ---
 
 ## Decision Template
