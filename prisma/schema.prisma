@@ -65,7 +65,6 @@ model Tenant {
   // Relasjoner
   users     User[]
   groups    Group[]
-  courses   Course[]
 }
 
 enum GlobalRole {
