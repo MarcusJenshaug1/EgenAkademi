@@ -13,10 +13,11 @@ import {
     listWebhooks, createWebhook, setWebhookEnabled, deleteWebhook,
     listRecentDeliveries, sendTestWebhook, updateWebhook,
     listLtiPlatforms, createLtiPlatform, updateLtiPlatform, setLtiEnabled, deleteLtiPlatform,
-    listAuditLogs, WEBHOOK_EVENTS,
+    listAuditLogs,
     type ScimTokenListItem, type WebhookListItem, type WebhookDeliveryItem,
     type LtiPlatformItem, type AuditLogItem,
 } from '@/app/actions/integrationActions';
+import { WEBHOOK_EVENTS } from '@/lib/webhookEvents';
 
 // ── Shared types (mirror server payload) ────────────────────
 

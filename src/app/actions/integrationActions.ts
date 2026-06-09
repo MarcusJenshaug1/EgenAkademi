@@ -6,6 +6,7 @@ import { auth } from '@/auth';
 import { checkAccess } from '@/lib/features';
 import { logAudit } from '@/lib/audit';
 import { sendWebhook, type WebhookRecord } from '@/lib/webhooks';
+import { WEBHOOK_EVENTS } from '@/lib/webhookEvents';
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -359,17 +360,6 @@ export async function revokeScimToken(
 // ════════════════════════════════════════════════════════════
 // WEBHOOKS
 // ════════════════════════════════════════════════════════════
-
-export const WEBHOOK_EVENTS = [
-    'user.created',
-    'user.updated',
-    'user.deactivated',
-    'course.published',
-    'course.completed',
-    'enrollment.created',
-    'certificate.issued',
-    'session.scheduled',
-] as const;
 
 export interface WebhookListItem {
     id: string;
