@@ -5,6 +5,7 @@ import { auth } from '@/auth';
 import type { GlobalRole } from '@prisma/client';
 import { runOnboardingAutoAssign } from './onboardingActions';
 import { syncDynamicGroupsForUser } from './groupActions';
+import { dispatchWebhookEvent } from '@/lib/webhooks';
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -31,6 +32,7 @@ export interface UserListItem {
     jobTitle: string | null;
     globalRole: GlobalRole;
     active: boolean;
+    anonymizedAt: Date | null;
     createdAt: Date;
     updatedAt: Date;
     groupCount: number;
@@ -64,6 +66,7 @@ export async function listUsers(search?: string): Promise<{ users: UserListItem[
                 jobTitle: true,
                 globalRole: true,
                 active: true,
+                anonymizedAt: true,
                 createdAt: true,
                 updatedAt: true,
                 _count: { select: { groupMemberships: true } },
@@ -86,6 +89,7 @@ export async function listUsers(search?: string): Promise<{ users: UserListItem[
                 jobTitle: u.jobTitle,
                 globalRole: u.globalRole,
                 active: u.active,
+                anonymizedAt: u.anonymizedAt,
                 createdAt: u.createdAt,
                 updatedAt: u.updatedAt,
                 groupCount: u._count.groupMemberships,
@@ -203,7 +207,7 @@ export async function updateUser(
         // Verify user belongs to this tenant
         const user = await prisma.user.findFirst({
             where: { id: userId, tenantId },
-            select: { id: true },
+            select: { id: true, active: true },
         });
         if (!user) return { error: 'Bruker ikke funnet' };
 
@@ -234,6 +238,14 @@ export async function updateUser(
 
         // Attributter (avdeling, rolle, status …) kan endre dynamisk gruppemedlemskap
         await syncDynamicGroupsForUser(tenantId, userId).catch(() => {});
+
+        // Webhook (best-effort): kun når brukeren faktisk gikk fra aktiv → inaktiv.
+        if (data.active === false && user.active === true) {
+            await dispatchWebhookEvent(tenantId, 'user.deactivated', {
+                userId,
+                tenantId,
+            });
+        }
 
         return { success: true };
     } catch (e: unknown) {
@@ -287,6 +299,13 @@ export async function inviteUser(
         // Auto-tildel onboarding-programmer + synk dynamiske grupper (best-effort)
         await runOnboardingAutoAssign(tenantId, user.id).catch(() => {});
         await syncDynamicGroupsForUser(tenantId, user.id).catch(() => {});
+
+        // Webhook (best-effort): aldri velt brukeropprettelsen om utsending feiler.
+        await dispatchWebhookEvent(tenantId, 'user.created', {
+            userId: user.id,
+            email: user.email,
+            tenantId,
+        });
 
         return { success: true, userId: user.id };
     } catch (e: unknown) {

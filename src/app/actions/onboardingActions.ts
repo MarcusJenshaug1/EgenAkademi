@@ -5,6 +5,7 @@ import 'server-only';
 import prisma from '@/lib/prisma';
 import { auth } from '@/auth';
 import { logAudit } from '@/lib/audit';
+import { dispatchWebhookEvent } from '@/lib/webhooks';
 import type { Prisma } from '@prisma/client';
 
 // ── Helpers ─────────────────────────────────────────────────
@@ -746,7 +747,7 @@ async function enrollUserInProgram(
         // Wrap per-item so a constraint violation never aborts the remaining
         // items and never bubbles a raw Prisma error to the client.
         try {
-            await prisma.courseEnrollment.create({
+            const enrollment = await prisma.courseEnrollment.create({
                 data: {
                     tenantId,
                     courseId: course.id,
@@ -767,6 +768,13 @@ async function enrollUserInProgram(
                     entityType: 'course',
                     entityId: course.id,
                 },
+            });
+
+            // Webhook (best-effort): aldri velt tildelingen om utsending feiler.
+            await dispatchWebhookEvent(tenantId, 'enrollment.created', {
+                userId,
+                courseId: course.id,
+                enrollmentId: enrollment.id,
             });
         } catch {
             // Skip this course (e.g. a concurrent enrollment won the unique

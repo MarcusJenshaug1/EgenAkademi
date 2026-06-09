@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma';
 import { auth } from '@/auth';
 import { checkAccess } from '@/lib/features';
 import { logAudit } from '@/lib/audit';
+import { dispatchWebhookEvent } from '@/lib/webhooks';
 import type {
     SessionFormat,
     SessionStatus,
@@ -454,6 +455,13 @@ export async function createSession(
 
         await writeAudit(tenantId, userId, 'session.created', session.id, {
             title: session.title,
+        });
+
+        // Webhook (best-effort): aldri velt opprettelsen om utsending feiler.
+        await dispatchWebhookEvent(tenantId, 'session.scheduled', {
+            sessionId: session.id,
+            title: session.title,
+            startsAt: session.startsAt,
         });
 
         return { success: true, sessionId: session.id };

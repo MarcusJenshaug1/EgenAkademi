@@ -5,13 +5,15 @@ import Link from 'next/link';
 import {
     Search, UserPlus, Edit3, Trash2, Users, Shield,
     ShieldCheck, X, CheckCircle, AlertTriangle, Filter,
-    Briefcase, MapPin, Phone, Clock,
+    Briefcase, MapPin, Phone, Clock, Download, UserX,
 } from 'lucide-react';
 import styles from './users.module.css';
 import {
     listUsers, inviteUser, updateUser, removeUser, getUser,
     type UserListItem, type UserDetail,
 } from '@/app/actions/userActions';
+import { exportUserData, anonymizeUser } from '@/app/actions/gdprActions';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 // ── Role helpers ────────────────────────────────────────────
 
@@ -85,6 +87,11 @@ export default function UsersClient({ initialUsers, stats }: UsersClientProps) {
     const [editUser, setEditUser] = useState<UserDetail | null>(null);
     const [editLoading, setEditLoading] = useState(false);
     const [deleteUser, setDeleteUser] = useState<UserListItem | null>(null);
+
+    // GDPR
+    const [exportingId, setExportingId] = useState<string | null>(null);
+    const [anonymizeUser_, setAnonymizeUser_] = useState<UserListItem | null>(null);
+    const [anonymizing, setAnonymizing] = useState(false);
 
     // Open edit modal: fetch full user detail
     async function openEditModal(user: UserListItem) {
@@ -206,6 +213,47 @@ export default function UsersClient({ initialUsers, stats }: UsersClientProps) {
             refreshUsers(search || undefined);
         } else {
             setError(result.error);
+        }
+    }
+
+    // ── GDPR: export data (client Blob download) ────────────
+
+    async function handleExport(user: UserListItem) {
+        setExportingId(user.id);
+        const result = await exportUserData(user.id);
+        setExportingId(null);
+
+        if ('json' in result) {
+            const blob = new Blob([result.json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = result.filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            setToast('Brukerdata ble eksportert');
+        } else {
+            setError(result.error);
+        }
+    }
+
+    // ── GDPR: anonymize (irreversible PII scrub) ────────────
+
+    async function handleAnonymize() {
+        if (!anonymizeUser_) return;
+        setAnonymizing(true);
+        const result = await anonymizeUser(anonymizeUser_.id);
+        setAnonymizing(false);
+
+        if ('success' in result) {
+            setAnonymizeUser_(null);
+            setToast('Brukeren ble anonymisert');
+            refreshUsers(search || undefined);
+        } else {
+            setError(result.error);
+            setAnonymizeUser_(null);
         }
     }
 
@@ -359,10 +407,18 @@ export default function UsersClient({ initialUsers, stats }: UsersClientProps) {
                                         </span>
                                     </td>
                                     <td>
-                                        <span className={`${styles.statusBadge} ${user.active ? styles.statusActive : styles.statusInactive}`}>
-                                            <span className={styles.statusDot} />
-                                            {user.active ? 'Aktiv' : 'Inaktiv'}
-                                        </span>
+                                        <div className={styles.statusStack}>
+                                            <span className={`${styles.statusBadge} ${user.active ? styles.statusActive : styles.statusInactive}`}>
+                                                <span className={styles.statusDot} />
+                                                {user.active ? 'Aktiv' : 'Inaktiv'}
+                                            </span>
+                                            {user.anonymizedAt && (
+                                                <span className={styles.anonymizedBadge}>
+                                                    <ShieldCheck size={12} />
+                                                    Anonymisert
+                                                </span>
+                                            )}
+                                        </div>
                                     </td>
                                     <td>
                                         <div className={styles.groupBadges}>
@@ -408,6 +464,31 @@ export default function UsersClient({ initialUsers, stats }: UsersClientProps) {
                                             >
                                                 <Edit3 size={15} />
                                             </button>
+                                            <button
+                                                className={styles.actionBtn}
+                                                disabled={exportingId === user.id}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleExport(user);
+                                                }}
+                                                aria-label="Eksporter data (JSON)"
+                                                title="Eksporter data (JSON)"
+                                            >
+                                                <Download size={15} />
+                                            </button>
+                                            {!user.anonymizedAt && (
+                                                <button
+                                                    className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setAnonymizeUser_(user);
+                                                    }}
+                                                    aria-label="Anonymiser bruker"
+                                                    title="Anonymiser bruker"
+                                                >
+                                                    <UserX size={15} />
+                                                </button>
+                                            )}
                                             <button
                                                 className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
                                                 onClick={(e) => {
@@ -716,6 +797,22 @@ export default function UsersClient({ initialUsers, stats }: UsersClientProps) {
                     </div>
                 </div>
             )}
+
+            {/* ── Anonymize confirm (GDPR, irreversible) ──── */}
+            <ConfirmDialog
+                open={anonymizeUser_ !== null}
+                variant="danger"
+                title="Anonymiser bruker"
+                description={
+                    anonymizeUser_
+                        ? `Dette fjerner all personlig informasjon (navn, e-post, telefon, profil) for ${getDisplayName(anonymizeUser_)} permanent og kan ikke angres. Læringsdata som kurs, progresjon og sertifikater beholdes, men identiteten kobles fra. Kontoen deaktiveres.`
+                        : ''
+                }
+                confirmText={anonymizing ? 'Anonymiserer…' : 'Anonymiser'}
+                cancelText="Avbryt"
+                onConfirm={handleAnonymize}
+                onCancel={() => setAnonymizeUser_(null)}
+            />
 
             {/* ── Toast ──────────────────────────────────── */}
             {toast && (

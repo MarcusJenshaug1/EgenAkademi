@@ -321,6 +321,28 @@
     color: var(--color-text-secondary);
 }
 
+/* ── Anonymized (GDPR) badge ───────────────────── */
+
+.statusStack {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+}
+
+.anonymizedBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 100px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    background: color-mix(in srgb, var(--color-warning) 15%, transparent);
+    color: var(--color-warning);
+}
+
 /* ── Actions ───────────────────────────────────── */
 
 .actionsCell {
@@ -353,6 +375,11 @@
     border-color: color-mix(in srgb, var(--color-danger) 40%, transparent);
     color: var(--color-danger);
     background: color-mix(in srgb, var(--color-danger) 8%, transparent);
+}
+
+.actionBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 /* ── Empty state ───────────────────────────────── */

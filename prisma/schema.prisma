@@ -110,6 +110,7 @@ model User {
   // SCIM støtte attributter
   externalId    String?  // ID fra kundens IdP
   active        Boolean   @default(true)
+  anonymizedAt  DateTime? // Satt når brukeren er GDPR-anonymisert
   
   globalRole    GlobalRole @default(USER)
   
