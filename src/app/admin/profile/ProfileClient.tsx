@@ -9,6 +9,7 @@ import {
 import {
     updateMyProfile, uploadAvatar, removeAvatar,
 } from '@/app/actions/profileActions';
+import TwoFactorSettings from '@/components/TwoFactorSettings';
 import styles from './profile.module.css';
 
 const ROLE_LABELS: Record<string, { label: string; badge: string; icon: typeof User }> = {
@@ -365,6 +366,18 @@ export default function ProfileClient({ initialProfile }: ProfileClientProps) {
                     </span>
                 </div>
             </div>
+
+            {/* Security / two-factor */}
+            <div className={styles.header}>
+                <h2 className={styles.title} style={{ fontSize: '1.4rem' }}>
+                    <ShieldCheck size={20} style={{ verticalAlign: 'middle', marginRight: 8 }} />
+                    Sikkerhet
+                </h2>
+                <p className={styles.subtitle}>
+                    Beskytt kontoen din med to-faktor-autentisering.
+                </p>
+            </div>
+            <TwoFactorSettings />
 
             {/* Toast */}
             {toast && (

@@ -111,6 +111,11 @@ model User {
   externalId    String?  // ID fra kundens IdP
   active        Boolean   @default(true)
   anonymizedAt  DateTime? // Satt når brukeren er GDPR-anonymisert
+
+  // To-faktor (TOTP)
+  totpSecret         String?   // Base32 TOTP-hemmelighet (satt under oppsett)
+  totpEnabled        Boolean   @default(false)
+  totpRecoveryCodes  String[]  // sha256-hashede engangs-gjenopprettingskoder
   
   globalRole    GlobalRole @default(USER)
   

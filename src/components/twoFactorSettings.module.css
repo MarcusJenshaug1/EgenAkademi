@@ -1,0 +1,416 @@
+/* ── Card ──────────────────────────────────────── */
+.card {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg, 12px);
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.cardHead {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.cardHeadIcon {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: var(--radius-md, 8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--color-accent-blue) 12%, transparent);
+    color: var(--color-accent-blue);
+}
+
+.cardHeadText {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.cardTitle {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+.cardDesc {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    line-height: 1.45;
+}
+
+/* ── Status row ────────────────────────────────── */
+.statusRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.statusLabel {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badgeOn {
+    background: color-mix(in srgb, var(--color-success) 14%, transparent);
+    color: var(--color-success);
+}
+
+.badgeOff {
+    background: color-mix(in srgb, var(--color-text-secondary) 14%, transparent);
+    color: var(--color-text-secondary);
+}
+
+.metaText {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+}
+
+.metaStrong {
+    color: var(--color-text-primary);
+    font-weight: 600;
+}
+
+/* ── Buttons ───────────────────────────────────── */
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.btnPrimary {
+    height: 40px;
+    padding: 0 22px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--color-button-primary);
+    color: var(--color-button-text);
+    border: none;
+    border-radius: var(--radius-md, 8px);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter var(--transition-fast, 0.15s);
+}
+
+.btnPrimary:hover {
+    filter: brightness(1.12);
+}
+
+.btnPrimary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btnSecondary {
+    height: 40px;
+    padding: 0 18px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--color-bg-surface);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md, 8px);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast, 0.15s);
+}
+
+.btnSecondary:hover {
+    border-color: var(--color-accent-blue);
+    color: var(--color-accent-blue);
+}
+
+.btnSecondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btnDanger {
+    border-color: color-mix(in srgb, var(--color-danger) 40%, var(--color-border));
+    color: var(--color-danger);
+}
+
+.btnDanger:hover {
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+    background: color-mix(in srgb, var(--color-danger) 8%, transparent);
+}
+
+.btnGhost {
+    height: 36px;
+    padding: 0 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md, 8px);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast, 0.15s);
+}
+
+.btnGhost:hover {
+    border-color: var(--color-accent-blue);
+    color: var(--color-accent-blue);
+}
+
+/* ── Setup flow ────────────────────────────────── */
+.setup {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md, 8px);
+}
+
+.setupSteps {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding-left: 18px;
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+}
+
+.qrWrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: center;
+}
+
+.qrImage {
+    width: 180px;
+    height: 180px;
+    border-radius: var(--radius-md, 8px);
+    /* Nøytral hvit bakgrunn for å sikre at QR-koden alltid er skannbar,
+       uavhengig av tema (jf. branding-unntak for forhåndsvisninger). */
+    background: #ffffff;
+    padding: 8px;
+    border: 1px solid var(--color-border);
+}
+
+.manualBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 220px;
+}
+
+.manualLabel {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-secondary);
+}
+
+.manualKey {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md, 8px);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.9rem;
+    color: var(--color-text-primary);
+    word-break: break-all;
+}
+
+.iconBtn {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm, 6px);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast, 0.15s);
+}
+
+.iconBtn:hover {
+    border-color: var(--color-accent-blue);
+    color: var(--color-accent-blue);
+}
+
+/* ── Code input ────────────────────────────────── */
+.codeBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.codeLabel {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+}
+
+.codeInput {
+    height: 44px;
+    width: 100%;
+    max-width: 220px;
+    padding: 0 14px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md, 8px);
+    color: var(--color-text-primary);
+    font-size: 1.25rem;
+    letter-spacing: 0.3em;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    outline: none;
+    transition: border-color var(--transition-fast, 0.15s);
+}
+
+.codeInput:focus {
+    border-color: var(--color-accent-blue);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent-blue) 15%, transparent);
+}
+
+/* ── Recovery codes ────────────────────────────── */
+.recoveryBox {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px;
+    background: color-mix(in srgb, var(--color-warning) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-warning) 35%, transparent);
+    border-radius: var(--radius-md, 8px);
+}
+
+.recoveryWarn {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.85rem;
+    color: var(--color-text-primary);
+    line-height: 1.45;
+}
+
+.recoveryWarnIcon {
+    flex-shrink: 0;
+    color: var(--color-warning);
+    margin-top: 1px;
+}
+
+.recoveryGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.recoveryCode {
+    padding: 8px 10px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm, 6px);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.9rem;
+    letter-spacing: 0.04em;
+    color: var(--color-text-primary);
+    text-align: center;
+}
+
+.recoveryActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+/* ── Confirm-inline (regen / disable code prompt) ─ */
+.inlinePrompt {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md, 8px);
+}
+
+.inlinePromptTitle {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+/* ── Feedback ──────────────────────────────────── */
+.error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-danger) 30%, transparent);
+    border-radius: var(--radius-md, 8px);
+    color: var(--color-danger);
+    font-size: 0.85rem;
+}
+
+.success {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--color-success);
+}
+
+.divider {
+    height: 1px;
+    background: var(--color-border);
+    border: none;
+    margin: 4px 0;
+}
+
+/* ── Loading spinner ───────────────────────────── */
+.spin {
+    animation: tfaSpin 0.8s linear infinite;
+}
+
+@keyframes tfaSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loadingLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
