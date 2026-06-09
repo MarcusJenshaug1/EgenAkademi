@@ -1024,6 +1024,56 @@ model RateLimit {
 }
 
 // ══════════════════════════════════════════════════════════════
+// WIKI / KUNNSKAPSBASE
+// ══════════════════════════════════════════════════════════════
+
+enum WikiStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+}
+
+model WikiPage {
+  id           String     @id @default(uuid())
+  tenantId     String
+  slug         String
+  title        String
+  contentHtml  String     @db.Text // Sanitert HTML (Lexical-output)
+  parentPageId String?
+  parentPage   WikiPage?  @relation("WikiTree", fields: [parentPageId], references: [id])
+  childPages   WikiPage[] @relation("WikiTree")
+  sortOrder    Int        @default(0)
+  status       WikiStatus @default(DRAFT)
+  pinned       Boolean    @default(false)
+  tags         String[]
+  accessLevel  String     @default("all") // "all" | "admins"
+  authorUserId String?
+  publishedAt  DateTime?
+
+  versions     WikiPageVersion[]
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([tenantId, slug])
+  @@index([tenantId, status])
+  @@index([tenantId, parentPageId])
+}
+
+model WikiPageVersion {
+  id           String   @id @default(uuid())
+  tenantId     String
+  pageId       String
+  page         WikiPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  title        String
+  contentHtml  String   @db.Text
+  editorUserId String?
+  createdAt    DateTime @default(now())
+
+  @@index([tenantId, pageId])
+}
+
+// ══════════════════════════════════════════════════════════════
 // GAMIFICATION (poeng, badges, nivåer, topplister)
 // ══════════════════════════════════════════════════════════════
 

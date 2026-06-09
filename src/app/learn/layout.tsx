@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import {
-    Home, BookOpen, Award, Bell, LogOut, GraduationCap, Shield, Compass, Calendar, Target, Trophy,
+    Home, BookOpen, Award, Bell, LogOut, GraduationCap, Shield, Compass, Calendar, Target, Trophy, BookText,
 } from 'lucide-react';
 import styles from './layout.module.css';
 import { auth, signOut } from '@/auth';
@@ -89,6 +89,13 @@ export default async function LearnLayout({
           ).allowed
         : false;
 
+    const wikiEnabled = tenant
+        ? checkAccess(
+              { plan: tenant.plan, addons: tenant.addons, trialEndsAt: tenant.trialEndsAt },
+              'wiki'
+          ).allowed
+        : false;
+
     return (
         <div className={styles.learnContainer}>
             {/* Sidebar */}
@@ -129,6 +136,11 @@ export default async function LearnLayout({
                     {gamificationEnabled && (
                         <LearnNavLink href="/learn/leaderboard">
                             <Trophy size={18} /> Toppliste
+                        </LearnNavLink>
+                    )}
+                    {wikiEnabled && (
+                        <LearnNavLink href="/learn/wiki">
+                            <BookText size={18} /> Kunnskapsbase
                         </LearnNavLink>
                     )}
                     <LearnNavLink href="/learn/certificates">
