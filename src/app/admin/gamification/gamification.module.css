@@ -1,0 +1,968 @@
+/* ── Gamification Admin ─────────────────────────── */
+
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* ── Header ─────────────────────────────────────── */
+
+.header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.headerLeft {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--color-text-primary);
+}
+
+.subtitle {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+}
+
+/* ── Tabs ───────────────────────────────────────── */
+
+.tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--color-border);
+    overflow-x: auto;
+}
+
+.tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: none;
+    background: none;
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+}
+
+.tab:hover {
+    color: var(--color-text-primary);
+}
+
+.tabActive {
+    color: var(--color-accent-blue);
+    border-bottom-color: var(--color-accent-blue);
+    font-weight: 600;
+}
+
+.tabContent {
+    min-height: 300px;
+}
+
+/* ── Section ────────────────────────────────────── */
+
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.sectionToolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.sectionCount {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+}
+
+/* ── Banners ────────────────────────────────────── */
+
+.errorBanner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-danger) 25%, transparent);
+    border-radius: var(--radius-md);
+    color: var(--color-danger);
+    font-size: 0.85rem;
+}
+
+/* ── Icon button ────────────────────────────────── */
+
+.iconBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+}
+
+.iconBtn:hover {
+    background: color-mix(in srgb, var(--color-border) 50%, transparent);
+    color: var(--color-text-primary);
+}
+
+.iconBtnDanger:hover {
+    background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+    color: var(--color-danger);
+}
+
+/* ── Buttons ────────────────────────────────────── */
+
+.btnPrimary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    background: var(--color-button-primary);
+    color: var(--color-button-text);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btnPrimary:hover {
+    filter: brightness(1.08);
+}
+
+.btnPrimary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btnSecondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    background: var(--color-bg-surface);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btnSecondary:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--color-accent-blue) 30%, var(--color-border));
+}
+
+.btnSecondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btnDanger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    background: var(--color-danger);
+    color: var(--color-button-text);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter var(--transition-fast);
+}
+
+.btnDanger:hover {
+    filter: brightness(1.08);
+}
+
+.btnGhost {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: color-mix(in srgb, var(--color-accent-blue) 10%, transparent);
+    color: var(--color-accent-blue);
+    border: 1px solid color-mix(in srgb, var(--color-accent-blue) 25%, transparent);
+    border-radius: var(--radius-md);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.btnGhost:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-accent-blue) 18%, transparent);
+}
+
+.btnGhost:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ── Forms ──────────────────────────────────────── */
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+    flex: 1;
+}
+
+.formRow {
+    display: flex;
+    gap: 12px;
+}
+
+.formLabel {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+}
+
+.formHint {
+    font-size: 0.72rem;
+    color: var(--color-text-secondary);
+    opacity: 0.8;
+}
+
+.formInput,
+.formSelect,
+.formTextarea {
+    width: 100%;
+    padding: 9px 12px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color var(--transition-fast);
+    font-family: inherit;
+}
+
+.formTextarea {
+    resize: vertical;
+}
+
+.formInput:focus,
+.formSelect:focus,
+.formTextarea:focus {
+    border-color: var(--color-accent-blue);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent-blue) 15%, transparent);
+}
+
+.formInput::placeholder,
+.formTextarea::placeholder {
+    color: var(--color-text-secondary);
+    opacity: 0.6;
+}
+
+.colorField {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.colorSwatch {
+    width: 42px;
+    height: 38px;
+    padding: 2px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-primary);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* ── Icon picker ────────────────────────────────── */
+
+.iconPicker {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.iconChoice {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-primary);
+    color: var(--color-text-secondary);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.iconChoice:hover {
+    color: var(--color-text-primary);
+    border-color: color-mix(in srgb, var(--color-accent-blue) 30%, var(--color-border));
+}
+
+.iconChoiceActive {
+    color: var(--color-accent-blue);
+    border-color: var(--color-accent-blue);
+    background: color-mix(in srgb, var(--color-accent-blue) 12%, transparent);
+}
+
+/* ── Modal ──────────────────────────────────────── */
+
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    background: color-mix(in srgb, var(--color-bg-primary) 70%, transparent);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+}
+
+.modal {
+    width: 100%;
+    max-width: 480px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 20px 60px -12px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.modalHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.modalTitle {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.modalBody {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.modalFooter {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 20px;
+    border-top: 1px solid var(--color-border);
+}
+
+.confirmText {
+    font-size: 0.88rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+    margin-bottom: 10px;
+}
+
+.confirmHighlight {
+    color: var(--color-text-primary);
+    font-weight: 600;
+}
+
+/* ── Point rules ────────────────────────────────── */
+
+.ruleList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ruleRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 16px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    flex-wrap: wrap;
+}
+
+.ruleMain {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 160px;
+}
+
+.ruleLabel {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.ruleEvent {
+    font-size: 0.7rem;
+    color: var(--color-text-secondary);
+    font-family: var(--font-mono, monospace);
+}
+
+.ruleControls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.pointsField {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pointsInput {
+    width: 80px;
+    padding: 8px 10px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: 0.85rem;
+    outline: none;
+    text-align: right;
+}
+
+.pointsInput:focus {
+    border-color: var(--color-accent-blue);
+}
+
+.pointsSuffix {
+    font-size: 0.78rem;
+    color: var(--color-text-secondary);
+}
+
+.toggleBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 4px;
+    border-radius: var(--radius-md);
+}
+
+.toggleOn {
+    color: var(--color-success);
+}
+
+.toggleOff {
+    color: var(--color-text-secondary);
+    opacity: 0.6;
+}
+
+.toggleLabel {
+    min-width: 30px;
+    text-align: left;
+}
+
+/* ── Badge grid ─────────────────────────────────── */
+
+.badgeGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+}
+
+.badgeCard {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+}
+
+.badgeMedallion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: color-mix(in srgb, var(--color-accent-blue) 14%, transparent);
+    color: var(--color-accent-blue);
+    border: 1px solid color-mix(in srgb, var(--color-accent-blue) 30%, transparent);
+}
+
+.badgeBody {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+}
+
+.badgeName {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.badgeDesc {
+    font-size: 0.78rem;
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+}
+
+.badgeMeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 2px;
+}
+
+.badgePill {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--color-accent-blue);
+    background: color-mix(in srgb, var(--color-accent-blue) 12%, transparent);
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.badgePillMuted {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    background: color-mix(in srgb, var(--color-border) 40%, transparent);
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+
+.badgeActions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+/* ── Manual award rows ──────────────────────────── */
+
+.awardRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 10px;
+    border-radius: var(--radius-md);
+}
+
+.awardRow:hover {
+    background: color-mix(in srgb, var(--color-accent-blue) 8%, transparent);
+}
+
+.awardUser {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+/* ── Search + user list ─────────────────────────── */
+
+.searchBox {
+    position: relative;
+    margin-bottom: 12px;
+}
+
+.searchIcon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-text-secondary);
+    pointer-events: none;
+}
+
+.searchInput {
+    width: 100%;
+    padding: 8px 12px 8px 32px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: 0.8rem;
+    outline: none;
+}
+
+.searchInput:focus {
+    border-color: var(--color-accent-blue);
+}
+
+.userList {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 360px;
+    overflow-y: auto;
+}
+
+.userItemName {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.userItemEmail {
+    font-size: 0.7rem;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Stats ──────────────────────────────────────── */
+
+.statGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+}
+
+.statCard {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 16px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+}
+
+.statValue {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    letter-spacing: -0.02em;
+}
+
+.statLabel {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+}
+
+/* ── Leaderboard ────────────────────────────────── */
+
+.lbList {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.lbRow {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.lbRank {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--color-text-secondary);
+    background: color-mix(in srgb, var(--color-border) 40%, transparent);
+    flex-shrink: 0;
+}
+
+.lbRankTop {
+    color: var(--color-button-text);
+    background: var(--gradient-primary, var(--color-accent-blue));
+}
+
+.lbAvatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--color-accent-blue) 14%, transparent);
+    color: var(--color-accent-blue);
+    font-size: 0.72rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.lbAvatarImg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.lbMain {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.lbName {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lbSub {
+    font-size: 0.72rem;
+    color: var(--color-text-secondary);
+}
+
+.lbPoints {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--color-accent-blue);
+    flex-shrink: 0;
+}
+
+/* ── Empty / loading ────────────────────────────── */
+
+.empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 32px;
+    gap: 12px;
+    text-align: center;
+}
+
+.emptyIcon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--color-accent-blue) 10%, transparent);
+    color: var(--color-accent-blue);
+}
+
+.emptyTitle {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.emptyText {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    max-width: 340px;
+    line-height: 1.5;
+}
+
+.emptyTextSmall {
+    font-size: 0.78rem;
+    color: var(--color-text-secondary);
+    padding: 12px;
+    text-align: center;
+}
+
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 60px;
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+}
+
+.loadingSmall {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid color-mix(in srgb, var(--color-accent-blue) 25%, transparent);
+    border-top-color: var(--color-accent-blue);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ── Toast ──────────────────────────────────────── */
+
+.toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--color-bg-secondary);
+    border: 1px solid color-mix(in srgb, var(--color-success) 30%, var(--color-border));
+    border-radius: var(--radius-md);
+    color: var(--color-success);
+    font-size: 0.85rem;
+    font-weight: 500;
+    box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.4);
+    z-index: 200;
+}
+
+/* ── Locked / upgrade notice ────────────────────── */
+
+.lockedPage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+}
+
+.lockedCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+    max-width: 460px;
+    padding: 40px 32px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+}
+
+.lockedIcon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--color-warning) 12%, transparent);
+    color: var(--color-warning);
+}
+
+.lockedTitle {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+.lockedText {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--color-text-primary);
+}
+
+.lockedHint {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+}
+
+.lockedButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 10px 18px;
+    background: var(--color-button-primary);
+    color: var(--color-button-text);
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: filter var(--transition-fast);
+}
+
+.lockedButton:hover {
+    filter: brightness(1.08);
+    text-decoration: none;
+}
+
+/* ── Responsive ─────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .formRow {
+        flex-direction: column;
+    }
+
+    .ruleRow {
+        align-items: flex-start;
+    }
+}

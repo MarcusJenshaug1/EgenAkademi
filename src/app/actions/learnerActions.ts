@@ -3,6 +3,7 @@
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { dispatchWebhookEvent } from '@/lib/webhooks';
+import { awardForEvent } from '@/lib/gamification';
 
 // ── Hjelpefunksjon for autentisert bruker ──────────────
 
@@ -800,6 +801,15 @@ export async function markLessonCompleted(
                 userId: user.userId,
                 courseId: enrollment.courseId,
                 enrollmentId,
+            });
+
+            // Gamification (best-effort): tildel poeng/badges ved fullføring.
+            // awardForEvent kaster aldri og no-op-er hvis 'gamification' ikke er
+            // aktivert. dedupeKey hindrer dobbel-tildeling per påmelding.
+            await awardForEvent(user.tenantId, user.userId, 'course_completed', {
+                sourceType: 'course',
+                sourceId: enrollment.courseId,
+                dedupeKey: 'course_completed:' + enrollmentId,
             });
         }
 

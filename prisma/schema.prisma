@@ -140,6 +140,9 @@ model User {
   sessionEnrollments SessionEnrollment[] @relation("SessionAttendee")
   onboardingEnrollments OnboardingEnrollment[]
   skills             UserSkill[]
+  gamification       UserGamification?
+  badges             UserBadge[]
+  pointTransactions  PointTransaction[]
 
   @@index([tenantId])
 }
@@ -1018,6 +1021,90 @@ model RateLimit {
   count       Int      @default(0)
   windowStart DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// ══════════════════════════════════════════════════════════════
+// GAMIFICATION (poeng, badges, nivåer, topplister)
+// ══════════════════════════════════════════════════════════════
+
+model PointRule {
+  id        String   @id @default(uuid())
+  tenantId  String
+  event     String   // "course_completed" | "lesson_completed" | "quiz_passed" | "streak_day" | "session_attended"
+  points    Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, event])
+  @@index([tenantId])
+}
+
+enum BadgeCriteriaType {
+  POINTS_TOTAL
+  COURSES_COMPLETED
+  STREAK_DAYS
+  MANUAL
+}
+
+model Badge {
+  id           String            @id @default(uuid())
+  tenantId     String
+  name         String
+  description  String?
+  color        String?           // hex
+  icon         String?           // lucide-ikonnavn
+  criteriaType BadgeCriteriaType @default(MANUAL)
+  threshold    Int?              // poeng/antall for auto-tildeling
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  userBadges   UserBadge[]
+
+  @@index([tenantId])
+}
+
+model UserBadge {
+  id        String   @id @default(uuid())
+  tenantId  String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId   String
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  awardedAt DateTime @default(now())
+
+  @@unique([userId, badgeId])
+  @@index([tenantId, userId])
+}
+
+model PointTransaction {
+  id         String   @id @default(uuid())
+  tenantId   String
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  points     Int
+  reason     String
+  sourceType String?
+  sourceId   String?
+  createdAt  DateTime @default(now())
+
+  @@index([tenantId, userId])
+}
+
+model UserGamification {
+  id               String    @id @default(uuid())
+  tenantId         String
+  userId           String    @unique
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalPoints      Int       @default(0)
+  level            Int       @default(1)
+  currentStreak    Int       @default(0)
+  longestStreak    Int       @default(0)
+  lastActivityDate DateTime?
+  leaderboardOptIn Boolean   @default(true)
+  updatedAt        DateTime  @updatedAt
+
+  @@index([tenantId])
 }
 
 model TenantDomain {

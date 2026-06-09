@@ -2,7 +2,7 @@ import Link from 'next/link';
 import {
     LayoutDashboard, Users, UsersRound, Shield, BookOpen,
     Calendar, Files, Palette, Plug, BarChart3, HelpCircle, LogOut, UserCircle,
-    Rocket, AlarmClock, Target, Package, Globe, ShieldAlert
+    Rocket, AlarmClock, Target, Package, Globe, ShieldAlert, Trophy
 } from 'lucide-react';
 import type { TenantPlan } from '@prisma/client';
 import styles from './layout.module.css';
@@ -76,6 +76,7 @@ export default async function AdminLayout({
         domains: has('custom-domain'),
         skills: has('competency-management'),
         reports: has('basic-analytics'),
+        gamification: has('gamification'),
         // Integrasjoner is unlocked if ANY enterprise integration feature is available.
         integrations:
             has('sso-saml') ||
@@ -156,6 +157,9 @@ export default async function AdminLayout({
                     </NavLink>
                     <NavLink href="/admin/scorm" locked={!gate.scorm}>
                         <Package size={18} /> SCORM
+                    </NavLink>
+                    <NavLink href="/admin/gamification" locked={!gate.gamification}>
+                        <Trophy size={18} /> Gamification
                     </NavLink>
 
                     <div className={styles.navSection}>Plattform</div>
