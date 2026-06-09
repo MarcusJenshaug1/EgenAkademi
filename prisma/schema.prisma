@@ -977,3 +977,39 @@ model UserSkill {
   @@unique([userId, skillId])
   @@index([tenantId, skillId])
 }
+
+// ══════════════════════════════════════════════════════════════
+// SCORM (import + runtime)
+// ══════════════════════════════════════════════════════════════
+
+model ScormPackage {
+  id           String   @id @default(uuid())
+  tenantId     String
+  title        String
+  scormVersion String   @default("1.2") // "1.2" | "2004"
+  entryPath    String   // Launch-fil relativt til pakkeroten (fra imsmanifest)
+  packagePath  String   // Offentlig rot for utpakkede filer, f.eks. "/uploads/scorm/<id>"
+  courseId     String?  // Valgfri kobling til et kurs
+  manifestJson Json?    // Rådata fra imsmanifest.xml (organisasjoner, ressurser)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([tenantId])
+}
+
+model ScormAttempt {
+  id             String    @id @default(uuid())
+  tenantId       String
+  scormPackageId String
+  userId         String
+  cmiJson        Json?     // Hele CMI-datamodellen (key/value)
+  lessonStatus   String?   // completed | incomplete | passed | failed | browsed | not attempted
+  scoreRaw       Float?
+  suspendData    String?   @db.Text
+  totalTime      String?   // SCORM tidsformat
+  completedAt    DateTime?
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([scormPackageId, userId])
+  @@index([tenantId, userId])
+}

@@ -19,6 +19,7 @@
     "@lexical/utils": "^0.41.0",
     "@prisma/adapter-pg": "^7.4.1",
     "@prisma/client": "^7.4.1",
+    "fflate": "^0.8.3",
     "isomorphic-dompurify": "^3.0.0",
     "lexical": "^0.41.0",
     "lucide-react": "^0.575.0",
