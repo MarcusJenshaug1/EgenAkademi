@@ -1,0 +1,178 @@
+.systemPage { display: flex; flex-direction: column; gap: 32px; }
+
+/* ── Header ────────────────────────────────────── */
+.header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+.headerLeft { display: flex; flex-direction: column; gap: 8px; }
+
+.headerBadge {
+    display: inline-flex; align-items: center; gap: 6px;
+    align-self: flex-start;
+    padding: 4px 10px; border-radius: 999px;
+    font-size: 0.72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    background: color-mix(in srgb, var(--color-warning) 14%, transparent);
+    color: var(--color-warning);
+    border: 1px solid color-mix(in srgb, var(--color-warning) 32%, transparent);
+}
+
+.title { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; color: var(--color-text-primary); }
+.subtitle { color: var(--color-text-secondary); font-size: 1rem; max-width: 640px; }
+
+/* ── Error ─────────────────────────────────────── */
+.errorBanner {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 18px;
+    background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-danger) 30%, transparent);
+    border-radius: var(--radius-md);
+    color: var(--color-danger); font-size: 0.875rem;
+}
+
+/* ── Stats ─────────────────────────────────────── */
+.statsRow { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+.statCard {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--color-bg-surface); border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg); padding: 18px 20px;
+    transition: all var(--transition-fast);
+}
+.statCard:hover { transform: translateY(-2px); box-shadow: 0 8px 24px -8px rgba(0,0,0,0.3); filter: brightness(1.05); }
+.statIcon {
+    width: 40px; height: 40px; border-radius: var(--radius-md); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: color-mix(in srgb, var(--color-accent-blue) 12%, transparent);
+    color: var(--color-accent-blue);
+    border: 1px solid color-mix(in srgb, var(--color-accent-blue) 24%, transparent);
+}
+.statBody { display: flex; flex-direction: column; gap: 4px; }
+.statLabel { font-size: 0.72rem; color: var(--color-text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.statValue { font-size: 1.6rem; font-weight: 700; color: var(--color-text-primary); line-height: 1; }
+
+/* ── Toolbar ───────────────────────────────────── */
+.toolbar { display: flex; align-items: center; gap: 12px; }
+.searchBox { flex: 1; position: relative; }
+.searchIcon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--color-text-secondary); pointer-events: none; }
+.searchInput {
+    width: 100%; height: 40px; padding: 0 16px 0 42px;
+    background: var(--color-bg-surface); border: 1px solid var(--color-border);
+    border-radius: var(--radius-md); color: var(--color-text-primary);
+    font-size: 0.875rem; outline: none; transition: border-color var(--transition-fast);
+}
+.searchInput::placeholder { color: var(--color-text-secondary); opacity: 0.7; }
+.searchInput:focus { border-color: var(--color-accent-blue); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent-blue) 15%, transparent); }
+
+/* ── Table ─────────────────────────────────────── */
+.tableWrap {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow-x: auto;
+    background: var(--color-bg-surface);
+}
+.table { width: 100%; border-collapse: collapse; min-width: 980px; }
+.table thead th {
+    text-align: left; padding: 14px 16px;
+    font-size: 0.72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--color-text-secondary);
+    border-bottom: 1px solid var(--color-border);
+    white-space: nowrap;
+}
+.table tbody td {
+    padding: 14px 16px;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent);
+    vertical-align: top;
+}
+.table tbody tr:last-child td { border-bottom: none; }
+.table tbody tr:hover { background: color-mix(in srgb, var(--color-accent-blue) 4%, transparent); }
+.rowDirty { background: color-mix(in srgb, var(--color-warning) 6%, transparent); }
+.rowDirty:hover { background: color-mix(in srgb, var(--color-warning) 9%, transparent); }
+
+.actionsCol { text-align: right; white-space: nowrap; }
+
+/* ── Tenant cell ───────────────────────────────── */
+.tenantCell { display: flex; flex-direction: column; gap: 3px; max-width: 220px; }
+.tenantName { font-size: 0.9rem; font-weight: 600; color: var(--color-text-primary); }
+.tenantId { font-size: 0.7rem; color: var(--color-text-secondary); font-family: monospace; opacity: 0.7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── Plan select ───────────────────────────────── */
+.planSelect {
+    height: 36px; padding: 0 10px; min-width: 130px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: 0.85rem; font-weight: 600; outline: none; cursor: pointer;
+    transition: border-color var(--transition-fast);
+}
+.planSelect:focus { border-color: var(--color-accent-blue); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent-blue) 15%, transparent); }
+
+/* ── Addon checklist ───────────────────────────── */
+.addonList { display: flex; flex-direction: column; gap: 4px; min-width: 220px; }
+.addonItem {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 8px; border-radius: var(--radius-md);
+    font-size: 0.78rem; color: var(--color-text-secondary);
+    cursor: pointer; transition: all var(--transition-fast);
+    border: 1px solid transparent;
+}
+.addonItem:hover { background: color-mix(in srgb, var(--color-accent-blue) 8%, transparent); }
+.addonItemOn {
+    color: var(--color-accent-blue);
+    background: color-mix(in srgb, var(--color-accent-blue) 10%, transparent);
+    border-color: color-mix(in srgb, var(--color-accent-blue) 26%, transparent);
+}
+.addonCheckbox {
+    width: 15px; height: 15px; flex-shrink: 0;
+    accent-color: var(--color-accent-blue);
+    cursor: pointer;
+}
+.addonKey { font-family: monospace; font-size: 0.76rem; }
+
+/* ── Date input ────────────────────────────────── */
+.dateInput {
+    height: 36px; padding: 0 10px; min-width: 150px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: 0.85rem; outline: none;
+    transition: border-color var(--transition-fast);
+}
+.dateInput:focus { border-color: var(--color-accent-blue); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent-blue) 15%, transparent); }
+.dateInput::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
+
+/* ── User count cell ───────────────────────────── */
+.userCountCell { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--color-text-secondary); font-weight: 500; }
+
+/* ── Save button ───────────────────────────────── */
+.saveBtn {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 36px; padding: 0 16px;
+    background: var(--color-button-primary); color: var(--color-button-text);
+    border: none; border-radius: var(--radius-md);
+    font-size: 0.82rem; font-weight: 600;
+    cursor: pointer; transition: all var(--transition-fast); white-space: nowrap;
+}
+.saveBtn:hover:not(:disabled) { filter: brightness(1.15); transform: translateY(-1px); }
+.saveBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+.saveBtn:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-button-primary) 35%, transparent); }
+
+/* ── Empty ─────────────────────────────────────── */
+.emptyState { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 64px 32px; gap: 14px; }
+.emptyIcon { width: 64px; height: 64px; border-radius: 50%; background: var(--color-bg-surface); border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; color: var(--color-text-secondary); }
+.emptyTitle { font-size: 1.1rem; font-weight: 600; color: var(--color-text-primary); }
+.emptyText { font-size: 0.875rem; color: var(--color-text-secondary); text-align: center; max-width: 400px; }
+
+/* ── Toast ─────────────────────────────────────── */
+.toast {
+    position: fixed; bottom: 32px; right: 32px;
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 20px;
+    background: var(--color-bg-secondary);
+    border: 1px solid color-mix(in srgb, var(--color-success) 30%, transparent);
+    border-radius: var(--radius-md);
+    color: var(--color-success); font-size: 0.875rem; font-weight: 500;
+    box-shadow: 0 12px 40px -12px rgba(0,0,0,0.4);
+    animation: slideIn 0.2s ease-out; z-index: 200;
+}
+@keyframes slideIn { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
