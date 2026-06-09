@@ -1,0 +1,610 @@
+/* ── Egendefinerte domener – Admin ──────────────── */
+
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* ── Header ─────────────────────────────────────── */
+
+.header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.headerLeft {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--color-text-primary);
+}
+
+.subtitle {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    max-width: 60ch;
+    line-height: 1.5;
+}
+
+/* ── Infopanel (TLS / ruting) ───────────────────── */
+
+.infoPanel {
+    display: flex;
+    gap: 12px;
+    padding: 16px 18px;
+    background: color-mix(in srgb, var(--color-accent-blue) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-accent-blue) 25%, transparent);
+    border-radius: var(--radius-lg);
+}
+
+.infoIcon {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: var(--color-accent-blue);
+}
+
+.infoTitle {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: 4px;
+}
+
+.infoText {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    max-width: 80ch;
+}
+
+/* ── Legg til domene ────────────────────────────── */
+
+.addForm {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+}
+
+.addRow {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.addLabel {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.addInputRow {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.input {
+    flex: 1;
+    min-width: 220px;
+    height: 42px;
+    padding: 0 14px;
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.input::placeholder {
+    color: var(--color-text-secondary);
+    opacity: 0.7;
+}
+
+.input:focus {
+    outline: none;
+    border-color: var(--color-accent-blue);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent-blue) 20%, transparent);
+}
+
+.input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.input[aria-invalid='true'] {
+    border-color: var(--color-danger);
+}
+
+.addHint {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+}
+
+.codeInline {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.8rem;
+    padding: 1px 6px;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--color-text-primary) 6%, transparent);
+    color: var(--color-text-primary);
+}
+
+.formError {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--color-danger);
+}
+
+/* ── Knapper ────────────────────────────────────── */
+
+.primaryButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 42px;
+    padding: 0 18px;
+    background: var(--color-button-primary);
+    color: var(--color-button-text);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter var(--transition-fast);
+    white-space: nowrap;
+}
+
+.primaryButton:hover:not(:disabled) {
+    filter: brightness(1.08);
+}
+
+.primaryButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.primaryButton:focus-visible {
+    outline: 2px solid var(--color-accent-blue);
+    outline-offset: 2px;
+}
+
+.secondaryButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 14px;
+    background: color-mix(in srgb, var(--color-accent-blue) 10%, transparent);
+    color: var(--color-accent-blue);
+    border: 1px solid color-mix(in srgb, var(--color-accent-blue) 30%, transparent);
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition-fast), filter var(--transition-fast);
+    white-space: nowrap;
+}
+
+.secondaryButton:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-accent-blue) 18%, transparent);
+}
+
+.secondaryButton:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.secondaryButton:focus-visible {
+    outline: 2px solid var(--color-accent-blue);
+    outline-offset: 2px;
+}
+
+.dangerButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 14px;
+    background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+    color: var(--color-danger);
+    border: 1px solid color-mix(in srgb, var(--color-danger) 30%, transparent);
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+    white-space: nowrap;
+}
+
+.dangerButton:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-danger) 18%, transparent);
+}
+
+.dangerButton:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.dangerButton:focus-visible {
+    outline: 2px solid var(--color-danger);
+    outline-offset: 2px;
+}
+
+/* ── Tom tilstand ───────────────────────────────── */
+
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    padding: 48px 24px;
+    background: var(--color-bg-surface);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+    color: var(--color-text-secondary);
+}
+
+.emptyTitle {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.emptyText {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+}
+
+/* ── Domene-liste ───────────────────────────────── */
+
+.domainList {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.domainCard {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 20px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+}
+
+.domainTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.domainNameWrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.domainName {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    word-break: break-all;
+}
+
+.primaryBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-accent-blue) 14%, transparent);
+    color: var(--color-accent-blue);
+}
+
+/* ── Statusmerker ───────────────────────────────── */
+
+.statusBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.statusVerified {
+    background: color-mix(in srgb, var(--color-success) 14%, transparent);
+    color: var(--color-success);
+}
+
+.statusPending {
+    background: color-mix(in srgb, var(--color-warning) 14%, transparent);
+    color: var(--color-warning);
+}
+
+.statusFailed {
+    background: color-mix(in srgb, var(--color-danger) 14%, transparent);
+    color: var(--color-danger);
+}
+
+.cardError {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: var(--color-danger);
+}
+
+/* ── DNS-instruksjoner ──────────────────────────── */
+
+.dnsBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background: color-mix(in srgb, var(--color-text-primary) 3%, transparent);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.dnsHeading {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.dnsRecord {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.dnsRecordHead {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dnsType {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--color-accent-blue) 14%, transparent);
+    color: var(--color-accent-blue);
+}
+
+.dnsPurpose {
+    font-size: 0.78rem;
+    color: var(--color-text-secondary);
+}
+
+.dnsField {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dnsFieldLabel {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-secondary);
+}
+
+.dnsFieldValueRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.dnsValue {
+    flex: 1;
+    min-width: 0;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.82rem;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--color-text-primary) 5%, transparent);
+    color: var(--color-text-primary);
+    word-break: break-all;
+}
+
+.copyButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 34px;
+    padding: 0 12px;
+    background: transparent;
+    color: var(--color-accent-blue);
+    border: 1px solid color-mix(in srgb, var(--color-accent-blue) 30%, transparent);
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+    white-space: nowrap;
+}
+
+.copyButton:hover {
+    background: color-mix(in srgb, var(--color-accent-blue) 12%, transparent);
+}
+
+.copyButton:focus-visible {
+    outline: 2px solid var(--color-accent-blue);
+    outline-offset: 2px;
+}
+
+/* ── Tilbakemelding ─────────────────────────────── */
+
+.feedback {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.83rem;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.feedbackOk {
+    color: var(--color-success);
+}
+
+.feedbackErr {
+    color: var(--color-danger);
+}
+
+/* ── Handlinger ─────────────────────────────────── */
+
+.cardActions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* ── Locked / upgrade-notice ────────────────────── */
+
+.lockedPage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+}
+
+.lockedCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+    max-width: 460px;
+    padding: 40px 32px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+}
+
+.lockedIcon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--color-warning) 12%, transparent);
+    color: var(--color-warning);
+}
+
+.lockedTitle {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+.lockedText {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--color-text-primary);
+}
+
+.lockedHint {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+}
+
+.lockedButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 10px 18px;
+    background: var(--color-button-primary);
+    color: var(--color-button-text);
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: filter var(--transition-fast);
+}
+
+.lockedButton:hover {
+    filter: brightness(1.08);
+    text-decoration: none;
+}
+
+.lockedButton:focus-visible {
+    outline: 2px solid var(--color-accent-blue);
+    outline-offset: 2px;
+}
+
+/* ── Responsiv ──────────────────────────────────── */
+
+@media (max-width: 640px) {
+    .addInputRow {
+        flex-direction: column;
+    }
+
+    .input {
+        min-width: 0;
+    }
+
+    .primaryButton {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .cardActions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .secondaryButton,
+    .dangerButton {
+        justify-content: center;
+    }
+}

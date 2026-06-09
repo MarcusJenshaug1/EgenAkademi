@@ -2,7 +2,7 @@ import Link from 'next/link';
 import {
     LayoutDashboard, Users, UsersRound, Shield, BookOpen,
     Calendar, Files, Palette, Plug, BarChart3, HelpCircle, LogOut, UserCircle,
-    Rocket, AlarmClock, Target, Package
+    Rocket, AlarmClock, Target, Package, Globe
 } from 'lucide-react';
 import styles from './layout.module.css';
 import { auth, signOut } from '@/auth';
@@ -118,6 +118,9 @@ export default async function AdminLayout({
                     <div className={styles.navSection}>Plattform</div>
                     <NavLink href="/admin/branding">
                         <Palette size={18} /> Branding
+                    </NavLink>
+                    <NavLink href="/admin/domains">
+                        <Globe size={18} /> Domener
                     </NavLink>
                     <NavLink href="/admin/integrations">
                         <Plug size={18} /> Integrasjoner
