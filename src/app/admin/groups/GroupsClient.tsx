@@ -4,12 +4,15 @@ import { useState, useEffect, useCallback } from 'react';
 import {
     Plus, Search, X, Pencil, Trash2, Users, UserPlus,
     FolderOpen, CheckCircle, UserMinus, Palette,
+    Zap, RefreshCw, Sparkles, Info,
 } from 'lucide-react';
 import {
     listGroups, getGroup, createGroup, updateGroup,
     deleteGroup, addGroupMember, removeGroupMember,
     listAvailableMembers, getGroupStats,
+    setGroupDynamic, syncDynamicGroup,
     type GroupListItem, type GroupDetail,
+    type GroupRule, type RuleCondition, type RuleAttribute, type RuleOperator,
 } from '@/app/actions/groupActions';
 import { suggestGroupColors, contrastRatio, meetsWcagAA, isValidHex, type ColorSuggestion } from '@/lib/groupColors';
 import styles from './groups.module.css';
@@ -35,6 +38,196 @@ function getBrandingBg(): string {
     const bgPrimary = getCssVar('--color-bg-primary');
     if (bgPrimary && isValidHex(bgPrimary)) return bgPrimary;
     return '#0f0f11'; // safe default
+}
+
+// ── Rule builder metadata ───────────────────────────────────
+
+const ATTRIBUTE_LABELS: Record<RuleAttribute, string> = {
+    department: 'Avdeling',
+    jobTitle: 'Stillingstittel',
+    location: 'Arbeidssted',
+    globalRole: 'Rolle',
+    active: 'Aktiv',
+    email: 'E-post',
+    firstName: 'Fornavn',
+    lastName: 'Etternavn',
+};
+
+const ATTRIBUTE_ORDER: RuleAttribute[] = [
+    'department', 'jobTitle', 'location', 'globalRole',
+    'active', 'email', 'firstName', 'lastName',
+];
+
+const OPERATOR_LABELS: Record<RuleOperator, string> = {
+    equals: 'er lik',
+    not_equals: 'er ikke lik',
+    contains: 'inneholder',
+    starts_with: 'starter med',
+    is_empty: 'er tom',
+    is_not_empty: 'er ikke tom',
+};
+
+const OPERATOR_ORDER: RuleOperator[] = [
+    'equals', 'not_equals', 'contains', 'starts_with', 'is_empty', 'is_not_empty',
+];
+
+const ROLE_OPTIONS: { value: string; label: string }[] = [
+    { value: 'USER', label: 'Bruker' },
+    { value: 'TENANT_ADMIN', label: 'Organisasjonsadmin' },
+    { value: 'SYSTEM_ADMIN', label: 'Systemadmin' },
+];
+
+/** Operators that take no value input */
+function operatorNeedsValue(op: RuleOperator): boolean {
+    return op !== 'is_empty' && op !== 'is_not_empty';
+}
+
+function emptyCondition(): RuleCondition {
+    return { attribute: 'department', operator: 'equals', value: '' };
+}
+
+function emptyRule(): GroupRule {
+    return { match: 'all', conditions: [emptyCondition()] };
+}
+
+// ── Rule builder component ───────────────────────────────────
+
+interface RuleBuilderProps {
+    rule: GroupRule;
+    onChange: (rule: GroupRule) => void;
+    styles: Record<string, string>;
+}
+
+function RuleBuilder({ rule, onChange, styles }: RuleBuilderProps) {
+    function updateMatch(match: 'all' | 'any') {
+        onChange({ ...rule, match });
+    }
+
+    function updateCondition(index: number, patch: Partial<RuleCondition>) {
+        const conditions = rule.conditions.map((c, i) => {
+            if (i !== index) return c;
+            const next = { ...c, ...patch };
+            // When switching attribute to active/globalRole, set a valid default
+            // value for the resulting select; otherwise clear the value.
+            if (patch.attribute === 'active') next.value = 'true';
+            else if (patch.attribute === 'globalRole') next.value = 'USER';
+            else if (patch.attribute && patch.attribute !== c.attribute) next.value = '';
+            return next;
+        });
+        onChange({ ...rule, conditions });
+    }
+
+    function addCondition() {
+        onChange({ ...rule, conditions: [...rule.conditions, emptyCondition()] });
+    }
+
+    function removeCondition(index: number) {
+        onChange({ ...rule, conditions: rule.conditions.filter((_, i) => i !== index) });
+    }
+
+    return (
+        <div className={styles.ruleBuilder}>
+            <div className={styles.ruleMatchRow}>
+                <span>Inkluder brukere som matcher</span>
+                <select
+                    className={styles.ruleMatchSelect}
+                    value={rule.match}
+                    onChange={(e) => updateMatch(e.target.value as 'all' | 'any')}
+                    aria-label="Match-modus"
+                >
+                    <option value="all">Alle betingelser</option>
+                    <option value="any">Enhver betingelse</option>
+                </select>
+            </div>
+
+            <div className={styles.ruleConditions}>
+                {rule.conditions.length === 0 && (
+                    <p className={styles.ruleEmpty}>Ingen betingelser ennå. Legg til minst én.</p>
+                )}
+                {rule.conditions.map((cond, i) => {
+                    const needsValue = operatorNeedsValue(cond.operator);
+                    return (
+                        <div key={i} className={styles.ruleRow}>
+                            <select
+                                className={styles.ruleSelect}
+                                value={cond.attribute}
+                                onChange={(e) => updateCondition(i, { attribute: e.target.value as RuleAttribute })}
+                                aria-label="Attributt"
+                            >
+                                {ATTRIBUTE_ORDER.map((attr) => (
+                                    <option key={attr} value={attr}>{ATTRIBUTE_LABELS[attr]}</option>
+                                ))}
+                            </select>
+
+                            <select
+                                className={styles.ruleSelect}
+                                value={cond.operator}
+                                onChange={(e) => updateCondition(i, { operator: e.target.value as RuleOperator })}
+                                aria-label="Operator"
+                            >
+                                {OPERATOR_ORDER.map((op) => (
+                                    <option key={op} value={op}>{OPERATOR_LABELS[op]}</option>
+                                ))}
+                            </select>
+
+                            {!needsValue ? (
+                                <input
+                                    className={`${styles.ruleValueInput} ${styles.ruleValueDisabled}`}
+                                    value=""
+                                    disabled
+                                    placeholder="—"
+                                    aria-label="Verdi (ikke nødvendig)"
+                                />
+                            ) : cond.attribute === 'active' ? (
+                                <select
+                                    className={styles.ruleSelect}
+                                    value={cond.value || 'true'}
+                                    onChange={(e) => updateCondition(i, { value: e.target.value })}
+                                    aria-label="Verdi"
+                                >
+                                    <option value="true">Ja (aktiv)</option>
+                                    <option value="false">Nei (inaktiv)</option>
+                                </select>
+                            ) : cond.attribute === 'globalRole' ? (
+                                <select
+                                    className={styles.ruleSelect}
+                                    value={cond.value || 'USER'}
+                                    onChange={(e) => updateCondition(i, { value: e.target.value })}
+                                    aria-label="Verdi"
+                                >
+                                    {ROLE_OPTIONS.map((r) => (
+                                        <option key={r.value} value={r.value}>{r.label}</option>
+                                    ))}
+                                </select>
+                            ) : (
+                                <input
+                                    className={styles.ruleValueInput}
+                                    value={cond.value}
+                                    onChange={(e) => updateCondition(i, { value: e.target.value })}
+                                    placeholder="Verdi..."
+                                    aria-label="Verdi"
+                                />
+                            )}
+
+                            <button
+                                type="button"
+                                className={styles.ruleRemove}
+                                onClick={() => removeCondition(i)}
+                                title="Fjern betingelse"
+                                aria-label="Fjern betingelse"
+                            >
+                                <X size={14} />
+                            </button>
+                        </div>
+                    );
+                })}
+            </div>
+
+            <button type="button" className={styles.addConditionBtn} onClick={addCondition}>
+                <Plus size={14} /> Legg til betingelse
+            </button>
+        </div>
+    );
 }
 
 interface GroupsClientProps {
@@ -63,6 +256,13 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
     const [formDesc, setFormDesc] = useState('');
     const [formColor, setFormColor] = useState<string | null>(null);
     const [customHex, setCustomHex] = useState('');
+
+    // Dynamic group form state
+    const [formIsDynamic, setFormIsDynamic] = useState(false);
+    const [formRule, setFormRule] = useState<GroupRule>(emptyRule());
+
+    // Per-card sync state
+    const [syncingId, setSyncingId] = useState<string | null>(null);
 
     // Color suggestions (computed from existing groups + actual branding)
     function getColorSuggestions(): ColorSuggestion[] {
@@ -111,6 +311,15 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
         return () => clearTimeout(t);
     }, [search]);
 
+    function resetForm() {
+        setFormName('');
+        setFormDesc('');
+        setFormColor(null);
+        setCustomHex('');
+        setFormIsDynamic(false);
+        setFormRule(emptyRule());
+    }
+
     // ── Create ──────────────────────────────────────────
     async function handleCreate() {
         setError(null);
@@ -120,25 +329,39 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
             description: formDesc || undefined,
             color: formColor || undefined,
         });
+        if ('error' in result) { setLoading(false); setError(result.error); return; }
+
+        // If marked dynamic, persist the rule + sync immediately.
+        if (formIsDynamic) {
+            const dynResult = await setGroupDynamic(result.groupId, true, formRule);
+            if ('error' in dynResult) { setLoading(false); setError(dynResult.error); return; }
+        }
+
         setLoading(false);
-        if ('error' in result) { setError(result.error); return; }
         setShowCreate(false);
-        setFormName('');
-        setFormDesc('');
-        setFormColor(null);
-        showToast('Gruppe opprettet');
+        resetForm();
+        showToast(formIsDynamic ? 'Dynamisk gruppe opprettet' : 'Gruppe opprettet');
         refreshData();
     }
 
     // ── Edit ────────────────────────────────────────────
-    function openEdit(group: GroupListItem) {
+    async function openEdit(group: GroupListItem) {
         setSelectedGroup(group);
         setFormName(group.name);
         setFormDesc(group.description || '');
         setFormColor(group.color || null);
         setCustomHex('');
+        setFormIsDynamic(group.isDynamic);
+        setFormRule(emptyRule());
         setError(null);
         setShowEdit(true);
+        // Load the persisted rule (only present in the full group detail).
+        if (group.isDynamic) {
+            const result = await getGroup(group.id);
+            if ('group' in result && result.group.ruleJson && result.group.ruleJson.conditions.length > 0) {
+                setFormRule(result.group.ruleJson);
+            }
+        }
     }
 
     async function handleEdit() {
@@ -150,11 +373,34 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
             description: formDesc,
             color: formColor,
         });
+        if ('error' in result) { setLoading(false); setError(result.error); return; }
+
+        // Persist dynamic mode + rule (also handles toggling off: clears rule
+        // and removes rule-based memberships server-side).
+        const dynResult = await setGroupDynamic(
+            selectedGroup.id,
+            formIsDynamic,
+            formIsDynamic ? formRule : null
+        );
+        if ('error' in dynResult) { setLoading(false); setError(dynResult.error); return; }
+
         setLoading(false);
-        if ('error' in result) { setError(result.error); return; }
         setShowEdit(false);
         showToast('Gruppe oppdatert');
         refreshData();
+    }
+
+    // ── Sync dynamic group ──────────────────────────────
+    async function handleSync(group: GroupListItem) {
+        setSyncingId(group.id);
+        const result = await syncDynamicGroup(group.id);
+        setSyncingId(null);
+        if ('error' in result) { setError(result.error); return; }
+        const { added, removed } = result;
+        showToast(`Synkronisert: ${added} lagt til, ${removed} fjernet`);
+        refreshData();
+        // Refresh open detail view if it's this group.
+        if (showDetail && selectedGroup?.id === group.id) refreshDetail();
     }
 
     // ── Delete ──────────────────────────────────────────
@@ -233,7 +479,7 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
                     <h1 className={styles.title}>Grupper</h1>
                     <p className={styles.subtitle}>Organiser brukere i grupper for enklere administrasjon av kurs og tilganger.</p>
                 </div>
-                <button className={styles.createButton} onClick={() => { setFormName(''); setFormDesc(''); setFormColor(null); setError(null); setShowCreate(true); }}>
+                <button className={styles.createButton} onClick={() => { resetForm(); setError(null); setShowCreate(true); }}>
                     <Plus size={16} /> Ny gruppe
                 </button>
             </div>
@@ -276,7 +522,7 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
                     <p className={styles.emptyText}>
                         Opprett din første gruppe for å organisere brukere og forenkle kursadministrasjon.
                     </p>
-                    <button className={styles.createButton} onClick={() => { setFormName(''); setFormDesc(''); setFormColor(null); setCustomHex(''); setError(null); setShowCreate(true); }}>
+                    <button className={styles.createButton} onClick={() => { resetForm(); setError(null); setShowCreate(true); }}>
                         <Plus size={16} /> Opprett gruppe
                     </button>
                 </div>
@@ -295,6 +541,11 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
                                         />
                                     )}
                                     <span className={styles.cardTitle}>{g.name}</span>
+                                    {g.isDynamic && (
+                                        <span className={styles.dynamicBadge} title="Medlemskap styres av regler">
+                                            <Zap size={11} /> Dynamisk
+                                        </span>
+                                    )}
                                 </div>
                                 <div className={styles.cardActions}>
                                     <button
@@ -318,6 +569,20 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
                                 <span className={styles.metaItem}>
                                     <Users size={14} /> {g.memberCount} {g.memberCount === 1 ? 'medlem' : 'medlemmer'}
                                 </span>
+                                {g.isDynamic && (
+                                    <>
+                                        <span className={styles.cardMetaSpacer} />
+                                        <button
+                                            className={styles.syncBtn}
+                                            title="Synkroniser medlemskap mot reglene"
+                                            disabled={syncingId === g.id}
+                                            onClick={(e) => { e.stopPropagation(); handleSync(g); }}
+                                        >
+                                            <RefreshCw size={13} className={syncingId === g.id ? styles.syncSpin : undefined} />
+                                            {syncingId === g.id ? 'Synkroniserer…' : 'Synkroniser nå'}
+                                        </button>
+                                    </>
+                                )}
                             </div>
                         </div>
                     ))}
@@ -420,6 +685,36 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
                                     </span>
                                 )}
                             </div>
+
+                            {/* Dynamic group toggle + rule builder */}
+                            <div className={styles.toggleRow}>
+                                <div className={styles.toggleInfo}>
+                                    <span className={styles.toggleTitle}>
+                                        <Zap size={14} /> Dynamisk gruppe
+                                    </span>
+                                    <span className={styles.toggleHint}>
+                                        Medlemskap utledes automatisk fra regler mot brukerattributter.
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    role="switch"
+                                    aria-checked={formIsDynamic}
+                                    aria-label="Dynamisk gruppe"
+                                    className={`${styles.switch} ${formIsDynamic ? styles.switchOn : ''}`}
+                                    onClick={() => setFormIsDynamic((v) => !v)}
+                                >
+                                    <span className={styles.switchKnob} />
+                                </button>
+                            </div>
+                            {formIsDynamic && (
+                                <div className={styles.formGroup}>
+                                    <label className={styles.formLabel}>
+                                        <Sparkles size={12} /> Regler
+                                    </label>
+                                    <RuleBuilder rule={formRule} onChange={setFormRule} styles={styles} />
+                                </div>
+                            )}
                         </div>
                         <div className={styles.modalFooter}>
                             <button className={styles.btnSecondary} onClick={() => setShowCreate(false)}>Avbryt</button>
@@ -525,6 +820,37 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
                                     </span>
                                 )}
                             </div>
+
+                            {/* Dynamic group toggle + rule builder */}
+                            <div className={styles.toggleRow}>
+                                <div className={styles.toggleInfo}>
+                                    <span className={styles.toggleTitle}>
+                                        <Zap size={14} /> Dynamisk gruppe
+                                    </span>
+                                    <span className={styles.toggleHint}>
+                                        Medlemskap utledes automatisk fra regler mot brukerattributter.
+                                        Manuelle medlemmer beholdes.
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    role="switch"
+                                    aria-checked={formIsDynamic}
+                                    aria-label="Dynamisk gruppe"
+                                    className={`${styles.switch} ${formIsDynamic ? styles.switchOn : ''}`}
+                                    onClick={() => setFormIsDynamic((v) => !v)}
+                                >
+                                    <span className={styles.switchKnob} />
+                                </button>
+                            </div>
+                            {formIsDynamic && (
+                                <div className={styles.formGroup}>
+                                    <label className={styles.formLabel}>
+                                        <Sparkles size={12} /> Regler
+                                    </label>
+                                    <RuleBuilder rule={formRule} onChange={setFormRule} styles={styles} />
+                                </div>
+                            )}
                         </div>
                         <div className={styles.modalFooter}>
                             <button className={styles.btnSecondary} onClick={() => setShowEdit(false)}>Avbryt</button>
@@ -584,13 +910,26 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
                                         <p className={styles.cardDesc}>{groupDetail.description}</p>
                                     )}
 
+                                    {groupDetail.isDynamic && (
+                                        <div className={styles.ruleNote}>
+                                            <Info size={15} />
+                                            <span>
+                                                Dette er en dynamisk gruppe. Medlemskap styres av regler og
+                                                oppdateres automatisk. Bruk <strong>Synkroniser nå</strong> for
+                                                å kjøre reglene på nytt.
+                                            </span>
+                                        </div>
+                                    )}
+
                                     <div className={styles.formLabel}>
                                         Medlemmer ({groupDetail.members.length})
                                     </div>
 
                                     {groupDetail.members.length === 0 ? (
                                         <div className={styles.emptyMembers}>
-                                            Ingen medlemmer i denne gruppen ennå.
+                                            {groupDetail.isDynamic
+                                                ? 'Ingen brukere matcher reglene ennå.'
+                                                : 'Ingen medlemmer i denne gruppen ennå.'}
                                         </div>
                                     ) : (
                                         <div className={styles.memberList}>
@@ -609,67 +948,92 @@ export default function GroupsClient({ initialGroups, initialStats }: GroupsClie
                                                         </span>
                                                         <span className={styles.memberEmail}>{m.email}</span>
                                                     </div>
-                                                    <button
-                                                        className={styles.memberRemove}
-                                                        title="Fjern fra gruppe"
-                                                        onClick={() => handleRemoveMember(m.id)}
-                                                    >
-                                                        <UserMinus size={14} />
-                                                    </button>
+                                                    {groupDetail.isDynamic && (
+                                                        <span
+                                                            className={`${styles.memberSourceTag} ${m.source === 'manual' ? styles.memberSourceManual : ''}`}
+                                                            title={m.source === 'rule' ? 'Lagt til av regel' : 'Lagt til manuelt'}
+                                                        >
+                                                            {m.source === 'rule' ? 'Regel' : 'Manuell'}
+                                                        </span>
+                                                    )}
+                                                    {/* In dynamic groups, only manual members can be removed by hand;
+                                                        rule-driven membership is reconciled by sync. */}
+                                                    {(!groupDetail.isDynamic || m.source === 'manual') && (
+                                                        <button
+                                                            className={styles.memberRemove}
+                                                            title="Fjern fra gruppe"
+                                                            onClick={() => handleRemoveMember(m.id)}
+                                                        >
+                                                            <UserMinus size={14} />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             ))}
                                         </div>
                                     )}
 
-                                    {/* Add member */}
-                                    <div className={styles.addMemberSection}>
-                                        <span className={styles.addMemberLabel}>
-                                            <UserPlus size={14} /> Legg til medlem
-                                        </span>
-                                        <input
-                                            className={styles.addMemberSearch}
-                                            placeholder="Søk etter bruker (navn eller e-post)..."
-                                            value={memberSearch}
-                                            onChange={(e) => setMemberSearch(e.target.value)}
-                                        />
-                                        {loadingMembers && (
-                                            <div className={styles.loading}>
-                                                <div className={styles.spinner} />
-                                            </div>
-                                        )}
-                                        {availableMembers.length > 0 && (
-                                            <div className={styles.addMemberResults}>
-                                                {availableMembers.map((u) => (
-                                                    <div key={u.id} className={styles.addMemberRow}>
-                                                        {u.avatarUrl ? (
-                                                            <img src={u.avatarUrl} alt="" className={styles.avatarImg} />
-                                                        ) : (
-                                                            <div className={styles.avatar}>{getInitials(u)}</div>
-                                                        )}
-                                                        <div>
-                                                            <div className={styles.addMemberName}>
-                                                                {u.firstName && u.lastName
-                                                                    ? `${u.firstName} ${u.lastName}`
-                                                                    : u.name || u.email}
+                                    {/* Add member — manual groups only */}
+                                    {!groupDetail.isDynamic && (
+                                        <div className={styles.addMemberSection}>
+                                            <span className={styles.addMemberLabel}>
+                                                <UserPlus size={14} /> Legg til medlem
+                                            </span>
+                                            <input
+                                                className={styles.addMemberSearch}
+                                                placeholder="Søk etter bruker (navn eller e-post)..."
+                                                value={memberSearch}
+                                                onChange={(e) => setMemberSearch(e.target.value)}
+                                            />
+                                            {loadingMembers && (
+                                                <div className={styles.loading}>
+                                                    <div className={styles.spinner} />
+                                                </div>
+                                            )}
+                                            {availableMembers.length > 0 && (
+                                                <div className={styles.addMemberResults}>
+                                                    {availableMembers.map((u) => (
+                                                        <div key={u.id} className={styles.addMemberRow}>
+                                                            {u.avatarUrl ? (
+                                                                <img src={u.avatarUrl} alt="" className={styles.avatarImg} />
+                                                            ) : (
+                                                                <div className={styles.avatar}>{getInitials(u)}</div>
+                                                            )}
+                                                            <div>
+                                                                <div className={styles.addMemberName}>
+                                                                    {u.firstName && u.lastName
+                                                                        ? `${u.firstName} ${u.lastName}`
+                                                                        : u.name || u.email}
+                                                                </div>
+                                                                <div className={styles.addMemberEmail}>{u.email}</div>
                                                             </div>
-                                                            <div className={styles.addMemberEmail}>{u.email}</div>
+                                                            <button
+                                                                className={styles.addMemberBtn}
+                                                                title="Legg til"
+                                                                onClick={() => handleAddMember(u.id)}
+                                                            >
+                                                                <Plus size={12} />
+                                                            </button>
                                                         </div>
-                                                        <button
-                                                            className={styles.addMemberBtn}
-                                                            title="Legg til"
-                                                            onClick={() => handleAddMember(u.id)}
-                                                        >
-                                                            <Plus size={12} />
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </>
                             ) : null}
                         </div>
                         <div className={styles.modalFooter}>
+                            {groupDetail?.isDynamic && (
+                                <button
+                                    className={styles.syncBtn}
+                                    disabled={syncingId === selectedGroup.id}
+                                    onClick={() => handleSync(selectedGroup)}
+                                    style={{ marginRight: 'auto' }}
+                                >
+                                    <RefreshCw size={13} className={syncingId === selectedGroup.id ? styles.syncSpin : undefined} />
+                                    {syncingId === selectedGroup.id ? 'Synkroniserer…' : 'Synkroniser nå'}
+                                </button>
+                            )}
                             <button className={styles.btnSecondary} onClick={() => setShowDetail(false)}>Lukk</button>
                         </div>
                     </div>

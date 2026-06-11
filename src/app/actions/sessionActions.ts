@@ -537,7 +537,14 @@ export async function cancelSession(
 
         const existing = await prisma.trainingSession.findFirst({
             where: { id, tenantId },
-            select: { id: true, title: true },
+            select: {
+                id: true,
+                title: true,
+                enrollments: {
+                    where: { status: { in: ['REGISTERED', 'WAITLISTED'] } },
+                    select: { userId: true },
+                },
+            },
         });
         if (!existing) return { error: 'Sesjon ikke funnet' };
 
@@ -545,6 +552,26 @@ export async function cancelSession(
             where: { id },
             data: { status: 'CANCELLED' },
         });
+
+        // Varsle alle påmeldte/ventelistede deltakere om at sesjonen er avlyst.
+        // Best effort: én feilende varsling skal ikke velte avlysningen.
+        for (const enrollment of existing.enrollments) {
+            try {
+                await prisma.notification.create({
+                    data: {
+                        tenantId,
+                        userId: enrollment.userId,
+                        type: 'GENERAL',
+                        title: 'Sesjon avlyst',
+                        message: `Sesjonen "${existing.title}" har blitt avlyst.`,
+                        entityType: 'session',
+                        entityId: id,
+                    },
+                });
+            } catch {
+                // Hopp over denne deltakeren, fortsett med resten.
+            }
+        }
 
         await writeAudit(tenantId, userId, 'session.cancelled', id, { title: existing.title });
 
