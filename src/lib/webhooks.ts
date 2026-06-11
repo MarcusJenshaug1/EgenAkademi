@@ -110,3 +110,45 @@ export async function sendWebhook(
 
     return { ok, statusCode, error: errorMessage };
 }
+
+/**
+ * Send en hendelse til alle aktiverte webhooks i tenanten som abonnerer på
+ * den gitte event-typen.
+ *
+ * Dette er en "fire-and-forget"-funksjon: den kalles etter at en server action
+ * allerede har fullført sin DB-skriving, og skal ALDRI velte den handlingen.
+ * Alle feil – inkludert oppslag av webhooks og selve leveringen – fanges og
+ * svelges. Funksjonen kaster aldri og returnerer alltid void.
+ */
+export async function dispatchWebhookEvent(
+    tenantId: string,
+    event: string,
+    payload: object
+): Promise<void> {
+    try {
+        const webhooks = await prisma.webhook.findMany({
+            where: {
+                tenantId,
+                enabled: true,
+                events: { has: event },
+            },
+            select: {
+                id: true,
+                tenantId: true,
+                url: true,
+                secret: true,
+                events: true,
+                enabled: true,
+            },
+        });
+
+        // Lever til hver matchende webhook uavhengig av hverandre. En feilende
+        // levering (eller en avvist promise) skal aldri stoppe de øvrige.
+        await Promise.allSettled(
+            webhooks.map((webhook) => sendWebhook(webhook, event, payload))
+        );
+    } catch {
+        // Svelg alt: webhook-utsending er en best-effort sideeffekt og skal
+        // aldri lekke feil eller velte den kallende handlingen.
+    }
+}

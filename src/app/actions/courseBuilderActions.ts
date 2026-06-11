@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma';
 import { auth } from '@/auth';
 import type { LessonType, CompletionRule, BlockType } from '@prisma/client';
 import { Prisma } from '@prisma/client';
+import { dispatchWebhookEvent } from '@/lib/webhooks';
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -312,6 +313,11 @@ export async function publishVersion(
         await prisma.course.update({
             where: { id: courseId },
             data: { currentPublishedVersionId: versionId },
+        });
+
+        // Webhook (best-effort): aldri velt publiseringen om utsending feiler.
+        await dispatchWebhookEvent(tenantId, 'course.published', {
+            courseId,
         });
 
         return { success: true };

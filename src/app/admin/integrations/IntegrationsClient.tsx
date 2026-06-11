@@ -5,6 +5,7 @@ import {
     KeyRound, Shield, Webhook, Plug, ScrollText, Lock,
     Plus, Trash2, Copy, Check, Send, RefreshCw, X,
     AlertTriangle, CheckCircle, ArrowUpCircle, Power, Edit3,
+    Download, Save, Eraser, Clock, Info,
 } from 'lucide-react';
 import styles from './integrations.module.css';
 import {
@@ -13,7 +14,7 @@ import {
     listWebhooks, createWebhook, setWebhookEnabled, deleteWebhook,
     listRecentDeliveries, sendTestWebhook, updateWebhook,
     listLtiPlatforms, createLtiPlatform, updateLtiPlatform, setLtiEnabled, deleteLtiPlatform,
-    listAuditLogs,
+    listAuditLogs, getAuditRetention, setAuditRetention, runAuditRetention, exportAuditCsv,
     type ScimTokenListItem, type WebhookListItem, type WebhookDeliveryItem,
     type LtiPlatformItem, type AuditLogItem,
 } from '@/app/actions/integrationActions';
@@ -40,6 +41,8 @@ interface SsoData {
 }
 
 export interface IntegrationsData {
+    tenantId: string;
+    baseUrl: string;
     access: {
         sso: AccessFlag;
         scim: AccessFlag;
@@ -189,7 +192,7 @@ export default function IntegrationsClient({ data }: { data: IntegrationsData })
                 <div className={styles.panel}>
                     {tab === 'sso' && (
                         data.access.sso.allowed
-                            ? <SsoTab initial={data.sso} onOk={notifyOk} onErr={notifyErr} />
+                            ? <SsoTab initial={data.sso} tenantId={data.tenantId} baseUrl={data.baseUrl} onOk={notifyOk} onErr={notifyErr} />
                             : <UpgradeCard title="SSO (SAML)" reason={data.access.sso.reason} />
                     )}
                     {tab === 'scim' && (
@@ -204,12 +207,12 @@ export default function IntegrationsClient({ data }: { data: IntegrationsData })
                     )}
                     {tab === 'lti' && (
                         data.access.lti.allowed
-                            ? <LtiTab initial={data.ltiPlatforms} onOk={notifyOk} onErr={notifyErr} />
+                            ? <LtiTab initial={data.ltiPlatforms} baseUrl={data.baseUrl} onOk={notifyOk} onErr={notifyErr} />
                             : <UpgradeCard title="LTI" reason={data.access.lti.reason} />
                     )}
                     {tab === 'audit' && (
                         data.access.audit.allowed
-                            ? <AuditTab initial={data.auditLogs} onErr={notifyErr} />
+                            ? <AuditTab initial={data.auditLogs} onOk={notifyOk} onErr={notifyErr} />
                             : <UpgradeCard title="Audit-logg" reason={data.access.audit.reason} />
                     )}
                 </div>
@@ -230,9 +233,11 @@ export default function IntegrationsClient({ data }: { data: IntegrationsData })
 // ════════════════════════════════════════════════════════════
 
 function SsoTab({
-    initial, onOk, onErr,
+    initial, tenantId, baseUrl, onOk, onErr,
 }: {
     initial: SsoData | null;
+    tenantId: string;
+    baseUrl: string;
     onOk: (m: string) => void;
     onErr: (m: string) => void;
 }) {
@@ -241,9 +246,14 @@ function SsoTab({
     const [toggling, setToggling] = useState(false);
     const mapping = initial?.attributeMapping ?? {};
 
-    // SP-metadata (ACS URL er en placeholder – live SAML-handshake er ikke implementert).
-    const spEntityId = initial?.spEntityId || 'urn:egenakademi:sp';
-    const acsPlaceholder = '<din-tenant>.egenakademi.no/api/auth/saml/acs';
+    // Per-tenant SP-endepunkter (speiler src/lib/saml.ts). Disse er de faktiske
+    // URL-ene admin registrerer i sin IdP (Okta/Entra/Google).
+    const samlBase = `${baseUrl}/api/auth/saml/${encodeURIComponent(tenantId)}`;
+    const loginUrl = `${samlBase}/login`;
+    const acsUrl = `${samlBase}/acs`;
+    const metadataUrl = `${samlBase}/metadata`;
+    // SP entityId: tenant-satt verdi, ellers avledet (= metadata-URL).
+    const spEntityId = (initial?.spEntityId && initial.spEntityId.trim()) || metadataUrl;
 
     async function handleSave(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -298,16 +308,26 @@ function SsoTab({
                 </button>
             </div>
 
-            {/* SP-metadata */}
+            {/* SP-endepunkter – registrer disse i din IdP */}
             <div className={styles.infoCard}>
-                <span className={styles.infoCardLabel}>Vår tjenesteleverandør (SP)</span>
+                <span className={styles.infoCardLabel}>
+                    Vår tjenesteleverandør (SP) – registrer disse i din IdP
+                </span>
                 <div className={styles.kvRow}>
                     <span className={styles.kvKey}>SP Entity ID</span>
-                    <code className={styles.kvValue}>{spEntityId}</code>
+                    <CopyBox value={spEntityId} />
                 </div>
                 <div className={styles.kvRow}>
-                    <span className={styles.kvKey}>ACS URL (placeholder)</span>
-                    <code className={styles.kvValue}>{acsPlaceholder}</code>
+                    <span className={styles.kvKey}>ACS / Callback-URL</span>
+                    <CopyBox value={acsUrl} />
+                </div>
+                <div className={styles.kvRow}>
+                    <span className={styles.kvKey}>Login-URL (SP-initiert)</span>
+                    <CopyBox value={loginUrl} />
+                </div>
+                <div className={styles.kvRow}>
+                    <span className={styles.kvKey}>SP-metadata-URL</span>
+                    <CopyBox value={metadataUrl} />
                 </div>
             </div>
 
@@ -774,12 +794,20 @@ function WebhooksTab({
 // ════════════════════════════════════════════════════════════
 
 function LtiTab({
-    initial, onOk, onErr,
+    initial, baseUrl, onOk, onErr,
 }: {
     initial: LtiPlatformItem[];
+    baseUrl: string;
     onOk: (m: string) => void;
     onErr: (m: string) => void;
 }) {
+    // Verktøy-endepunkter (tool side). Disse er felles for tjenesten – ikke
+    // per-tenant i denne scaffolden – og er de URL-ene admin registrerer i sin
+    // LMS-plattform (Canvas/Moodle/Blackboard). Speiler src/lib/lti.ts.
+    const ltiBase = `${baseUrl}/api/lti`;
+    const loginUrl = `${ltiBase}/login`;
+    const launchUrl = `${ltiBase}/launch`;
+    const jwksUrl = `${ltiBase}/jwks`;
     const [platforms, setPlatforms] = useState<LtiPlatformItem[]>(initial);
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState<LtiPlatformItem | null>(null);
@@ -862,6 +890,25 @@ function LtiTab({
                     <Plus size={16} />
                     Ny plattform
                 </button>
+            </div>
+
+            {/* Verktøy-URLer – registrer disse i din LMS-plattform */}
+            <div className={styles.infoCard}>
+                <span className={styles.infoCardLabel}>
+                    Våre verktøy-URLer – registrer disse i din LMS-plattform
+                </span>
+                <div className={styles.kvRow}>
+                    <span className={styles.kvKey}>OIDC login-URL (initiering)</span>
+                    <CopyBox value={loginUrl} />
+                </div>
+                <div className={styles.kvRow}>
+                    <span className={styles.kvKey}>Launch / redirect-URI</span>
+                    <CopyBox value={launchUrl} />
+                </div>
+                <div className={styles.kvRow}>
+                    <span className={styles.kvKey}>JWKS / offentlig nøkkel-URL</span>
+                    <CopyBox value={jwksUrl} />
+                </div>
             </div>
 
             {showForm && (
@@ -953,14 +1000,23 @@ function LtiTab({
 // ════════════════════════════════════════════════════════════
 
 function AuditTab({
-    initial, onErr,
+    initial, onOk, onErr,
 }: {
     initial: AuditLogItem[];
+    onOk: (m: string) => void;
     onErr: (m: string) => void;
 }) {
     const [logs, setLogs] = useState<AuditLogItem[]>(initial);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(false);
+
+    // Retention-kontroll
+    const [retentionLoaded, setRetentionLoaded] = useState(false);
+    const [keepForever, setKeepForever] = useState(true);
+    const [retentionDays, setRetentionDays] = useState<string>('365');
+    const [savingRetention, setSavingRetention] = useState(false);
+    const [cleaning, setCleaning] = useState(false);
+    const [exporting, setExporting] = useState(false);
 
     const refresh = useCallback(async (q: string) => {
         setLoading(true);
@@ -971,13 +1027,96 @@ function AuditTab({
     }, [onErr]);
 
     useEffect(() => {
+        // Debounce søk. Kjører også ved montering for å holde listen i synk med
+        // serverens filtrering (initial-data er kun et førstevisnings-øyeblikksbilde).
         const t = setTimeout(() => {
-            // Skip the very first run (initial data already loaded) only when search is empty.
             refresh(search);
         }, 300);
         return () => clearTimeout(t);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [search]);
+
+    // Hent gjeldende oppbevaringsinnstilling én gang.
+    useEffect(() => {
+        let active = true;
+        (async () => {
+            const result = await getAuditRetention();
+            if (!active) return;
+            if ('retentionDays' in result) {
+                if (result.retentionDays == null) {
+                    setKeepForever(true);
+                } else {
+                    setKeepForever(false);
+                    setRetentionDays(String(result.retentionDays));
+                }
+            }
+            setRetentionLoaded(true);
+        })();
+        return () => {
+            active = false;
+        };
+    }, []);
+
+    async function handleSaveRetention(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault();
+        let days: number | null = null;
+        if (!keepForever) {
+            const parsed = parseInt(retentionDays, 10);
+            if (!Number.isFinite(parsed) || parsed < 1 || parsed > 3650) {
+                onErr('Antall dager må være et heltall mellom 1 og 3650');
+                return;
+            }
+            days = parsed;
+        }
+        setSavingRetention(true);
+        const result = await setAuditRetention(days);
+        setSavingRetention(false);
+        if ('success' in result) {
+            onOk('Oppbevaringsinnstilling lagret');
+        } else {
+            onErr(result.error);
+        }
+    }
+
+    async function handleExport() {
+        setExporting(true);
+        const result = await exportAuditCsv({ search: search || undefined });
+        setExporting(false);
+        if ('csv' in result) {
+            const blob = new Blob([result.csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = result.filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+            onOk(
+                result.capped
+                    ? 'CSV eksportert (begrenset til 5000 rader)'
+                    : 'CSV eksportert'
+            );
+        } else {
+            onErr(result.error);
+        }
+    }
+
+    async function handleRunRetention() {
+        setCleaning(true);
+        const result = await runAuditRetention();
+        setCleaning(false);
+        if ('deleted' in result) {
+            onOk(
+                result.deleted > 0
+                    ? `Opprydding fullført – ${result.deleted} hendelser slettet`
+                    : 'Opprydding fullført – ingen hendelser eldre enn grensen'
+            );
+            await refresh(search);
+        } else {
+            onErr(result.error);
+        }
+    }
 
     return (
         <div className={styles.tabContent}>
@@ -988,7 +1127,106 @@ function AuditTab({
                         Sikkerhetshendelser i organisasjonen, nyeste først.
                     </p>
                 </div>
+                <button
+                    type="button"
+                    className={styles.btnGhost}
+                    onClick={handleExport}
+                    disabled={exporting}
+                >
+                    <span className={styles.btnIconLabel}>
+                        <Download size={15} />
+                        {exporting ? 'Eksporterer…' : 'Eksporter CSV'}
+                    </span>
+                </button>
             </div>
+
+            {/* Oppbevaring (retention) */}
+            <form onSubmit={handleSaveRetention} className={styles.inlineForm}>
+                <div className={styles.formGroup}>
+                    <span className={styles.subLabel}>Oppbevaring av audit-logg</span>
+                    <p className={styles.retentionHint}>
+                        Bestem hvor lenge hendelser skal lagres. Eldre hendelser kan
+                        ryddes bort manuelt nedenfor.
+                    </p>
+                </div>
+
+                <div className={styles.retentionControls}>
+                    <label className={styles.checkItem}>
+                        <input
+                            type="radio"
+                            name="retentionMode"
+                            checked={keepForever}
+                            onChange={() => setKeepForever(true)}
+                        />
+                        <span>Behold for alltid</span>
+                    </label>
+                    <label className={styles.checkItem}>
+                        <input
+                            type="radio"
+                            name="retentionMode"
+                            checked={!keepForever}
+                            onChange={() => setKeepForever(false)}
+                        />
+                        <span>Behold i</span>
+                    </label>
+                    <input
+                        className={styles.daysInput}
+                        type="number"
+                        min={1}
+                        max={3650}
+                        value={retentionDays}
+                        onChange={(e) => setRetentionDays(e.target.value)}
+                        onFocus={() => setKeepForever(false)}
+                        disabled={keepForever}
+                        aria-label="Antall dager"
+                    />
+                    <span className={styles.muted}>dager</span>
+                </div>
+
+                <div className={styles.formActions}>
+                    <button
+                        type="submit"
+                        className={styles.btnPrimary}
+                        disabled={savingRetention || !retentionLoaded}
+                    >
+                        <Save size={15} />
+                        {savingRetention ? 'Lagrer…' : 'Lagre oppbevaring'}
+                    </button>
+                </div>
+            </form>
+
+            {/* Manuell opprydding */}
+            <div className={styles.retentionNote}>
+                <Info size={15} />
+                <div>
+                    <span>
+                        Planlagt håndheving av oppbevaring (cron) er ennå ikke satt opp
+                        (TODO). Inntil videre kan du kjøre oppryddingen manuelt.
+                    </span>
+                    <div className={styles.retentionNoteAction}>
+                        <button
+                            type="button"
+                            className={styles.btnGhost}
+                            onClick={handleRunRetention}
+                            disabled={cleaning}
+                        >
+                            <span className={styles.btnIconLabel}>
+                                <Eraser size={15} />
+                                {cleaning ? 'Rydder opp…' : 'Kjør opprydding nå'}
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div className={styles.divider} />
+
+            <span className={styles.subLabel}>
+                <span className={styles.btnIconLabel}>
+                    <Clock size={14} />
+                    Hendelser
+                </span>
+            </span>
 
             <input
                 className={styles.input}

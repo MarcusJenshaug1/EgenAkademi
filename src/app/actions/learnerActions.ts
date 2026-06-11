@@ -2,6 +2,8 @@
 
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
+import { dispatchWebhookEvent } from '@/lib/webhooks';
+import { awardForEvent } from '@/lib/gamification';
 
 // ── Hjelpefunksjon for autentisert bruker ──────────────
 
@@ -777,7 +779,13 @@ export async function markLessonCompleted(
             },
         });
 
-        if (isCompleted) {
+        // Fyrte kun ved den faktiske fullførings-overgangen (ikke ved hver
+        // leksjon som markeres når kurset allerede står på 100 %, f.eks.
+        // valgfrie leksjoner). enrollment.completedAt er pre-oppdaterings-
+        // verdien siden den ble hentet før prisma.update over.
+        const justCompleted = isCompleted && enrollment.completedAt === null;
+
+        if (justCompleted) {
             await prisma.progressEvent.create({
                 data: {
                     tenantId: user.tenantId,
@@ -786,6 +794,22 @@ export async function markLessonCompleted(
                     entityType: 'course',
                     entityId: enrollment.courseId,
                 },
+            });
+
+            // Webhook (best-effort): aldri velt fullføringen om utsending feiler.
+            await dispatchWebhookEvent(user.tenantId, 'course.completed', {
+                userId: user.userId,
+                courseId: enrollment.courseId,
+                enrollmentId,
+            });
+
+            // Gamification (best-effort): tildel poeng/badges ved fullføring.
+            // awardForEvent kaster aldri og no-op-er hvis 'gamification' ikke er
+            // aktivert. dedupeKey hindrer dobbel-tildeling per påmelding.
+            await awardForEvent(user.tenantId, user.userId, 'course_completed', {
+                sourceType: 'course',
+                sourceId: enrollment.courseId,
+                dedupeKey: 'course_completed:' + enrollmentId,
             });
         }
 

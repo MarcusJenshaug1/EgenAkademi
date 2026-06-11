@@ -2,12 +2,14 @@ import Link from 'next/link';
 import {
     LayoutDashboard, Users, UsersRound, Shield, BookOpen,
     Calendar, Files, Palette, Plug, BarChart3, HelpCircle, LogOut, UserCircle,
-    Rocket, AlarmClock
+    Rocket, AlarmClock, Target, Package, Globe, ShieldAlert, Trophy, BookText
 } from 'lucide-react';
+import type { TenantPlan } from '@prisma/client';
 import styles from './layout.module.css';
 import { auth, signOut } from '@/auth';
 import { redirect } from 'next/navigation';
 import prisma from '@/lib/prisma';
+import { checkAccess } from '@/lib/features';
 import NavLink from './NavLink';
 
 export default async function AdminLayout({
@@ -26,13 +28,29 @@ export default async function AdminLayout({
     let tenantLogoUrl: string | null = null;
     let userAvatarUrl: string | null = null;
     let currentUser: { avatarUrl: string | null; firstName: string | null; lastName: string | null; jobTitle: string | null } | null = null;
+    // Plan/addons/trial drive nav gating. Default to FREE/no-addons so missing
+    // tenants degrade to "only core items unlocked" rather than over-granting.
+    let tenantPlan: TenantPlan = 'FREE';
+    let tenantAddons: string[] = [];
+    let tenantTrialEndsAt: Date | null = null;
     if (session.user.tenantId) {
         const tenant = await prisma.tenant.findUnique({
             where: { id: session.user.tenantId },
-            select: { name: true, logoUrl: true, logoSvgModified: true, logoSvgContent: true },
+            select: {
+                name: true,
+                logoUrl: true,
+                logoSvgModified: true,
+                logoSvgContent: true,
+                plan: true,
+                addons: true,
+                trialEndsAt: true,
+            },
         });
         if (tenant) {
             tenantName = tenant.name;
+            tenantPlan = tenant.plan;
+            tenantAddons = tenant.addons;
+            tenantTrialEndsAt = tenant.trialEndsAt;
             // Prefer modified SVG → original SVG → uploaded URL
             if (tenant.logoSvgModified) {
                 tenantLogoUrl = `data:image/svg+xml;base64,${Buffer.from(tenant.logoSvgModified).toString('base64')}`;
@@ -43,6 +61,33 @@ export default async function AdminLayout({
             }
         }
     }
+
+    // ── Plan-based nav gating ───────────────────────────────
+    // A gated item is rendered regardless (discoverable for upsell); when the
+    // tenant is not entitled we pass `locked` so NavLink shows a lock indicator.
+    // The destination pages enforce access server-side and show upgrade notices.
+    const tenantForAccess = { plan: tenantPlan, addons: tenantAddons, trialEndsAt: tenantTrialEndsAt };
+    const has = (feature: string) => checkAccess(tenantForAccess, feature).allowed;
+    const gate = {
+        sessions: has('session-events'),
+        onboarding: has('onboarding-programs'),
+        deadlines: has('escalation-logic'),
+        scorm: has('scorm'),
+        domains: has('custom-domain'),
+        skills: has('competency-management'),
+        reports: has('basic-analytics'),
+        gamification: has('gamification'),
+        wiki: has('wiki'),
+        // Integrasjoner is unlocked if ANY enterprise integration feature is available.
+        integrations:
+            has('sso-saml') ||
+            has('scim') ||
+            has('webhooks') ||
+            has('lti') ||
+            has('audit-logging'),
+    };
+
+    const isSystemAdmin = session.user.globalRole === 'SYSTEM_ADMIN';
     // Fetch user avatar
     if (session.user.id) {
         currentUser = await prisma.user.findUnique({
@@ -91,34 +136,58 @@ export default async function AdminLayout({
                     <NavLink href="/admin/roles">
                         <Shield size={18} /> Roller og tilgang
                     </NavLink>
+                    <NavLink href="/admin/skills" locked={!gate.skills}>
+                        <Target size={18} /> Kompetanse
+                    </NavLink>
 
                     <div className={styles.navSection}>Læring</div>
                     <NavLink href="/admin/courses">
                         <BookOpen size={18} /> Kurs
                     </NavLink>
-                    <NavLink href="/admin/sessions">
+                    <NavLink href="/admin/sessions" locked={!gate.sessions}>
                         <Calendar size={18} /> Sesjoner
                     </NavLink>
                     <NavLink href="/admin/content">
                         <Files size={18} /> Innhold
                     </NavLink>
-                    <NavLink href="/admin/onboarding">
+                    <NavLink href="/admin/onboarding" locked={!gate.onboarding}>
                         <Rocket size={18} /> Onboarding
                     </NavLink>
-                    <NavLink href="/admin/deadlines">
+                    <NavLink href="/admin/deadlines" locked={!gate.deadlines}>
                         <AlarmClock size={18} /> Frister
+                    </NavLink>
+                    <NavLink href="/admin/scorm" locked={!gate.scorm}>
+                        <Package size={18} /> SCORM
+                    </NavLink>
+                    <NavLink href="/admin/gamification" locked={!gate.gamification}>
+                        <Trophy size={18} /> Gamification
                     </NavLink>
 
                     <div className={styles.navSection}>Plattform</div>
                     <NavLink href="/admin/branding">
                         <Palette size={18} /> Branding
                     </NavLink>
-                    <NavLink href="/admin/integrations">
+                    <NavLink href="/admin/domains" locked={!gate.domains}>
+                        <Globe size={18} /> Domener
+                    </NavLink>
+                    <NavLink href="/admin/integrations" locked={!gate.integrations}>
                         <Plug size={18} /> Integrasjoner
                     </NavLink>
-                    <NavLink href="/admin/reports">
+                    <NavLink href="/admin/reports" locked={!gate.reports}>
                         <BarChart3 size={18} /> Rapporter
                     </NavLink>
+                    <NavLink href="/admin/wiki" locked={!gate.wiki}>
+                        <BookText size={18} /> Wiki
+                    </NavLink>
+
+                    {isSystemAdmin && (
+                        <>
+                            <div className={styles.navSection}>System</div>
+                            <NavLink href="/admin/system">
+                                <ShieldAlert size={18} /> System
+                            </NavLink>
+                        </>
+                    )}
                 </nav>
             </aside>
 

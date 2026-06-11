@@ -1,0 +1,993 @@
+/* ============================================================
+   EgenAkademi – Markedsnettsted (delt chrome + sideelementer)
+   Kun var(--color-*) / color-mix() — anonyme besøkende får
+   default-merkevaren fra globals.css.
+   ============================================================ */
+
+/* ── Layout-skall ───────────────────────────────────────── */
+.page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.container {
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+/* ── Header ──────────────────────────────────────────────── */
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: color-mix(in srgb, var(--color-bg-primary) 72%, transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.headerInner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 68px;
+    gap: 24px;
+}
+
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: -0.01em;
+    color: var(--color-text-primary);
+    text-decoration: none;
+}
+
+.brand:hover {
+    text-decoration: none;
+}
+
+.brandMark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--gradient-primary);
+    color: var(--color-button-text);
+    box-shadow: 0 0 18px var(--color-accent-glow);
+}
+
+.nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.navLink {
+    padding: 8px 14px;
+    border-radius: var(--radius-md);
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.navLink:hover {
+    color: var(--color-text-primary);
+    background: color-mix(in srgb, var(--color-text-primary) 6%, transparent);
+    text-decoration: none;
+}
+
+.headerActions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* ── Knapper (delt) ──────────────────────────────────────── */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 44px;
+    padding: 0 22px;
+    border-radius: var(--radius-lg);
+    border: 1px solid transparent;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast),
+        background-color var(--transition-fast), border-color var(--transition-fast);
+    white-space: nowrap;
+}
+
+.btn:hover {
+    text-decoration: none;
+}
+
+.btnPrimary {
+    background: var(--gradient-primary);
+    color: var(--color-button-text);
+    box-shadow: 0 0 18px var(--color-accent-glow);
+}
+
+.btnPrimary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 32px var(--color-accent-glow);
+}
+
+.btnGhost {
+    background: color-mix(in srgb, var(--color-text-primary) 4%, transparent);
+    color: var(--color-text-primary);
+    border-color: var(--color-border);
+}
+
+.btnGhost:hover {
+    background: color-mix(in srgb, var(--color-text-primary) 9%, transparent);
+    border-color: color-mix(in srgb, var(--color-text-primary) 20%, transparent);
+}
+
+.btnSm {
+    height: 38px;
+    padding: 0 16px;
+    font-size: 0.9rem;
+}
+
+.btnFull {
+    width: 100%;
+}
+
+.btnIcon {
+    transition: transform var(--transition-fast);
+}
+
+.btnPrimary:hover .btnIcon {
+    transform: translateX(3px);
+}
+
+/* ── Footer ──────────────────────────────────────────────── */
+.footer {
+    margin-top: auto;
+    border-top: 1px solid var(--color-border);
+    background: color-mix(in srgb, var(--color-text-primary) 2%, transparent);
+}
+
+.footerInner {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr 1fr;
+    gap: 40px;
+    padding: 64px 0 40px;
+}
+
+.footerBrandCol {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 320px;
+}
+
+.footerTagline {
+    color: var(--color-text-secondary);
+    font-size: 0.92rem;
+    line-height: 1.6;
+}
+
+.footerCol h3 {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-secondary);
+    margin-bottom: 16px;
+}
+
+.footerCol ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.footerCol a {
+    color: var(--color-text-secondary);
+    font-size: 0.92rem;
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+.footerCol a:hover {
+    color: var(--color-text-primary);
+    text-decoration: none;
+}
+
+.footerBottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 20px 0 40px;
+    border-top: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+}
+
+/* ── Seksjoner ───────────────────────────────────────────── */
+.section {
+    padding: 88px 0;
+}
+
+.sectionTight {
+    padding: 56px 0;
+}
+
+.sectionHeader {
+    text-align: center;
+    max-width: 720px;
+    margin: 0 auto 56px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+}
+
+.eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-accent-blue) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-accent-blue) 28%, transparent);
+    color: var(--color-accent-blue);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.sectionTitle {
+    font-size: 2.4rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.12;
+    color: var(--color-text-primary);
+}
+
+.sectionLead {
+    font-size: 1.12rem;
+    color: var(--color-text-secondary);
+    line-height: 1.65;
+}
+
+.gradientText {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* ── Hero ────────────────────────────────────────────────── */
+.hero {
+    position: relative;
+    overflow: hidden;
+    padding: 120px 0 96px;
+    text-align: center;
+}
+
+.heroGlow {
+    position: absolute;
+    top: -120px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 900px;
+    max-width: 120vw;
+    height: 540px;
+    background: radial-gradient(circle, var(--color-accent-glow) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.heroInner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 26px;
+    max-width: 820px;
+    margin: 0 auto;
+}
+
+.heroTitle {
+    font-size: 3.8rem;
+    font-weight: 800;
+    letter-spacing: -0.045em;
+    line-height: 1.05;
+    color: var(--color-text-primary);
+}
+
+.heroSubtitle {
+    font-size: 1.3rem;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    max-width: 640px;
+}
+
+.heroActions {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 6px;
+}
+
+.heroTrust {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    margin-top: 8px;
+}
+
+/* ── Generisk kort-grid ──────────────────────────────────── */
+.grid {
+    display: grid;
+    gap: 22px;
+}
+
+.grid2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.grid3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.grid4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.card {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(180deg,
+            color-mix(in srgb, var(--color-text-primary) 4%, transparent) 0%,
+            color-mix(in srgb, var(--color-text-primary) 1%, transparent) 100%);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transition: transform var(--transition-fast), border-color var(--transition-fast),
+        box-shadow var(--transition-fast);
+}
+
+.cardHover:hover {
+    transform: translateY(-4px);
+    border-color: color-mix(in srgb, var(--color-accent-blue) 35%, transparent);
+    box-shadow: 0 22px 44px -24px color-mix(in srgb, var(--color-accent-blue) 50%, transparent);
+}
+
+.iconBox {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--color-accent-blue) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-accent-blue) 26%, transparent);
+    color: var(--color-accent-blue);
+    flex-shrink: 0;
+}
+
+.cardTitle {
+    font-size: 1.12rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    letter-spacing: -0.01em;
+}
+
+.cardText {
+    color: var(--color-text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+/* ── Whitelabel highlight ────────────────────────────────── */
+.highlightPanel {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 48px;
+    align-items: center;
+    background: linear-gradient(135deg,
+            color-mix(in srgb, var(--color-accent-blue) 10%, transparent) 0%,
+            color-mix(in srgb, var(--color-text-primary) 2%, transparent) 60%);
+    border: 1px solid color-mix(in srgb, var(--color-accent-blue) 22%, transparent);
+    border-radius: var(--radius-lg);
+    padding: 56px;
+    overflow: hidden;
+}
+
+.highlightCopy {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.highlightList {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 6px;
+}
+
+.highlightItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    color: var(--color-text-primary);
+    font-size: 0.98rem;
+    line-height: 1.5;
+}
+
+.checkIcon {
+    color: var(--color-success);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* Liten "branding preview"-illustrasjon bygget kun av tokens */
+.brandPreview {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 18px;
+    box-shadow: 0 30px 60px -30px color-mix(in srgb, var(--color-accent-blue) 60%, transparent);
+}
+
+.brandPreviewBar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.brandDot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.brandDotAccent {
+    background: var(--color-accent-blue);
+}
+
+.brandDotSuccess {
+    background: var(--color-success);
+}
+
+.brandDotWarning {
+    background: var(--color-warning);
+}
+
+.brandPreviewBody {
+    display: flex;
+    gap: 12px;
+}
+
+.brandPreviewSidebar {
+    width: 64px;
+    border-radius: var(--radius-md);
+    background: var(--color-sidebar-bg);
+    padding: 12px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.brandPreviewNav {
+    height: 8px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--color-sidebar-text) 30%, transparent);
+}
+
+.brandPreviewNavActive {
+    background: var(--color-sidebar-active);
+}
+
+.brandPreviewMain {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.brandPreviewHeading {
+    height: 14px;
+    width: 60%;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--color-text-primary) 70%, transparent);
+}
+
+.brandPreviewLine {
+    height: 8px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--color-text-primary) 14%, transparent);
+}
+
+.brandPreviewLineShort {
+    width: 70%;
+}
+
+.brandPreviewBtn {
+    margin-top: 6px;
+    height: 24px;
+    width: 96px;
+    border-radius: 6px;
+    background: var(--gradient-primary);
+}
+
+/* ── Security teaser ─────────────────────────────────────── */
+.teaser {
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+    background: linear-gradient(135deg,
+            color-mix(in srgb, var(--color-accent-blue) 12%, transparent) 0%,
+            color-mix(in srgb, var(--color-text-primary) 2%, transparent) 70%);
+    border: 1px solid color-mix(in srgb, var(--color-accent-blue) 24%, transparent);
+    border-radius: var(--radius-lg);
+    padding: 64px 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+}
+
+.teaserBadges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin: 8px 0 6px;
+}
+
+.pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-text-primary) 5%, transparent);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.pillIcon {
+    color: var(--color-accent-blue);
+}
+
+/* ── Social proof ────────────────────────────────────────── */
+.proof {
+    text-align: center;
+}
+
+.proofLabel {
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+}
+
+.proofRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+}
+
+.proofLogo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--color-text-secondary);
+    font-weight: 700;
+    font-size: 1.15rem;
+    letter-spacing: -0.01em;
+    opacity: 0.7;
+    transition: opacity var(--transition-fast);
+}
+
+.proofLogo:hover {
+    opacity: 1;
+}
+
+.statsRow {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 48px;
+}
+
+.stat {
+    text-align: center;
+    padding: 28px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: color-mix(in srgb, var(--color-text-primary) 2%, transparent);
+}
+
+.statValue {
+    font-size: 2.4rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--color-text-primary);
+}
+
+.statLabel {
+    color: var(--color-text-secondary);
+    font-size: 0.92rem;
+    margin-top: 4px;
+}
+
+/* ── Final CTA ───────────────────────────────────────────── */
+.finalCta {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+    padding: 80px 0 96px;
+}
+
+/* ── Priser ──────────────────────────────────────────────── */
+.pricingGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    align-items: stretch;
+}
+
+.planCard {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    background: color-mix(in srgb, var(--color-text-primary) 3%, transparent);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+}
+
+.planCardHighlight {
+    border-color: color-mix(in srgb, var(--color-accent-blue) 55%, transparent);
+    background: linear-gradient(180deg,
+            color-mix(in srgb, var(--color-accent-blue) 12%, transparent) 0%,
+            color-mix(in srgb, var(--color-text-primary) 3%, transparent) 50%);
+    box-shadow: 0 30px 60px -30px color-mix(in srgb, var(--color-accent-blue) 55%, transparent);
+}
+
+.planBadge {
+    position: absolute;
+    top: -13px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 14px;
+    border-radius: 999px;
+    background: var(--gradient-primary);
+    color: var(--color-button-text);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.planName {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--color-text-primary);
+    letter-spacing: -0.02em;
+}
+
+.planPrice {
+    font-size: 1.9rem;
+    font-weight: 800;
+    color: var(--color-text-primary);
+    letter-spacing: -0.02em;
+}
+
+.planDesc {
+    color: var(--color-text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.55;
+    min-height: 44px;
+}
+
+.planFeatures {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 4px;
+    flex: 1;
+}
+
+.planFeature {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    color: var(--color-text-primary);
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+
+.planFeatureMuted {
+    color: var(--color-text-secondary);
+}
+
+.planInherit {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--color-accent-blue);
+}
+
+/* Sammenligningstabell */
+.compareWrap {
+    overflow-x: auto;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+}
+
+.compareTable {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 640px;
+}
+
+.compareTable th,
+.compareTable td {
+    padding: 14px 18px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 0.92rem;
+}
+
+.compareTable thead th {
+    color: var(--color-text-primary);
+    font-weight: 700;
+    background: color-mix(in srgb, var(--color-text-primary) 3%, transparent);
+}
+
+.compareFeatureCell {
+    color: var(--color-text-secondary);
+}
+
+.compareColHighlight {
+    background: color-mix(in srgb, var(--color-accent-blue) 8%, transparent);
+}
+
+.compareCheck {
+    color: var(--color-success);
+}
+
+.compareDash {
+    color: color-mix(in srgb, var(--color-text-secondary) 60%, transparent);
+}
+
+.compareCenter {
+    text-align: center;
+}
+
+/* Addons */
+.addonGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.addonCard {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: color-mix(in srgb, var(--color-text-primary) 3%, transparent);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 26px;
+    transition: border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.addonCard:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--color-accent-blue) 35%, transparent);
+}
+
+.addonHead {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.addonTag {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--color-accent-blue);
+    background: color-mix(in srgb, var(--color-accent-blue) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-accent-blue) 26%, transparent);
+    border-radius: 999px;
+    padding: 4px 10px;
+    width: fit-content;
+}
+
+.addonActions {
+    margin-top: auto;
+    padding-top: 8px;
+}
+
+/* ── Sikkerhet ───────────────────────────────────────────── */
+.securityGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 22px;
+}
+
+.securityNote {
+    margin-top: 40px;
+    padding: 22px 26px;
+    border-radius: var(--radius-lg);
+    border: 1px solid color-mix(in srgb, var(--color-warning) 30%, transparent);
+    background: color-mix(in srgb, var(--color-warning) 8%, transparent);
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    color: var(--color-text-secondary);
+    font-size: 0.92rem;
+    line-height: 1.6;
+}
+
+.securityNoteIcon {
+    color: var(--color-warning);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* ── Demo-side ───────────────────────────────────────────── */
+.demoLayout {
+    display: grid;
+    grid-template-columns: 0.95fr 1.05fr;
+    gap: 56px;
+    align-items: start;
+    padding: 88px 0;
+}
+
+.demoIntro {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.demoBenefits {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 8px;
+}
+
+.demoBenefit {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.demoBenefitText strong {
+    display: block;
+    color: var(--color-text-primary);
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.demoBenefitText span {
+    color: var(--color-text-secondary);
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+
+/* ── Responsiv ───────────────────────────────────────────── */
+@media (max-width: 920px) {
+    .heroTitle {
+        font-size: 2.8rem;
+    }
+
+    .sectionTitle {
+        font-size: 2rem;
+    }
+
+    .grid3,
+    .grid4,
+    .pricingGrid,
+    .statsRow {
+        grid-template-columns: 1fr;
+    }
+
+    .grid2,
+    .securityGrid,
+    .addonGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .highlightPanel {
+        grid-template-columns: 1fr;
+        padding: 36px;
+    }
+
+    .demoLayout {
+        grid-template-columns: 1fr;
+        gap: 36px;
+    }
+
+    .footerInner {
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+    }
+
+    .nav {
+        display: none;
+    }
+}
+
+@media (max-width: 540px) {
+    .heroTitle {
+        font-size: 2.2rem;
+    }
+
+    .section {
+        padding: 56px 0;
+    }
+
+    .hero {
+        padding: 80px 0 64px;
+    }
+
+    .highlightPanel,
+    .teaser {
+        padding: 28px;
+    }
+
+    .footerInner {
+        grid-template-columns: 1fr;
+    }
+
+    .headerActions .btnGhost {
+        display: none;
+    }
+}

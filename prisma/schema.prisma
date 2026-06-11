@@ -15,6 +15,7 @@ model Tenant {
   plan          TenantPlan @default(FREE)
   addons        String[]   // Feature-flagg: ["brand-detector", "scorm", "custom-domain", ...]
   trialEndsAt   DateTime?  // Utløpsdato for prøveperiode (null = ingen trial)
+  auditRetentionDays Int?  // Oppbevaringsdager for audit-logg (null = behold for alltid)
   
   // ── Whitelabel Branding ──────────────────────────────
   // Bakgrunner
@@ -109,6 +110,12 @@ model User {
   // SCIM støtte attributter
   externalId    String?  // ID fra kundens IdP
   active        Boolean   @default(true)
+  anonymizedAt  DateTime? // Satt når brukeren er GDPR-anonymisert
+
+  // To-faktor (TOTP)
+  totpSecret         String?   // Base32 TOTP-hemmelighet (satt under oppsett)
+  totpEnabled        Boolean   @default(false)
+  totpRecoveryCodes  String[]  // sha256-hashede engangs-gjenopprettingskoder
   
   globalRole    GlobalRole @default(USER)
   
@@ -132,6 +139,10 @@ model User {
   sessionsTaught     TrainingSession[]   @relation("SessionInstructor")
   sessionEnrollments SessionEnrollment[] @relation("SessionAttendee")
   onboardingEnrollments OnboardingEnrollment[]
+  skills             UserSkill[]
+  gamification       UserGamification?
+  badges             UserBadge[]
+  pointTransactions  PointTransaction[]
 
   @@index([tenantId])
 }
@@ -351,6 +362,7 @@ model Course {
   enrollments               CourseEnrollment[]
   certificates              Certificate[]
   sessions                  TrainingSession[]
+  skills                    CourseSkill[]
 
   createdAt                 DateTime         @default(now())
   updatedAt                 DateTime         @updatedAt
@@ -917,5 +929,280 @@ model OnboardingEnrollment {
   completedAt DateTime?
 
   @@unique([programId, userId])
+  @@index([tenantId, userId])
+}
+
+// ══════════════════════════════════════════════════════════════
+// FERDIGHETER & KOMPETANSE
+// ══════════════════════════════════════════════════════════════
+
+model Skill {
+  id            String   @id @default(uuid())
+  tenantId      String
+  name          String
+  description   String?  @db.Text
+  category      String?
+  parentSkillId String?  // Underferdighet av en annen ferdighet
+  parentSkill   Skill?   @relation("SkillTree", fields: [parentSkillId], references: [id])
+  childSkills   Skill[]  @relation("SkillTree")
+  maxLevel      Int      @default(5) // Skala 1..maxLevel
+  sortOrder     Int      @default(0)
+
+  courses       CourseSkill[]
+  userSkills    UserSkill[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, parentSkillId])
+}
+
+model CourseSkill {
+  id        String  @id @default(uuid())
+  tenantId  String
+  courseId  String
+  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  skillId   String
+  skill     Skill   @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  level     Int     @default(1) // Nivået kurset gir i ferdigheten
+
+  createdAt DateTime @default(now())
+
+  @@unique([courseId, skillId])
+  @@index([tenantId, skillId])
+}
+
+model UserSkill {
+  id         String   @id @default(uuid())
+  tenantId   String
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skillId    String
+  skill      Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  level      Int      @default(1)
+  source     String   @default("manual") // "manual" | "course" | "assessment"
+  acquiredAt DateTime @default(now())
+
+  @@unique([userId, skillId])
+  @@index([tenantId, skillId])
+}
+
+// ══════════════════════════════════════════════════════════════
+// SCORM (import + runtime)
+// ══════════════════════════════════════════════════════════════
+
+model ScormPackage {
+  id           String   @id @default(uuid())
+  tenantId     String
+  title        String
+  scormVersion String   @default("1.2") // "1.2" | "2004"
+  entryPath    String   // Launch-fil relativt til pakkeroten (fra imsmanifest)
+  packagePath  String   // Offentlig rot for utpakkede filer, f.eks. "/uploads/scorm/<id>"
+  courseId     String?  // Valgfri kobling til et kurs
+  manifestJson Json?    // Rådata fra imsmanifest.xml (organisasjoner, ressurser)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([tenantId])
+}
+
+// ══════════════════════════════════════════════════════════════
+// CUSTOM DOMENER (whitelabel)
+// ══════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════
+// RATE LIMITING (fixed-window teller)
+// ══════════════════════════════════════════════════════════════
+
+model RateLimit {
+  id          String   @id @default(uuid())
+  key         String   @unique // f.eks. "login:<email>" | "scim:<tenantId>" | "upload:<userId>"
+  count       Int      @default(0)
+  windowStart DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ══════════════════════════════════════════════════════════════
+// MARKEDSNETTSTED – demo-forespørsler (leads)
+// ══════════════════════════════════════════════════════════════
+
+model DemoRequest {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  company   String?
+  phone     String?
+  message   String?  @db.Text
+  status    String   @default("new") // new | contacted | closed
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// ══════════════════════════════════════════════════════════════
+// WIKI / KUNNSKAPSBASE
+// ══════════════════════════════════════════════════════════════
+
+enum WikiStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+}
+
+model WikiPage {
+  id           String     @id @default(uuid())
+  tenantId     String
+  slug         String
+  title        String
+  contentHtml  String     @db.Text // Sanitert HTML (Lexical-output)
+  parentPageId String?
+  parentPage   WikiPage?  @relation("WikiTree", fields: [parentPageId], references: [id])
+  childPages   WikiPage[] @relation("WikiTree")
+  sortOrder    Int        @default(0)
+  status       WikiStatus @default(DRAFT)
+  pinned       Boolean    @default(false)
+  tags         String[]
+  accessLevel  String     @default("all") // "all" | "admins"
+  authorUserId String?
+  publishedAt  DateTime?
+
+  versions     WikiPageVersion[]
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([tenantId, slug])
+  @@index([tenantId, status])
+  @@index([tenantId, parentPageId])
+}
+
+model WikiPageVersion {
+  id           String   @id @default(uuid())
+  tenantId     String
+  pageId       String
+  page         WikiPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  title        String
+  contentHtml  String   @db.Text
+  editorUserId String?
+  createdAt    DateTime @default(now())
+
+  @@index([tenantId, pageId])
+}
+
+// ══════════════════════════════════════════════════════════════
+// GAMIFICATION (poeng, badges, nivåer, topplister)
+// ══════════════════════════════════════════════════════════════
+
+model PointRule {
+  id        String   @id @default(uuid())
+  tenantId  String
+  event     String   // "course_completed" | "lesson_completed" | "quiz_passed" | "streak_day" | "session_attended"
+  points    Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, event])
+  @@index([tenantId])
+}
+
+enum BadgeCriteriaType {
+  POINTS_TOTAL
+  COURSES_COMPLETED
+  STREAK_DAYS
+  MANUAL
+}
+
+model Badge {
+  id           String            @id @default(uuid())
+  tenantId     String
+  name         String
+  description  String?
+  color        String?           // hex
+  icon         String?           // lucide-ikonnavn
+  criteriaType BadgeCriteriaType @default(MANUAL)
+  threshold    Int?              // poeng/antall for auto-tildeling
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  userBadges   UserBadge[]
+
+  @@index([tenantId])
+}
+
+model UserBadge {
+  id        String   @id @default(uuid())
+  tenantId  String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId   String
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  awardedAt DateTime @default(now())
+
+  @@unique([userId, badgeId])
+  @@index([tenantId, userId])
+}
+
+model PointTransaction {
+  id         String   @id @default(uuid())
+  tenantId   String
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  points     Int
+  reason     String
+  sourceType String?
+  sourceId   String?
+  createdAt  DateTime @default(now())
+
+  @@index([tenantId, userId])
+}
+
+model UserGamification {
+  id               String    @id @default(uuid())
+  tenantId         String
+  userId           String    @unique
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalPoints      Int       @default(0)
+  level            Int       @default(1)
+  currentStreak    Int       @default(0)
+  longestStreak    Int       @default(0)
+  lastActivityDate DateTime?
+  leaderboardOptIn Boolean   @default(true)
+  updatedAt        DateTime  @updatedAt
+
+  @@index([tenantId])
+}
+
+model TenantDomain {
+  id                String    @id @default(uuid())
+  tenantId          String
+  domain            String    @unique
+  verificationToken String
+  status            String    @default("pending") // pending | verified | failed
+  verifiedAt        DateTime?
+  isPrimary         Boolean   @default(false)
+  lastCheckedAt     DateTime?
+  lastError         String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([tenantId])
+}
+
+model ScormAttempt {
+  id             String    @id @default(uuid())
+  tenantId       String
+  scormPackageId String
+  userId         String
+  cmiJson        Json?     // Hele CMI-datamodellen (key/value)
+  lessonStatus   String?   // completed | incomplete | passed | failed | browsed | not attempted
+  scoreRaw       Float?
+  suspendData    String?   @db.Text
+  totalTime      String?   // SCORM tidsformat
+  completedAt    DateTime?
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([scormPackageId, userId])
   @@index([tenantId, userId])
 }

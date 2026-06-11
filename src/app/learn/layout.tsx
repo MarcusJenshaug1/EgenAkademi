@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import {
-    Home, BookOpen, Award, Bell, LogOut, GraduationCap, Shield, Compass, Calendar,
+    Home, BookOpen, Award, Bell, LogOut, GraduationCap, Shield, Compass, Calendar, Target, Trophy, BookText,
 } from 'lucide-react';
 import styles from './layout.module.css';
 import { auth, signOut } from '@/auth';
@@ -82,6 +82,20 @@ export default async function LearnLayout({
           ).allowed
         : false;
 
+    const gamificationEnabled = tenant
+        ? checkAccess(
+              { plan: tenant.plan, addons: tenant.addons, trialEndsAt: tenant.trialEndsAt },
+              'gamification'
+          ).allowed
+        : false;
+
+    const wikiEnabled = tenant
+        ? checkAccess(
+              { plan: tenant.plan, addons: tenant.addons, trialEndsAt: tenant.trialEndsAt },
+              'wiki'
+          ).allowed
+        : false;
+
     return (
         <div className={styles.learnContainer}>
             {/* Sidebar */}
@@ -111,9 +125,22 @@ export default async function LearnLayout({
                     <LearnNavLink href="/learn/courses">
                         <Compass size={18} /> Kurskatalog
                     </LearnNavLink>
+                    <LearnNavLink href="/learn/skills">
+                        <Target size={18} /> Kompetanse
+                    </LearnNavLink>
                     {sessionsEnabled && (
                         <LearnNavLink href="/learn/sessions">
                             <Calendar size={18} /> Sesjoner
+                        </LearnNavLink>
+                    )}
+                    {gamificationEnabled && (
+                        <LearnNavLink href="/learn/leaderboard">
+                            <Trophy size={18} /> Toppliste
+                        </LearnNavLink>
+                    )}
+                    {wikiEnabled && (
+                        <LearnNavLink href="/learn/wiki">
+                            <BookText size={18} /> Kunnskapsbase
                         </LearnNavLink>
                     )}
                     <LearnNavLink href="/learn/certificates">

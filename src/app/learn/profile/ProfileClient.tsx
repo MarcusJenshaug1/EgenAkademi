@@ -4,12 +4,13 @@ import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     User, Save, Building2, Briefcase, MapPin,
-    Phone, FileText, CheckCircle, Camera,
+    Phone, FileText, CheckCircle, Camera, ShieldCheck,
 } from 'lucide-react';
 import styles from './profile.module.css';
 import { updateLearnerProfile } from '@/app/actions/learnerActions';
 import type { ProfileData } from '@/app/actions/learnerActions';
 import { RichTextEditor } from '@/components/LexicalEditor';
+import TwoFactorSettings from '@/components/TwoFactorSettings';
 
 interface Props {
     profile: ProfileData;
@@ -258,6 +259,15 @@ export default function ProfileClient({ profile }: Props) {
                         />
                     </div>
                 </div>
+            </div>
+
+            {/* Security / two-factor */}
+            <div className={`${styles.section} ${styles.sectionFull}`}>
+                <h2 className={styles.sectionTitle}>
+                    <ShieldCheck size={16} />
+                    Sikkerhet
+                </h2>
+                <TwoFactorSettings />
             </div>
 
             {/* Toast */}

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { kindFromMimeType } from '@/lib/mediaKind';
+import { checkRateLimit } from '@/lib/rateLimit';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 
@@ -43,6 +44,17 @@ export async function POST(request: NextRequest) {
 
         if (!session?.user?.id || !session?.user?.tenantId) {
             return NextResponse.json({ error: 'Ikke autentisert' }, { status: 401 });
+        }
+
+        const userId = session.user.id;
+
+        // Rate limiting (sikkerhetsregel #8): maks 30 opplastinger per minutt per bruker.
+        const rl = await checkRateLimit(`upload:${userId}`, 30, 60_000);
+        if (!rl.allowed) {
+            return NextResponse.json(
+                { error: 'For mange forespørsler. Prøv igjen senere.' },
+                { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } }
+            );
         }
 
         const formData = await request.formData();

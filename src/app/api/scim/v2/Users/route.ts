@@ -1,190 +1,71 @@
-import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
+import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
-import { checkAccess } from '@/lib/features';
+import { authenticateScim, scimError, scimJson, SCIM_SCHEMAS } from '@/lib/scimAuth';
+import { logAudit } from '@/lib/audit';
+import { toScimUser, parseEqFilter, parsePagination } from '@/lib/scimResources';
 
 /**
- * SCIM 2.0 – Users-endepunkt (minimal, men ekte og autentisert).
+ * SCIM 2.0 – Users-kolleksjon (list + opprett).
  *
- * Sikkerhet:
- *  - Bearer-token autentiseres ved å sha256-hashe tokenet og slå opp en
- *    ScimToken-rad med samme tokenHash som ikke er tilbakekalt eller utløpt.
- *  - Tokenet logges ALDRI noe sted.
- *  - Alle feil returneres som generiske SCIM-feil – ingen interne detaljer.
- *  - CORS settes ALDRI til '*'.
+ * Auth, plan-gating og rate limiting håndteres av `authenticateScim`
+ * (se src/lib/scimAuth.ts). Tokenet logges ALDRI. Alle feil returneres som
+ * generiske SCIM-feil. CORS settes ALDRI til '*'.
  *
- * Begrensninger: se followups i oppgavebeskrivelsen. Dette er en lese-/
- * opprett-flate; PATCH/PUT/DELETE og full filter-syntaks er ikke implementert.
+ * Filter-grammatikk: kun `userName eq "<verdi>"` (se followups).
  */
 
-const SCIM_CONTENT_TYPE = 'application/scim+json';
-const USER_SCHEMA = 'urn:ietf:params:scim:schemas:core:2.0:User';
-const LIST_SCHEMA = 'urn:ietf:params:scim:api:messages:2.0:ListResponse';
-const ERROR_SCHEMA = 'urn:ietf:params:scim:api:messages:2.0:Error';
-
-function sha256Hex(value: string): string {
-    return crypto.createHash('sha256').update(value, 'utf8').digest('hex');
-}
-
-function scimError(status: number, detail: string) {
-    return NextResponse.json(
-        { schemas: [ERROR_SCHEMA], detail, status: String(status) },
-        { status, headers: { 'Content-Type': SCIM_CONTENT_TYPE } }
-    );
-}
-
-interface AuthedToken {
-    tenantId: string;
-    tokenId: string;
-}
-
-/**
- * Autentiser SCIM-forespørselen via Bearer-token. Returnerer tenantId ved
- * gyldig token, ellers null. Oppdaterer lastUsedAt som bivirkning.
- */
-async function authenticate(req: NextRequest): Promise<AuthedToken | null> {
-    const header = req.headers.get('authorization');
-    if (!header) return null;
-
-    const match = /^Bearer\s+(.+)$/i.exec(header.trim());
-    if (!match) return null;
-
-    const presented = match[1].trim();
-    if (!presented) return null;
-
-    // Hash tokenet og slå opp – klartekst lagres aldri og logges aldri.
-    const tokenHash = sha256Hex(presented);
-
-    const token = await prisma.scimToken.findUnique({
-        where: { tokenHash },
-        select: { id: true, tenantId: true, revokedAt: true, expiresAt: true },
-    });
-
-    if (!token) return null;
-    if (token.revokedAt) return null;
-    if (token.expiresAt && token.expiresAt.getTime() < Date.now()) return null;
-
-    // Oppdater lastUsedAt – best effort, skal ikke velte forespørselen.
-    try {
-        await prisma.scimToken.update({
-            where: { id: token.id },
-            data: { lastUsedAt: new Date() },
-        });
-    } catch {
-        // Ignorer logging-feil.
-    }
-
-    return { tenantId: token.tenantId, tokenId: token.id };
-}
-
-/**
- * Plan-gate SCIM på serveren. Et gyldig token er ikke nok – tenanten må
- * fortsatt ha 'scim'-funksjonen i planen (f.eks. nedgradering eller utløpt
- * prøveperiode skal stenge provisjonering selv om tokenet ikke er tilbakekalt).
- */
-async function scimFeatureAllowed(tenantId: string): Promise<boolean> {
-    const tenant = await prisma.tenant.findUnique({
-        where: { id: tenantId },
-        select: { plan: true, addons: true, trialEndsAt: true },
-    });
-    if (!tenant) return false;
-    return checkAccess(tenant, 'scim').allowed;
-}
-
-function toScimUser(user: {
-    id: string;
-    email: string | null;
-    firstName: string | null;
-    lastName: string | null;
-    name: string | null;
-    active: boolean;
-    createdAt: Date;
-    updatedAt: Date;
-}) {
-    return {
-        schemas: [USER_SCHEMA],
-        id: user.id,
-        userName: user.email ?? user.id,
-        name: {
-            givenName: user.firstName ?? '',
-            familyName: user.lastName ?? '',
-            formatted:
-                [user.firstName, user.lastName].filter(Boolean).join(' ') ||
-                user.name ||
-                (user.email ?? ''),
-        },
-        emails: user.email
-            ? [{ value: user.email, primary: true, type: 'work' }]
-            : [],
-        active: user.active,
-        meta: {
-            resourceType: 'User',
-            created: user.createdAt.toISOString(),
-            lastModified: user.updatedAt.toISOString(),
-        },
-    };
-}
+const USER_SELECT = {
+    id: true,
+    email: true,
+    firstName: true,
+    lastName: true,
+    name: true,
+    active: true,
+    externalId: true,
+    createdAt: true,
+    updatedAt: true,
+} as const;
 
 // ── GET /api/scim/v2/Users → ListResponse ───────────────────
 
 export async function GET(req: NextRequest) {
     try {
-        const authed = await authenticate(req);
-        if (!authed) {
-            return scimError(401, 'Uautorisert');
-        }
-        if (!(await scimFeatureAllowed(authed.tenantId))) {
-            return scimError(403, 'SCIM er ikke tilgjengelig for denne organisasjonen');
-        }
+        const auth = await authenticateScim(req);
+        if (!auth.ok) return auth.response;
+        const { tenantId } = auth.context;
 
         const url = new URL(req.url);
-        const startIndex = Math.max(parseInt(url.searchParams.get('startIndex') ?? '1', 10) || 1, 1);
-        const count = Math.min(
-            Math.max(parseInt(url.searchParams.get('count') ?? '100', 10) || 100, 1),
-            200
-        );
+        const { startIndex, count } = parsePagination(url);
 
         // Minimal filter-støtte: userName eq "..." (vanligst fra IdP-er).
         const filter = url.searchParams.get('filter');
-        const where: Record<string, unknown> = { tenantId: authed.tenantId };
+        const where: { tenantId: string; email?: string } = { tenantId };
         if (filter) {
-            const m = /userName\s+eq\s+"([^"]+)"/i.exec(filter);
-            if (m) {
-                where.email = m[1];
+            const parsed = parseEqFilter(filter);
+            if (!parsed || parsed.attribute.toLowerCase() !== 'username') {
+                return scimError(400, 'Filteret støttes ikke', 'invalidFilter');
             }
+            where.email = parsed.value.toLowerCase();
         }
 
         const [total, users] = await Promise.all([
             prisma.user.count({ where }),
             prisma.user.findMany({
                 where,
-                select: {
-                    id: true,
-                    email: true,
-                    firstName: true,
-                    lastName: true,
-                    name: true,
-                    active: true,
-                    createdAt: true,
-                    updatedAt: true,
-                },
+                select: USER_SELECT,
                 orderBy: { createdAt: 'asc' },
                 skip: startIndex - 1,
                 take: count,
             }),
         ]);
 
-        const body = {
-            schemas: [LIST_SCHEMA],
+        const baseUrl = url.origin;
+        return scimJson({
+            schemas: [SCIM_SCHEMAS.LIST_RESPONSE],
             totalResults: total,
             startIndex,
             itemsPerPage: users.length,
-            Resources: users.map(toScimUser),
-        };
-
-        return NextResponse.json(body, {
-            status: 200,
-            headers: { 'Content-Type': SCIM_CONTENT_TYPE },
+            Resources: users.map((u) => toScimUser(u, baseUrl)),
         });
     } catch {
         return scimError(500, 'Intern feil');
@@ -203,19 +84,15 @@ interface ScimUserPayload {
 
 export async function POST(req: NextRequest) {
     try {
-        const authed = await authenticate(req);
-        if (!authed) {
-            return scimError(401, 'Uautorisert');
-        }
-        if (!(await scimFeatureAllowed(authed.tenantId))) {
-            return scimError(403, 'SCIM er ikke tilgjengelig for denne organisasjonen');
-        }
+        const auth = await authenticateScim(req);
+        if (!auth.ok) return auth.response;
+        const { tenantId, tokenId } = auth.context;
 
         let payload: ScimUserPayload;
         try {
             payload = (await req.json()) as ScimUserPayload;
         } catch {
-            return scimError(400, 'Ugyldig forespørsel');
+            return scimError(400, 'Ugyldig forespørsel', 'invalidValue');
         }
 
         // userName/email er påkrevd.
@@ -224,17 +101,17 @@ export async function POST(req: NextRequest) {
         const email = (payload.userName || primaryEmail || anyEmail || '').trim().toLowerCase();
 
         if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            return scimError(400, 'userName/email er påkrevd og må være gyldig');
+            return scimError(400, 'userName/email er påkrevd og må være gyldig', 'invalidValue');
         }
 
         // Unikhet: User.email er globalt unikt i schema.
         const existing = await prisma.user.findUnique({
             where: { email },
-            select: { id: true, tenantId: true },
+            select: { id: true },
         });
         if (existing) {
             // SCIM 409 ved konflikt – ikke avslør hvilken tenant brukeren er i.
-            return scimError(409, 'Bruker finnes allerede');
+            return scimError(409, 'Bruker finnes allerede', 'uniqueness');
         }
 
         const created = await prisma.user.create({
@@ -245,41 +122,22 @@ export async function POST(req: NextRequest) {
                 externalId: payload.externalId?.trim() || null,
                 active: payload.active ?? true,
                 globalRole: 'USER',
-                tenantId: authed.tenantId,
+                tenantId,
             },
-            select: {
-                id: true,
-                email: true,
-                firstName: true,
-                lastName: true,
-                name: true,
-                active: true,
-                createdAt: true,
-                updatedAt: true,
-            },
+            select: USER_SELECT,
         });
 
-        // Audit-logg provisjonering – best effort.
-        try {
-            await prisma.auditLog.create({
-                data: {
-                    tenantId: authed.tenantId,
-                    action: 'scim.user_provisioned',
-                    targetType: 'user',
-                    targetId: created.id,
-                    metadata: { via: 'scim', tokenId: authed.tokenId },
-                },
-            });
-        } catch {
-            // Ignorer logging-feil.
-        }
+        await logAudit({
+            tenantId,
+            action: 'scim.user_provisioned',
+            targetType: 'user',
+            targetId: created.id,
+            metadata: { via: 'scim', tokenId },
+        });
 
-        return NextResponse.json(toScimUser(created), {
-            status: 201,
-            headers: {
-                'Content-Type': SCIM_CONTENT_TYPE,
-                Location: `${new URL(req.url).origin}/api/scim/v2/Users/${created.id}`,
-            },
+        const baseUrl = new URL(req.url).origin;
+        return scimJson(toScimUser(created, baseUrl), 201, {
+            Location: `${baseUrl}/api/scim/v2/Users/${created.id}`,
         });
     } catch {
         return scimError(500, 'Intern feil');

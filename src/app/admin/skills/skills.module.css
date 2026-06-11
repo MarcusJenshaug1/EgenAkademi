@@ -1,0 +1,1071 @@
+/* ── Skills & Competency Admin ──────────────────── */
+
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* ── Header ─────────────────────────────────────── */
+
+.header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.headerLeft {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--color-text-primary);
+}
+
+.subtitle {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+}
+
+/* ── Tabs ───────────────────────────────────────── */
+
+.tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--color-border);
+    overflow-x: auto;
+}
+
+.tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: none;
+    background: none;
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+}
+
+.tab:hover {
+    color: var(--color-text-primary);
+}
+
+.tabActive {
+    color: var(--color-accent-blue);
+    border-bottom-color: var(--color-accent-blue);
+    font-weight: 600;
+}
+
+.tabContent {
+    min-height: 300px;
+}
+
+/* ── Section ────────────────────────────────────── */
+
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.sectionToolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.sectionCount {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+}
+
+.sectionFooter {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 8px;
+    border-top: 1px solid var(--color-border);
+}
+
+/* ── Banners ────────────────────────────────────── */
+
+.errorBanner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-danger) 25%, transparent);
+    border-radius: var(--radius-md);
+    color: var(--color-danger);
+    font-size: 0.85rem;
+}
+
+.noticeBanner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: color-mix(in srgb, var(--color-warning) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-warning) 25%, transparent);
+    border-radius: var(--radius-md);
+    color: var(--color-warning);
+    font-size: 0.8rem;
+}
+
+/* ── Tree ───────────────────────────────────────── */
+
+.tree {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--color-bg-surface);
+}
+
+.treeNode {
+    display: flex;
+    flex-direction: column;
+}
+
+.treeRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--color-border);
+    transition: background var(--transition-fast);
+}
+
+.treeRow:hover {
+    background: color-mix(in srgb, var(--color-accent-blue) 5%, transparent);
+}
+
+.treeToggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    flex-shrink: 0;
+}
+
+.treeToggle:hover {
+    background: color-mix(in srgb, var(--color-border) 50%, transparent);
+    color: var(--color-text-primary);
+}
+
+.treeMain {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+}
+
+.treeName {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.treeCategory {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--color-accent-blue);
+    background: color-mix(in srgb, var(--color-accent-blue) 12%, transparent);
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.treeMeta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.metaPill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    background: color-mix(in srgb, var(--color-border) 40%, transparent);
+    padding: 3px 8px;
+    border-radius: 999px;
+}
+
+.treeActions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.treeChildren {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Icon button ────────────────────────────────── */
+
+.iconBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+}
+
+.iconBtn:hover {
+    background: color-mix(in srgb, var(--color-border) 50%, transparent);
+    color: var(--color-text-primary);
+}
+
+.iconBtnDanger:hover {
+    background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+    color: var(--color-danger);
+}
+
+/* ── Buttons ────────────────────────────────────── */
+
+.btnPrimary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    background: var(--color-button-primary);
+    color: var(--color-button-text);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btnPrimary:hover {
+    filter: brightness(1.08);
+}
+
+.btnPrimary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btnSecondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    background: var(--color-bg-surface);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btnSecondary:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--color-accent-blue) 30%, var(--color-border));
+}
+
+.btnSecondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btnDanger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    background: var(--color-danger);
+    color: var(--color-button-text);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter var(--transition-fast);
+}
+
+.btnDanger:hover {
+    filter: brightness(1.08);
+}
+
+.btnGhost {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: color-mix(in srgb, var(--color-accent-blue) 10%, transparent);
+    color: var(--color-accent-blue);
+    border: 1px solid color-mix(in srgb, var(--color-accent-blue) 25%, transparent);
+    border-radius: var(--radius-md);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.btnGhost:hover {
+    background: color-mix(in srgb, var(--color-accent-blue) 18%, transparent);
+}
+
+/* ── Forms ──────────────────────────────────────── */
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+    flex: 1;
+}
+
+.formRow {
+    display: flex;
+    gap: 12px;
+}
+
+.formLabel {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+}
+
+.formInput,
+.formSelect,
+.formTextarea {
+    width: 100%;
+    padding: 9px 12px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color var(--transition-fast);
+    font-family: inherit;
+}
+
+.formTextarea {
+    resize: vertical;
+}
+
+.formInput:focus,
+.formSelect:focus,
+.formTextarea:focus {
+    border-color: var(--color-accent-blue);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent-blue) 15%, transparent);
+}
+
+.formInput::placeholder,
+.formTextarea::placeholder {
+    color: var(--color-text-secondary);
+    opacity: 0.6;
+}
+
+/* ── Modal ──────────────────────────────────────── */
+
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    background: color-mix(in srgb, var(--color-bg-primary) 70%, transparent);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+}
+
+.modal {
+    width: 100%;
+    max-width: 480px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 20px 60px -12px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.modalHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.modalTitle {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.modalBody {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.modalFooter {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 20px;
+    border-top: 1px solid var(--color-border);
+}
+
+.confirmText {
+    font-size: 0.88rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+    margin-bottom: 10px;
+}
+
+.confirmHighlight {
+    color: var(--color-text-primary);
+    font-weight: 600;
+}
+
+/* ── Course mapping ─────────────────────────────── */
+
+.mapAddRow {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+}
+
+.mapAddRow .formSelect {
+    flex: 1;
+}
+
+.mapList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mapRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.mapSkillName {
+    flex: 1;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--color-text-primary);
+}
+
+.levelControl {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.levelLabel {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+.levelSelect {
+    padding: 6px 10px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: 0.8rem;
+    outline: none;
+    cursor: pointer;
+}
+
+.levelSelect:focus {
+    border-color: var(--color-accent-blue);
+}
+
+/* ── Matrix ─────────────────────────────────────── */
+
+.matrixWrap {
+    overflow-x: auto;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+}
+
+.matrixTable {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: max-content;
+}
+
+.matrixTable th,
+.matrixTable td {
+    border-bottom: 1px solid var(--color-border);
+    border-right: 1px solid var(--color-border);
+}
+
+.matrixCorner {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    background: var(--color-bg-secondary);
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    min-width: 180px;
+}
+
+.matrixSkillHead {
+    background: var(--color-bg-surface);
+    padding: 10px 8px;
+    vertical-align: bottom;
+    min-width: 56px;
+    max-width: 90px;
+}
+
+.matrixSkillName {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    white-space: nowrap;
+    max-height: 110px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0 auto;
+}
+
+.matrixUserCell {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: var(--color-bg-secondary);
+    padding: 10px 16px;
+    min-width: 180px;
+}
+
+.matrixUser {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.matrixUserName {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    white-space: nowrap;
+}
+
+.matrixUserDept {
+    font-size: 0.68rem;
+    color: var(--color-text-secondary);
+}
+
+.matrixCell {
+    text-align: center;
+    padding: 8px;
+    vertical-align: middle;
+}
+
+.levelChip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 6px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+.gapDash {
+    color: var(--color-text-secondary);
+    opacity: 0.4;
+    font-size: 0.85rem;
+}
+
+/* ── Gap analysis ───────────────────────────────── */
+
+.gapLayout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+.gapSidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 12px;
+    background: var(--color-bg-surface);
+    position: sticky;
+    top: 0;
+}
+
+.searchBox {
+    position: relative;
+}
+
+.searchIcon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-text-secondary);
+    pointer-events: none;
+}
+
+.searchInput {
+    width: 100%;
+    padding: 8px 12px 8px 32px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: 0.8rem;
+    outline: none;
+}
+
+.searchInput:focus {
+    border-color: var(--color-accent-blue);
+}
+
+.userList {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 480px;
+    overflow-y: auto;
+}
+
+.userItem {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 10px;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-md);
+    text-align: left;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.userItem:hover {
+    background: color-mix(in srgb, var(--color-accent-blue) 8%, transparent);
+}
+
+.userItemActive {
+    background: color-mix(in srgb, var(--color-accent-blue) 14%, transparent);
+}
+
+.userItemName {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.userItemEmail {
+    font-size: 0.7rem;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gapMain {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+}
+
+.gapHeading {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.gapSection {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.gapSectionTitle {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-secondary);
+}
+
+.gapList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.gapItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-warning);
+    border-radius: var(--radius-md);
+}
+
+.gapItemMain {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+}
+
+.gapItemName {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.gapLevels {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.gapCurrentLevel {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+}
+
+.gapArrow {
+    color: var(--color-text-secondary);
+}
+
+.gapRequiredLevel {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-warning);
+}
+
+.successCard {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px;
+    background: color-mix(in srgb, var(--color-success) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-success) 25%, transparent);
+    border-radius: var(--radius-md);
+    color: var(--color-success);
+    font-size: 0.88rem;
+    font-weight: 500;
+}
+
+.recList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.recCard {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+}
+
+.recCard:hover {
+    border-color: color-mix(in srgb, var(--color-accent-blue) 30%, var(--color-border));
+    text-decoration: none;
+}
+
+.recMain {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.recTitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.recSkills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.recSkillTag {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--color-accent-blue);
+    background: color-mix(in srgb, var(--color-accent-blue) 10%, transparent);
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+
+.recArrow {
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+}
+
+.recCard:hover .recArrow {
+    color: var(--color-accent-blue);
+}
+
+/* ── Empty / loading ────────────────────────────── */
+
+.empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 32px;
+    gap: 12px;
+    text-align: center;
+}
+
+.emptyIcon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--color-accent-blue) 10%, transparent);
+    color: var(--color-accent-blue);
+}
+
+.emptyTitle {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.emptyText {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    max-width: 340px;
+    line-height: 1.5;
+}
+
+.emptyTextSmall {
+    font-size: 0.78rem;
+    color: var(--color-text-secondary);
+    padding: 12px;
+    text-align: center;
+}
+
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 60px;
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+}
+
+.loadingSmall {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid color-mix(in srgb, var(--color-accent-blue) 25%, transparent);
+    border-top-color: var(--color-accent-blue);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ── Toast ──────────────────────────────────────── */
+
+.toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    background: var(--color-bg-secondary);
+    border: 1px solid color-mix(in srgb, var(--color-success) 30%, var(--color-border));
+    border-radius: var(--radius-md);
+    color: var(--color-success);
+    font-size: 0.85rem;
+    font-weight: 500;
+    box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.4);
+    z-index: 200;
+}
+
+/* ── Locked / upgrade notice ────────────────────── */
+
+.lockedPage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+}
+
+.lockedCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+    max-width: 460px;
+    padding: 40px 32px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+}
+
+.lockedIcon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--color-warning) 12%, transparent);
+    color: var(--color-warning);
+}
+
+.lockedTitle {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+.lockedText {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--color-text-primary);
+}
+
+.lockedHint {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+}
+
+.lockedButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 10px 18px;
+    background: var(--color-button-primary);
+    color: var(--color-button-text);
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: filter var(--transition-fast);
+}
+
+.lockedButton:hover {
+    filter: brightness(1.08);
+    text-decoration: none;
+}
+
+/* ── Responsive ─────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .gapLayout {
+        grid-template-columns: 1fr;
+    }
+
+    .gapSidebar {
+        position: static;
+    }
+
+    .formRow {
+        flex-direction: column;
+    }
+}
